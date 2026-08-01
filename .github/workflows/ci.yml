@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend — Lint, Test & Build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ai_knowledge_graph
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready -U postgres
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+
+      - run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_knowledge_graph
+
+      - run: npm run lint
+
+      - run: npx jest --passWithNoTests
+        env:
+          NODE_ENV: test
+
+      - run: npm run build
+
+      - run: docker build -t akg-backend -f ../docker/Dockerfile.backend .
+        if: github.ref == 'refs/heads/main'
+
+  frontend:
+    name: Frontend — Lint, Test & Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.35.x"
+          cache: true
+
+      - run: flutter pub get
+
+      - run: flutter analyze
+
+      - run: flutter build web --release --no-tree-shake-icons
+
+      - run: docker build -t akg-frontend -f ../docker/Dockerfile.frontend .
+        if: github.ref == 'refs/heads/main'
+
+  docker:
+    name: Docker — Compose Validation
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: docker compose -f docker/docker-compose.yml config

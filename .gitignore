@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+.next/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Flutter
+frontend/.dart_tool/
+frontend/.packages
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/ephemeral/
+
+# Docker
+docker/data/
+docker/logs/
+
+# Prisma
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
+# MinIO data
+minio-data/
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Secrets
+*.key
+*.pem
+*.cert
+secrets/

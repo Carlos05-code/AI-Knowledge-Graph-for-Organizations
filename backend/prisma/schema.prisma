@@ -1,0 +1,459 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =========================================================================
+// Organization & Users
+// =========================================================================
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  domain    String?
+  logo      String?
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  workspaces Workspace[]
+  users      User[]
+  connectors Connector[]
+  documents  Document[]
+  policies   Policy[]
+  auditLogs  AuditLog[]
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  password       String?
+  firstName      String
+  lastName       String
+  avatar         String?
+  title          String?
+  department     String?
+  keycloakId     String   @unique
+  organizationId String
+  role           UserRole @default(USER)
+  isActive       Boolean  @default(true)
+  preferences    Json     @default("{}")
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  organization        Organization        @relation(fields: [organizationId], references: [id])
+  authoredDocuments   Document[]          @relation("DocumentAuthor")
+  conversations       Conversation[]
+  meetingParticipants MeetingParticipant[]
+  notifications       Notification[]
+  expertiseScores     ExpertiseScore[]
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  VIEWER
+}
+
+// =========================================================================
+// Workspaces
+// =========================================================================
+
+model Workspace {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  organizationId String
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  documents    Document[]
+}
+
+// =========================================================================
+// Documents & Processing
+// =========================================================================
+
+model Document {
+  id             String          @id @default(uuid())
+  title          String
+  description    String?
+  filePath       String
+  fileType       String
+  fileSize       Int
+  mimeType       String
+  checksum       String
+  status         DocumentStatus  @default(PENDING)
+  authorId       String?
+  organizationId String
+  workspaceId    String?
+  source         DocumentSource  @default(UPLOAD)
+  sourceUrl      String?
+  metadata       Json            @default("{}")
+  pageCount      Int?
+  wordCount      Int?
+  language       String?
+  isIndexed      Boolean         @default(false)
+  isEncrypted    Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+
+  author       User?             @relation("DocumentAuthor", fields: [authorId], references: [id])
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  workspace    Workspace?        @relation(fields: [workspaceId], references: [id])
+  versions     DocumentVersion[]
+  chunks       Chunk[]
+  policyLinks  PolicyDocument[]
+}
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  INDEXED
+  FAILED
+  DELETED
+}
+
+enum DocumentSource {
+  UPLOAD
+  GOOGLE_DRIVE
+  ONEDRIVE
+  SHAREPOINT
+  SLACK
+  TEAMS
+  NOTION
+  CONFLUENCE
+  GITHUB
+  GITLAB
+  JIRA
+  LINEAR
+  DROPBOX
+  EMAIL
+  MEETING
+}
+
+model DocumentVersion {
+  id          String   @id @default(uuid())
+  documentId  String
+  version     Int
+  filePath    String
+  fileSize    Int
+  checksum    String
+  changeLog   String?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id])
+}
+
+model Chunk {
+  id         String   @id @default(uuid())
+  documentId String
+  content    String
+  index      Int
+  metadata   Json     @default("{}")
+  tokenCount Int?
+  embedding  Unsupported("vector(1536)")?
+  createdAt  DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id])
+}
+
+// =========================================================================
+// Connectors
+// =========================================================================
+
+model Connector {
+  id             String          @id @default(uuid())
+  name           String
+  type           ConnectorType
+  organizationId String
+  credentials    String          @db.VarChar(4000)
+  config         Json            @default("{}")
+  isEnabled      Boolean         @default(true)
+  lastSyncAt     DateTime?
+  syncInterval   Int?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  runs         ConnectorRun[]
+}
+
+enum ConnectorType {
+  GOOGLE_DRIVE
+  ONEDRIVE
+  SHAREPOINT
+  GMAIL
+  OUTLOOK
+  SLACK
+  TEAMS
+  DROPBOX
+  NOTION
+  CONFLUENCE
+  GITHUB
+  GITLAB
+  JIRA
+  LINEAR
+  CUSTOM
+}
+
+model ConnectorRun {
+  id              String             @id @default(uuid())
+  connectorId     String
+  status          ConnectorRunStatus @default(PENDING)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  documentsSynced Int                @default(0)
+  errorCount      Int                @default(0)
+  errorLog        String?
+  metadata        Json               @default("{}")
+  createdAt       DateTime           @default(now())
+
+  connector Connector @relation(fields: [connectorId], references: [id])
+}
+
+enum ConnectorRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// =========================================================================
+// Conversations & Messages
+// =========================================================================
+
+model Conversation {
+  id        String   @id @default(uuid())
+  title     String?
+  userId    String
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  messages Message[]
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  role           MessageRole
+  content        String
+  sources        Json?
+  confidence     Float?
+  tokensUsed     Int?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// =========================================================================
+// Meetings
+// =========================================================================
+
+model Meeting {
+  id             String   @id @default(uuid())
+  title          String
+  description    String?
+  meetingDate    DateTime
+  duration       Int?
+  transcript     String?
+  summary        String?
+  actionItems    Json?
+  decisions      Json?
+  organizerId    String
+  organizationId String
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  participants MeetingParticipant[]
+}
+
+model MeetingParticipant {
+  id        String   @id @default(uuid())
+  meetingId String
+  userId    String
+  role      String?
+  createdAt DateTime @default(now())
+
+  meeting Meeting @relation(fields: [meetingId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+// =========================================================================
+// Notifications
+// =========================================================================
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum NotificationType {
+  DOCUMENT_CHANGED
+  POLICY_UPDATED
+  CONNECTOR_FAILED
+  SYNC_COMPLETED
+  AI_CONFIDENCE_LOW
+  MEETING_SUMMARY
+  EXPERT_RECOMMENDATION
+  KNOWLEDGE_GAP
+}
+
+// =========================================================================
+// Policies
+// =========================================================================
+
+model Policy {
+  id             String   @id @default(uuid())
+  title          String
+  content        String
+  version        Int      @default(1)
+  category       String?
+  organizationId String
+  workspaceId    String?
+  isActive       Boolean  @default(true)
+  effectiveDate  DateTime?
+  expirationDate DateTime?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  documents    PolicyDocument[]
+}
+
+model PolicyDocument {
+  policyId   String
+  documentId String
+  relevance  Float?
+
+  policy   Policy   @relation(fields: [policyId], references: [id])
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@id([policyId, documentId])
+}
+
+// =========================================================================
+// Expertise & Knowledge Gaps
+// =========================================================================
+
+model ExpertiseScore {
+  id        String   @id @default(uuid())
+  userId    String
+  topic     String
+  score     Float
+  source    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, topic])
+}
+
+model KnowledgeGap {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  severity    GapSeverity @default(MEDIUM)
+  category    String?
+  source      String?
+  metadata    Json        @default("{}")
+  resolvedAt  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum GapSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// =========================================================================
+// Audit Logs
+// =========================================================================
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String?
+  action         String
+  entity         String
+  entityId       String?
+  changes        Json?
+  ipAddress      String?
+  userAgent      String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([entity, entityId])
+}
+
+// =========================================================================
+// Graph Entities (synced with Neo4j)
+// =========================================================================
+
+model GraphEntity {
+  id        String   @id @default(uuid())
+  type      String
+  name      String
+  sourceId  String?
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([type, name])
+  @@index([type])
+}
+
+model GraphRelationship {
+  id              String   @id @default(uuid())
+  sourceEntityId  String
+  targetEntityId  String
+  type            String
+  metadata        Json     @default("{}")
+  weight          Float?
+  createdAt       DateTime @default(now())
+
+  @@unique([sourceEntityId, targetEntityId, type])
+}

@@ -1,0 +1,48 @@
+{
+  "realm": "ai-knowledge-graph",
+  "enabled": true,
+  "displayName": "AI Knowledge Graph",
+  "accessTokenLifespan": 900,
+  "refreshTokenLifespan": 604800,
+  "ssoSessionMaxLifespan": 604800,
+  "clients": [
+    {
+      "clientId": "backend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "your-client-secret",
+      "standardFlowEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": ["http://localhost:3000/*", "http://localhost:4200/*"],
+      "webOrigins": ["http://localhost:3000", "http://localhost:4200"]
+    },
+    {
+      "clientId": "frontend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["http://localhost:4200/*", "http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:4200", "http://localhost:3000"]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {"name": "admin", "description": "Administrator"},
+      {"name": "user", "description": "Regular user"},
+      {"name": "viewer", "description": "Read-only access"}
+    ]
+  },
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@akg.dev",
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [{"type": "password", "value": "admin123", "temporary": false}],
+      "realmRoles": ["admin", "user"]
+    }
+  ]
+}
