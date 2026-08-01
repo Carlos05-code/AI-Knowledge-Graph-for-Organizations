@@ -24,7 +24,11 @@ export class AuditLogHandler {
       action: 'DOCUMENT_UPLOADED',
       entity: 'document',
       entityId: event.documentId,
-      changes: { title: event.title, fileType: event.fileType, fileSize: event.fileSize },
+      changes: {
+        title: event.title,
+        fileType: event.fileType,
+        fileSize: event.fileSize,
+      },
     });
   }
 
@@ -35,7 +39,11 @@ export class AuditLogHandler {
       action: 'DOCUMENT_PROCESSED',
       entity: 'document',
       entityId: event.documentId,
-      changes: { status: event.status, chunksCount: event.chunksCount, duration: event.duration },
+      changes: {
+        status: event.status,
+        chunksCount: event.chunksCount,
+        duration: event.duration,
+      },
     });
   }
 
@@ -56,7 +64,11 @@ export class AuditLogHandler {
       action: 'CONNECTOR_SYNC_COMPLETED',
       entity: 'connector',
       entityId: event.connectorId,
-      changes: { runId: event.runId, documentsSynced: event.documentsSynced, errors: event.errors },
+      changes: {
+        runId: event.runId,
+        documentsSynced: event.documentsSynced,
+        errors: event.errors,
+      },
     });
   }
 

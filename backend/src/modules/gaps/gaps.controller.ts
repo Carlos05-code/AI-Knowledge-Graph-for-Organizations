@@ -24,7 +24,13 @@ export class GapsController {
     @Query('category') category?: string,
     @Query('resolved') resolved?: boolean,
   ) {
-    return this.gapsService.getGaps(user.organizationId, { page, limit, severity, category, resolved });
+    return this.gapsService.getGaps(user.organizationId, {
+      page,
+      limit,
+      severity,
+      category,
+      resolved,
+    });
   }
 
   @Post('detect')

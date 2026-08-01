@@ -1,5 +1,10 @@
 import { Logger } from '@nestjs/common';
-import { ConnectorAdapter, ConnectorConfig, ConnectorFile, SyncResult } from '../connector-adapter.interface';
+import {
+  ConnectorAdapter,
+  ConnectorConfig,
+  ConnectorFile,
+  SyncResult,
+} from '../connector-adapter.interface';
 
 export class SlackAdapter extends ConnectorAdapter {
   private readonly logger = new Logger(SlackAdapter.name);

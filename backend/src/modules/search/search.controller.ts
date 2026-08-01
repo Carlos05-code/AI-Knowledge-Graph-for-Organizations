@@ -21,7 +21,12 @@ export class SearchController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    return this.searchService.hybridSearch(query, user.organizationId, { mode, type, page, limit });
+    return this.searchService.hybridSearch(query, user.organizationId, {
+      mode,
+      type,
+      page,
+      limit,
+    });
   }
 
   @Get('suggestions')

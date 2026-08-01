@@ -10,7 +10,12 @@ describe('ChatService', () => {
   let service: ChatService;
 
   const mockPrisma = {
-    conversation: { findUnique: jest.fn(), create: jest.fn(), findMany: jest.fn(), delete: jest.fn() },
+    conversation: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      findMany: jest.fn(),
+      delete: jest.fn(),
+    },
     message: { create: jest.fn(), deleteMany: jest.fn() },
     document: { findMany: jest.fn() },
     chunk: { findMany: jest.fn().mockResolvedValue([]) },
@@ -49,7 +54,11 @@ describe('ChatService', () => {
   beforeEach(async () => {
     Object.defineProperty(ChatService.prototype, 'openai', {
       get: () => ({
-        chat: { completions: { create: jest.fn().mockResolvedValue(mockOpenAICompletions) } },
+        chat: {
+          completions: {
+            create: jest.fn().mockResolvedValue(mockOpenAICompletions),
+          },
+        },
       }),
       configurable: true,
     });
@@ -73,7 +82,10 @@ describe('ChatService', () => {
   });
 
   it('should create conversation and send message', async () => {
-    mockPrisma.conversation.create.mockResolvedValue({ id: 'conv-1', userId: 'user-1' });
+    mockPrisma.conversation.create.mockResolvedValue({
+      id: 'conv-1',
+      userId: 'user-1',
+    });
     mockPrisma.message.create.mockResolvedValue({ id: 'msg-1' });
     mockPrisma.document.findMany.mockResolvedValue([]);
 
@@ -83,7 +95,9 @@ describe('ChatService', () => {
   });
 
   it('should list conversations', async () => {
-    mockPrisma.conversation.findMany.mockResolvedValue([{ id: 'conv-1', messages: [] }]);
+    mockPrisma.conversation.findMany.mockResolvedValue([
+      { id: 'conv-1', messages: [] },
+    ]);
     const result = await service.listConversations('user-1');
     expect(result).toHaveLength(1);
   });

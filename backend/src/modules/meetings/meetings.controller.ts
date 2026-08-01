@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MeetingsService } from './meetings.service';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
@@ -14,12 +23,20 @@ export class MeetingsController {
   @Post()
   @ApiOperation({ summary: 'Create a meeting record' })
   create(@Body() dto: any, @CurrentUser() user: any) {
-    return this.meetingsService.create({ ...dto, organizerId: user.id, organizationId: user.organizationId });
+    return this.meetingsService.create({
+      ...dto,
+      organizerId: user.id,
+      organizationId: user.organizationId,
+    });
   }
 
   @Get()
   @ApiOperation({ summary: 'List meetings' })
-  findAll(@Query('page') page = 1, @Query('limit') limit = 20, @CurrentUser() user: any) {
+  findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @CurrentUser() user: any,
+  ) {
     return this.meetingsService.findAll(user.organizationId, { page, limit });
   }
 

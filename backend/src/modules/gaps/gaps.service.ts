@@ -23,7 +23,9 @@ export class GapsService {
     return gaps.flat();
   }
 
-  private async detectUndocumentedServices(organizationId: string): Promise<any[]> {
+  private async detectUndocumentedServices(
+    organizationId: string,
+  ): Promise<any[]> {
     try {
       const services = await this.neo4j.executeRaw(
         `MATCH (s:Service)
@@ -73,7 +75,9 @@ export class GapsService {
     }));
   }
 
-  private async detectConflictingPolicies(organizationId: string): Promise<any[]> {
+  private async detectConflictingPolicies(
+    organizationId: string,
+  ): Promise<any[]> {
     const policies = await this.prisma.policy.findMany({
       where: { organizationId, deletedAt: null, isActive: true },
       select: { id: true, title: true, content: true, category: true },
@@ -98,7 +102,9 @@ export class GapsService {
     return conflicts;
   }
 
-  private async detectOrphanRepositories(organizationId: string): Promise<any[]> {
+  private async detectOrphanRepositories(
+    organizationId: string,
+  ): Promise<any[]> {
     try {
       const orphans = await this.neo4j.executeRaw(
         `MATCH (r:Repository)
@@ -144,7 +150,16 @@ export class GapsService {
     }));
   }
 
-  async getGaps(organizationId: string, params: { page: number; limit: number; severity?: string; category?: string; resolved?: boolean }) {
+  async getGaps(
+    organizationId: string,
+    params: {
+      page: number;
+      limit: number;
+      severity?: string;
+      category?: string;
+      resolved?: boolean;
+    },
+  ) {
     const where: any = {};
     if (params.severity) where.severity = params.severity;
     if (params.category) where.category = params.category;
@@ -156,17 +171,21 @@ export class GapsService {
         where,
         skip: (params.page - 1) * params.limit,
         take: params.limit,
-        orderBy: [
-          { severity: 'asc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy: [{ severity: 'asc' }, { createdAt: 'desc' }],
       }),
       this.prisma.knowledgeGap.count({ where }),
     ]);
 
     return {
       data,
-      meta: { total, page: params.page, limit: params.limit, totalPages: Math.ceil(total / params.limit), hasNext: params.page * params.limit < total, hasPrevious: params.page > 1 },
+      meta: {
+        total,
+        page: params.page,
+        limit: params.limit,
+        totalPages: Math.ceil(total / params.limit),
+        hasNext: params.page * params.limit < total,
+        hasPrevious: params.page > 1,
+      },
     };
   }
 

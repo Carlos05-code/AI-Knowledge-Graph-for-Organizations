@@ -128,6 +128,7 @@ flowchart LR
 ```mermaid
 graph TD
     APP[AppModule] --> AUTH[AuthModule]
+    APP --> USERS[UsersModule]
     APP --> UPLOAD[UploadModule]
     UPLOAD --> DOCS[DocumentsModule]
     DOCS --> SEARCH[SearchModule]

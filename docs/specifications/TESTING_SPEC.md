@@ -4,8 +4,8 @@
 
 | Level | Tool | Count | Status |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | 28 | ✅ passing |
-| e2e (backend) | Jest + Supertest | 23 | ✅ passing |
+| Unit (backend) | Jest + ts-jest | 36 | ✅ passing |
+| e2e (backend) | Jest + Supertest | 31 | ✅ passing |
 | Widget (frontend) | flutter_test | 2 | ⚠️ need ProviderScope fix |
 | Performance | k6 | — | ⬜ planned |
 | Security | npm audit / OWASP checks | — | ⬜ planned |
@@ -20,6 +20,7 @@
 | `expertise.service.spec.ts` | experts by topic, summary ranking, Neo4j failure fallback |
 | `gaps.service.spec.ts` | pagination, resolve, 5 detectors, stale docs, graceful failure |
 | `recommendations.service.spec.ts` | shape, similar-role experts, Qdrant-based recs, personalized feed |
+| `users.service.spec.ts` | profile get/update, member pagination + search, role/status updates, self-demotion guard |
 | `prisma.service.spec.ts` | service construction |
 
 Patterns: mocked Prisma delegates, `Object.defineProperty` for OpenAI/Qdrant clients,
@@ -34,7 +35,8 @@ cache-manager-redis-yet, bcrypt) and asserts:
 - health (full check + live)
 - auth: register, login, invalid login 401, validation 400s
 - documents: create (ADMIN), list, admin-only delete (403/200)
-- search: hybrid + suggestions; graph: nodes + raw Cypher (no auth)
+- search: hybrid + suggestions; graph: nodes + raw Cypher (401/403/ADMIN only)
+- users: profile (200/401), profile update, members list + role update (RBAC 403/200)
 - chat: messages + conversations; connectors: admin-only POST
 - notifications, expertise, gaps, recommendations, upload auth, admin dashboard RBAC
 
@@ -61,7 +63,7 @@ in `ProviderScope` is scheduled (ROADMAP). Additional planned suites:
 ## 5. Coverage goals
 
 - Backend unit: ≥ 80% statements for services/controllers (currently ~50–90% per suite).
-- e2e: every public endpoint exercised at least once (current: 23 specs covering all 16 controllers).
+- e2e: every public endpoint exercised at least once (current: 31 specs covering all 17 controllers).
 - Frontend: critical flows (auth, chat, search) ≥ 70%.
 
 ## 6. Performance & load (planned)

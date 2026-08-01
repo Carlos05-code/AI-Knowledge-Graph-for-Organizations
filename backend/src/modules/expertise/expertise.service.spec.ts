@@ -44,7 +44,14 @@ describe('ExpertiseService', () => {
         score: 0.95,
         source: 'commits',
         topic: 'Kubernetes',
-        user: { id: 'user-1', firstName: 'Jane', lastName: 'Doe', email: 'jane@test.com', title: 'ML Engineer', avatar: null },
+        user: {
+          id: 'user-1',
+          firstName: 'Jane',
+          lastName: 'Doe',
+          email: 'jane@test.com',
+          title: 'ML Engineer',
+          avatar: null,
+        },
       },
     ]);
     mockNeo4j.executeRaw.mockResolvedValue([]);
@@ -67,9 +74,21 @@ describe('ExpertiseService', () => {
 
   it('should get expertise summary', async () => {
     mockPrisma.expertiseScore.findMany.mockResolvedValue([
-      { topic: 'Kubernetes', score: 0.95, user: { id: 'user-1', firstName: 'Jane', lastName: 'Doe' } },
-      { topic: 'Kubernetes', score: 0.85, user: { id: 'user-2', firstName: 'John', lastName: 'Smith' } },
-      { topic: 'React', score: 0.92, user: { id: 'user-1', firstName: 'Jane', lastName: 'Doe' } },
+      {
+        topic: 'Kubernetes',
+        score: 0.95,
+        user: { id: 'user-1', firstName: 'Jane', lastName: 'Doe' },
+      },
+      {
+        topic: 'Kubernetes',
+        score: 0.85,
+        user: { id: 'user-2', firstName: 'John', lastName: 'Smith' },
+      },
+      {
+        topic: 'React',
+        score: 0.92,
+        user: { id: 'user-1', firstName: 'Jane', lastName: 'Doe' },
+      },
     ]);
 
     const result = await service.getExpertiseSummary('org-1');

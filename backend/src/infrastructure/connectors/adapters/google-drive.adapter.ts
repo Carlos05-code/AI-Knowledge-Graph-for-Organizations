@@ -1,5 +1,10 @@
 import { Logger } from '@nestjs/common';
-import { ConnectorAdapter, ConnectorConfig, ConnectorFile, SyncResult } from '../connector-adapter.interface';
+import {
+  ConnectorAdapter,
+  ConnectorConfig,
+  ConnectorFile,
+  SyncResult,
+} from '../connector-adapter.interface';
 
 export class GoogleDriveAdapter extends ConnectorAdapter {
   private readonly logger = new Logger(GoogleDriveAdapter.name);
@@ -33,7 +38,8 @@ export class GoogleDriveAdapter extends ConnectorAdapter {
     try {
       const { credentials } = await this.oauth2Client.refreshAccessToken();
       this.config.accessToken = credentials.access_token;
-      this.config.refreshToken = credentials.refresh_token || this.config.refreshToken;
+      this.config.refreshToken =
+        credentials.refresh_token || this.config.refreshToken;
     } catch (error) {
       this.logger.error('Token refresh failed', error);
       throw error;
@@ -52,7 +58,8 @@ export class GoogleDriveAdapter extends ConnectorAdapter {
 
       const response = await drive.files.list({
         q: query,
-        fields: 'files(id, name, mimeType, size, parents, createdTime, modifiedTime)',
+        fields:
+          'files(id, name, mimeType, size, parents, createdTime, modifiedTime)',
         pageSize: 100,
       });
 
@@ -98,7 +105,8 @@ export class GoogleDriveAdapter extends ConnectorAdapter {
 
       const response = await drive.files.get({
         fileId,
-        fields: 'id, name, mimeType, size, owners, lastModifyingUser, description, createdTime, modifiedTime, permissions',
+        fields:
+          'id, name, mimeType, size, owners, lastModifyingUser, description, createdTime, modifiedTime, permissions',
       });
 
       return response.data;
@@ -116,7 +124,8 @@ export class GoogleDriveAdapter extends ConnectorAdapter {
 
       const response = await drive.files.list({
         q: `name contains '${query}' and trashed = false`,
-        fields: 'files(id, name, mimeType, size, parents, createdTime, modifiedTime)',
+        fields:
+          'files(id, name, mimeType, size, parents, createdTime, modifiedTime)',
         pageSize: 50,
       });
 
@@ -147,7 +156,11 @@ export class GoogleDriveAdapter extends ConnectorAdapter {
           const metadata = await this.getFileMetadata(file.id);
 
           result.documentsSynced++;
-          result.metadata[file.id] = { name: file.name, size: file.size, mimeType: file.mimeType };
+          result.metadata[file.id] = {
+            name: file.name,
+            size: file.size,
+            mimeType: file.mimeType,
+          };
         } catch (error: any) {
           result.errors.push({ fileId: file.id, error: error.message });
         }

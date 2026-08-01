@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
@@ -31,7 +40,12 @@ export class DocumentsController {
     @Query('status') status?: string,
     @Query('source') source?: string,
   ) {
-    return this.documentsService.findAll(user.organizationId, { page, limit, status, source });
+    return this.documentsService.findAll(user.organizationId, {
+      page,
+      limit,
+      status,
+      source,
+    });
   }
 
   @Get(':id')

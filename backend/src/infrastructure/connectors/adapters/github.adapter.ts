@@ -1,5 +1,10 @@
 import { Logger } from '@nestjs/common';
-import { ConnectorAdapter, ConnectorConfig, ConnectorFile, SyncResult } from '../connector-adapter.interface';
+import {
+  ConnectorAdapter,
+  ConnectorConfig,
+  ConnectorFile,
+  SyncResult,
+} from '../connector-adapter.interface';
 
 export class GitHubAdapter extends ConnectorAdapter {
   private readonly logger = new Logger(GitHubAdapter.name);
@@ -38,14 +43,19 @@ export class GitHubAdapter extends ConnectorAdapter {
         path: '',
       });
 
-      return (Array.isArray(contents) ? contents : [contents]).map((item: any) => ({
-        id: item.sha,
-        name: item.name,
-        mimeType: item.type === 'dir' ? 'application/vnd.github.directory' : 'text/plain',
-        size: item.size || 0,
-        path: item.path,
-        metadata: { type: item.type, htmlUrl: item.html_url },
-      }));
+      return (Array.isArray(contents) ? contents : [contents]).map(
+        (item: any) => ({
+          id: item.sha,
+          name: item.name,
+          mimeType:
+            item.type === 'dir'
+              ? 'application/vnd.github.directory'
+              : 'text/plain',
+          size: item.size || 0,
+          path: item.path,
+          metadata: { type: item.type, htmlUrl: item.html_url },
+        }),
+      );
     } catch (error) {
       this.logger.error(`Failed to list repo ${repo}`, error);
       return [];
@@ -59,8 +69,12 @@ export class GitHubAdapter extends ConnectorAdapter {
   async getFileMetadata(fileId: string): Promise<Record<string, unknown>> {
     await this.ensureAuth();
     try {
-      const { data } = await this.octokit.git.getCommit({ commit_sha: fileId, owner: '', repo: '' });
-      return data as unknown as Record<string, unknown>;
+      const { data } = await this.octokit.git.getCommit({
+        commit_sha: fileId,
+        owner: '',
+        repo: '',
+      });
+      return data;
     } catch {
       return {};
     }
@@ -69,7 +83,10 @@ export class GitHubAdapter extends ConnectorAdapter {
   async searchFiles(query: string): Promise<ConnectorFile[]> {
     await this.ensureAuth();
     try {
-      const { data } = await this.octokit.search.code({ q: query, per_page: 20 });
+      const { data } = await this.octokit.search.code({
+        q: query,
+        per_page: 20,
+      });
       return data.items.map((item: any) => ({
         id: item.sha,
         name: item.name,

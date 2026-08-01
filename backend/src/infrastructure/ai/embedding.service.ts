@@ -43,7 +43,9 @@ export class EmbeddingService {
         model: this.config.get('EMBEDDING_MODEL', 'text-embedding-3-small'),
         input: texts,
       });
-      return response.data.sort((a: any, b: any) => a.index - b.index).map((d: any) => d.embedding);
+      return response.data
+        .sort((a: any, b: any) => a.index - b.index)
+        .map((d: any) => d.embedding);
     } catch (error) {
       this.logger.error('OpenAI batch embedding failed', error);
       return texts.map((t) => this.fallbackEmbedding(t));
@@ -66,7 +68,7 @@ export class EmbeddingService {
     let hash = 0;
     for (let i = 0; i < text.length; i++) {
       const char = text.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return Math.abs(hash) / 2147483647;

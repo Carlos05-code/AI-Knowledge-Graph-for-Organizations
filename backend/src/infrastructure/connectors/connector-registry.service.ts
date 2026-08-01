@@ -1,10 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConnectorAdapter, ConnectorConfig } from './connector-adapter.interface';
+import {
+  ConnectorAdapter,
+  ConnectorConfig,
+} from './connector-adapter.interface';
 import { GoogleDriveAdapter } from './adapters/google-drive.adapter';
 import { SlackAdapter } from './adapters/slack.adapter';
 import { GitHubAdapter } from './adapters/github.adapter';
 
-export type AdapterConstructor = new (config: ConnectorConfig) => ConnectorAdapter;
+export type AdapterConstructor = new (
+  config: ConnectorConfig,
+) => ConnectorAdapter;
 
 @Injectable()
 export class ConnectorRegistryService {

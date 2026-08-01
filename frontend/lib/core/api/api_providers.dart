@@ -5,6 +5,7 @@ import 'chat_service.dart';
 import 'search_service.dart';
 import 'graph_service.dart';
 import 'documents_service.dart';
+import 'users_service.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient();
@@ -28,4 +29,8 @@ final graphServiceProvider = Provider<GraphService>((ref) {
 
 final documentsServiceProvider = Provider<DocumentsService>((ref) {
   return DocumentsService(ref.watch(apiClientProvider));
+});
+
+final usersServiceProvider = Provider<UsersService>((ref) {
+  return UsersService(ref.watch(apiClientProvider));
 });

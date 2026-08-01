@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
@@ -19,7 +28,11 @@ export class NotificationsController {
     @Query('limit') limit = 20,
     @Query('unreadOnly') unreadOnly?: boolean,
   ) {
-    return this.notificationsService.findAll(user.id, { page, limit, unreadOnly });
+    return this.notificationsService.findAll(user.id, {
+      page,
+      limit,
+      unreadOnly,
+    });
   }
 
   @Get('unread-count')

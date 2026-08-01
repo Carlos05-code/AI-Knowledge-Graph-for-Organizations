@@ -7,10 +7,10 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 
 - ✅ Backend API complete (NestJS 11, 16 controllers, ~60 endpoints, WebSocket chat)
 - ✅ Databases wired (PostgreSQL 16 + Prisma, Neo4j, Qdrant, Redis cache w/ in-memory fallback)
-- ✅ Flutter app shell (login/register, chat, hybrid search, graph explorer)
+- ✅ Flutter app shell (login/register, chat, hybrid search, graph explorer, profile, admin)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 28 unit + 23 e2e, all passing
+- ✅ Tests: 36 unit + 31 e2e, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -21,7 +21,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 2 | Flutter application shell | ✅ | Auth, shell, routing, theme |
 | 3 | Backend foundation | ✅ | NestJS modules, global pipe/filters/interceptors |
 | 4 | Authentication | ✅ | JWT login/register/refresh/me, RBAC roles |
-| 5 | User management | ⬜ | Profile, org membership, invite flows |
+| 5 | User management | ✅ | Profile edit, org members list + search, role/status management (ADMIN), self-demotion guard; invites pending |
 | 6 | Connector framework | 🔄 | Registry + Google Drive adapter real; Slack/GitHub stubs |
 | 7 | Document ingestion pipeline | 🔄 | Upload → checksum → chunk (512/64) → Qdrant; OCR & versions partial |
 | 8 | OCR pipeline | ⬜ | Tesseract integration for scanned PDFs/images |
@@ -40,21 +40,22 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 28 unit + 23 e2e; widget/load/security suites pending |
+| 24 | Testing | 🔄 | 36 unit + 31 e2e; widget/load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
 
 - Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
 - Android release manifest lacks the `INTERNET` permission (only debug/profile have it).
-- Frontend: 6 of 13 routes are "Coming soon" placeholders; typed models (freezed) planned.
+- Frontend: 4 of 13 routes are "Coming soon" placeholders (documents, connectors, meetings, policies); typed models (freezed) planned.
 - Frontend `widget_test.dart` needs a `ProviderScope` wrapper to be runnable.
 - Dead dependencies in `frontend/pubspec.yaml` (retrofit, freezed, graphview, fl_chart, ...) — either adopt or prune.
+- Backend `npm run lint` fails on legacy `no-unsafe-*` violations (type-checked config; fix on install) — resolved deps missing previously.
 
 ## Quarter ahead (priority order)
 
-1. User management (profile, org invites, roles UI).
-2. Documents feature UI (list/upload/process/delete).
-3. Connector UI + real Slack adapter.
-4. Widget test suite with Riverpod harness; fix `widget_test.dart`.
+1. Documents feature UI (list/upload/process/delete).
+2. Connector UI + real Slack adapter.
+3. Widget test suite with Riverpod harness; fix `widget_test.dart`.
+4. Org invites for user management (email invite + accept flow).
 5. Release hardening: JWT rotation, Android INTERNET permission, secrets management, `npm audit` CI gate.

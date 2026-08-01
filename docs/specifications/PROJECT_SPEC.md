@@ -47,6 +47,7 @@ lacks the *graph* view of how information relates.
 ## Functional requirements (implemented)
 
 - Auth: register (auto-creates org), login, refresh, `GET /auth/me`, JWT + RBAC.
+- Users: profile view/edit (`/users/me`), org members list + search, role/status management (ADMIN) (`/users`, `/users/:id`).
 - Documents: create, list (paginated/filtered), get, soft-delete (admin), process.
 - Upload: multipart, 50 MB cap, MIME allowlist, SHA-256 checksum.
 - Search: `hybrid | keyword | semantic`, suggestions, reranked results.

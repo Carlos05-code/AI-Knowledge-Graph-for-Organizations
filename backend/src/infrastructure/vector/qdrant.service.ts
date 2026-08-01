@@ -79,13 +79,15 @@ export class QdrantService implements OnModuleInit {
       filter?: Record<string, unknown>;
       scoreThreshold?: number;
     } = {},
-  ): Promise<Array<{ id: string; score: number; payload: Record<string, unknown> }>> {
+  ): Promise<
+    Array<{ id: string; score: number; payload: Record<string, unknown> }>
+  > {
     const result = await this.client.search(collection, {
       vector,
       limit: options.limit ?? 20,
       offset: options.offset ?? 0,
       score_threshold: options.scoreThreshold,
-      filter: options.filter as any,
+      filter: options.filter,
       with_payload: true,
     });
 
@@ -101,7 +103,9 @@ export class QdrantService implements OnModuleInit {
     vector: number[],
     keywordFilter: Record<string, unknown>,
     options: { limit?: number; offset?: number } = {},
-  ): Promise<Array<{ id: string; score: number; payload: Record<string, unknown> }>> {
+  ): Promise<
+    Array<{ id: string; score: number; payload: Record<string, unknown> }>
+  > {
     const vectorResults = await this.search(collection, vector, {
       limit: options.limit ?? 20,
       offset: options.offset ?? 0,

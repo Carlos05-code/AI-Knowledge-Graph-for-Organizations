@@ -40,8 +40,17 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('should create user and return tokens', async () => {
-      const dto = { email: 'new@test.com', firstName: 'John', lastName: 'Doe', password: 'password123' };
-      const expected = { accessToken: 'token', refreshToken: 'refresh', user: { id: '1', email: dto.email } };
+      const dto = {
+        email: 'new@test.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        password: 'password123',
+      };
+      const expected = {
+        accessToken: 'token',
+        refreshToken: 'refresh',
+        user: { id: '1', email: dto.email },
+      };
       mockAuthService.register.mockResolvedValue(expected);
 
       const result = await controller.register(dto);

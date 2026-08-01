@@ -53,12 +53,16 @@ export class ConnectorsService {
     });
   }
 
-  async update(id: string, organizationId: string, data: {
-    name?: string;
-    config?: Record<string, unknown>;
-    isEnabled?: boolean;
-    syncInterval?: number;
-  }) {
+  async update(
+    id: string,
+    organizationId: string,
+    data: {
+      name?: string;
+      config?: Record<string, unknown>;
+      isEnabled?: boolean;
+      syncInterval?: number;
+    },
+  ) {
     return this.prisma.connector.update({
       where: { id },
       data: {

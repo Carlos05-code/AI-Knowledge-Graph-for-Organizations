@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import neo4j, { Driver, Session } from 'neo4j-driver';
 
@@ -177,7 +182,10 @@ export class Neo4jService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async executeRaw(query: string, params?: Record<string, unknown>): Promise<any> {
+  async executeRaw(
+    query: string,
+    params?: Record<string, unknown>,
+  ): Promise<any> {
     const session = this.getSession();
     try {
       const result = await session.run(query, params);

@@ -14,7 +14,9 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     app.setGlobalPrefix('/api/v1');
     await app.init();
   });
@@ -35,7 +37,10 @@ describe('AppController (e2e)', () => {
       .get('/api/v1/health/live')
       .expect(200)
       .expect((res) => {
-        expect(res.body.data).toEqual({ status: 'ok', timestamp: expect.any(String) });
+        expect(res.body.data).toEqual({
+          status: 'ok',
+          timestamp: expect.any(String),
+        });
       });
   });
 

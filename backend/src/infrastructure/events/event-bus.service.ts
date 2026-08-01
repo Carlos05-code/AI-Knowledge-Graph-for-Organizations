@@ -9,7 +9,9 @@ export class EventBusService {
   constructor(private eventEmitter: EventEmitter2) {}
 
   async publish<T extends BaseEvent>(event: T): Promise<void> {
-    this.logger.debug(`Publishing event: ${event.eventName} (${event.eventId})`);
+    this.logger.debug(
+      `Publishing event: ${event.eventName} (${event.eventId})`,
+    );
     this.eventEmitter.emit(event.eventName, event);
   }
 
@@ -19,7 +21,10 @@ export class EventBusService {
     }
   }
 
-  subscribe(eventName: string, handler: (event: BaseEvent) => Promise<void>): void {
+  subscribe(
+    eventName: string,
+    handler: (event: BaseEvent) => Promise<void>,
+  ): void {
     this.eventEmitter.on(eventName, handler);
   }
 }

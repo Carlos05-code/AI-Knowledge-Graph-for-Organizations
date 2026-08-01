@@ -15,10 +15,16 @@ export class AdminService {
       totalPolicies,
       recentActivity,
     ] = await Promise.all([
-      this.prisma.document.count({ where: { organizationId, deletedAt: null } }),
-      this.prisma.document.count({ where: { organizationId, status: 'INDEXED', deletedAt: null } }),
+      this.prisma.document.count({
+        where: { organizationId, deletedAt: null },
+      }),
+      this.prisma.document.count({
+        where: { organizationId, status: 'INDEXED', deletedAt: null },
+      }),
       this.prisma.user.count({ where: { organizationId, isActive: true } }),
-      this.prisma.connector.count({ where: { organizationId, deletedAt: null, isEnabled: true } }),
+      this.prisma.connector.count({
+        where: { organizationId, deletedAt: null, isEnabled: true },
+      }),
       this.prisma.meeting.count({ where: { organizationId, deletedAt: null } }),
       this.prisma.policy.count({ where: { organizationId, deletedAt: null } }),
       this.prisma.auditLog.findMany({
@@ -30,7 +36,11 @@ export class AdminService {
     ]);
 
     return {
-      documents: { total: totalDocuments, indexed: indexedDocuments, pending: totalDocuments - indexedDocuments },
+      documents: {
+        total: totalDocuments,
+        indexed: indexedDocuments,
+        pending: totalDocuments - indexedDocuments,
+      },
       users: { total: totalUsers },
       connectors: { active: totalConnectors },
       meetings: { total: totalMeetings },
@@ -39,7 +49,10 @@ export class AdminService {
     };
   }
 
-  async getAuditLogs(organizationId: string, params: { page: number; limit: number; entity?: string; action?: string }) {
+  async getAuditLogs(
+    organizationId: string,
+    params: { page: number; limit: number; entity?: string; action?: string },
+  ) {
     const where: any = { organizationId };
     if (params.entity) where.entity = params.entity;
     if (params.action) where.action = params.action;
@@ -56,7 +69,14 @@ export class AdminService {
 
     return {
       data,
-      meta: { total, page: params.page, limit: params.limit, totalPages: Math.ceil(total / params.limit), hasNext: params.page * params.limit < total, hasPrevious: params.page > 1 },
+      meta: {
+        total,
+        page: params.page,
+        limit: params.limit,
+        totalPages: Math.ceil(total / params.limit),
+        hasNext: params.page * params.limit < total,
+        hasPrevious: params.page > 1,
+      },
     };
   }
 

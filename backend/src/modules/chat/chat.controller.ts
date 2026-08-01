@@ -15,7 +15,11 @@ export class ChatController {
   @Post('messages')
   @ApiOperation({ summary: 'Send a message and get AI response' })
   sendMessage(@Body() dto: SendMessageDto, @CurrentUser() user: any) {
-    return this.chatService.sendMessage(user.id, dto.content, dto.conversationId);
+    return this.chatService.sendMessage(
+      user.id,
+      dto.content,
+      dto.conversationId,
+    );
   }
 
   @Get('conversations')

@@ -4,7 +4,11 @@ import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
 import { EmbeddingService } from '../../infrastructure/ai/embedding.service';
 import { SearchService } from '../search/search.service';
 import { EventBusService } from '../../infrastructure/events/event-bus.service';
-import { DocumentUploadedEvent, DocumentProcessedEvent, DocumentDeletedEvent } from '../../infrastructure/events/domain-events';
+import {
+  DocumentUploadedEvent,
+  DocumentProcessedEvent,
+  DocumentDeletedEvent,
+} from '../../infrastructure/events/domain-events';
 import { CreateDocumentDto } from './dto/create-document.dto';
 
 @Injectable()
@@ -19,7 +23,11 @@ export class DocumentsService {
     private eventBus: EventBusService,
   ) {}
 
-  async create(dto: CreateDocumentDto, organizationId: string, authorId?: string) {
+  async create(
+    dto: CreateDocumentDto,
+    organizationId: string,
+    authorId?: string,
+  ) {
     const doc = await this.prisma.document.create({
       data: {
         ...dto,
@@ -42,17 +50,30 @@ export class DocumentsService {
         },
       });
     } catch (error) {
-      this.logger.warn(`Knowledge graph node not created for document ${doc.id}`, error instanceof Error ? error.message : error);
+      this.logger.warn(
+        `Knowledge graph node not created for document ${doc.id}`,
+        error instanceof Error ? error.message : error,
+      );
     }
 
-    await this.eventBus.publish(new DocumentUploadedEvent(
-      doc.id, organizationId, authorId || '', doc.title, doc.fileType, doc.fileSize,
-    ));
+    await this.eventBus.publish(
+      new DocumentUploadedEvent(
+        doc.id,
+        organizationId,
+        authorId || '',
+        doc.title,
+        doc.fileType,
+        doc.fileSize,
+      ),
+    );
 
     return doc;
   }
 
-  async findAll(organizationId: string, params: { page: number; limit: number; status?: string; source?: string }) {
+  async findAll(
+    organizationId: string,
+    params: { page: number; limit: number; status?: string; source?: string },
+  ) {
     const where: any = { organizationId, deletedAt: null };
     if (params.status) where.status = params.status;
     if (params.source) where.source = params.source;
@@ -63,7 +84,11 @@ export class DocumentsService {
         skip: (params.page - 1) * params.limit,
         take: params.limit,
         orderBy: { createdAt: 'desc' },
-        include: { author: { select: { id: true, firstName: true, lastName: true, email: true } } },
+        include: {
+          author: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
+        },
       }),
       this.prisma.document.count({ where }),
     ]);
@@ -85,9 +110,14 @@ export class DocumentsService {
     return this.prisma.document.findFirst({
       where: { id, organizationId, deletedAt: null },
       include: {
-        author: { select: { id: true, firstName: true, lastName: true, email: true } },
+        author: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
         versions: { orderBy: { version: 'desc' }, take: 5 },
-        chunks: { select: { id: true, index: true, content: true, tokenCount: true }, orderBy: { index: 'asc' } },
+        chunks: {
+          select: { id: true, index: true, content: true, tokenCount: true },
+          orderBy: { index: 'asc' },
+        },
       },
     });
   }
@@ -100,20 +130,27 @@ export class DocumentsService {
     try {
       await this.neo4j.deleteNode(id);
     } catch (error) {
-      this.logger.warn(`Graph node cleanup skipped for document ${id}`, error instanceof Error ? error.message : error);
+      this.logger.warn(
+        `Graph node cleanup skipped for document ${id}`,
+        error instanceof Error ? error.message : error,
+      );
     }
     await this.search.deleteDocumentChunks(id);
-    await this.eventBus.publish(new DocumentDeletedEvent(id, organizationId, ''));
+    await this.eventBus.publish(
+      new DocumentDeletedEvent(id, organizationId, ''),
+    );
   }
 
   async processDocument(id: string) {
     const doc = await this.prisma.document.findUnique({ where: { id } });
     if (!doc) throw new Error('Document not found');
 
-    await this.prisma.document.update({ where: { id }, data: { status: 'PROCESSING' } });
+    await this.prisma.document.update({
+      where: { id },
+      data: { status: 'PROCESSING' },
+    });
 
     try {
-
       const content = await this.readDocumentContent(doc);
       const chunks = await this.chunkDocument(id, content);
       await this.search.indexDocumentChunks(id, doc.organizationId, chunks);
@@ -121,16 +158,41 @@ export class DocumentsService {
 
       await this.prisma.document.update({
         where: { id },
-        data: { status: 'INDEXED', isIndexed: true, wordCount: content.split(/\s+/).length },
+        data: {
+          status: 'INDEXED',
+          isIndexed: true,
+          wordCount: content.split(/\s+/).length,
+        },
       });
 
-      await this.eventBus.publish(new DocumentProcessedEvent(id, doc.organizationId, 'INDEXED', chunks.length, 0));
+      await this.eventBus.publish(
+        new DocumentProcessedEvent(
+          id,
+          doc.organizationId,
+          'INDEXED',
+          chunks.length,
+          0,
+        ),
+      );
 
-      this.logger.log(`Document ${id} processed: ${chunks.length} chunks indexed`);
+      this.logger.log(
+        `Document ${id} processed: ${chunks.length} chunks indexed`,
+      );
     } catch (error) {
       this.logger.error(`Document ${id} processing failed`, error);
-      await this.prisma.document.update({ where: { id }, data: { status: 'FAILED' } });
-      await this.eventBus.publish(new DocumentProcessedEvent(id, doc?.organizationId || '', 'FAILED', 0, 0));
+      await this.prisma.document.update({
+        where: { id },
+        data: { status: 'FAILED' },
+      });
+      await this.eventBus.publish(
+        new DocumentProcessedEvent(
+          id,
+          doc?.organizationId || '',
+          'FAILED',
+          0,
+          0,
+        ),
+      );
     }
   }
 
@@ -152,7 +214,10 @@ export class DocumentsService {
     let currentChunk = '';
 
     for (const line of lines) {
-      if (currentChunk.length + line.length > chunkSize && currentChunk.length > 0) {
+      if (
+        currentChunk.length + line.length > chunkSize &&
+        currentChunk.length > 0
+      ) {
         const id = `${documentId}_chunk_${chunks.length}`;
         chunks.push({ id, content: currentChunk.trim(), index: chunks.length });
         currentChunk = currentChunk.slice(-overlap);
@@ -184,7 +249,14 @@ export class DocumentsService {
   }
 
   private async extractKnowledgeGraph(doc: any, _content: string) {
-    const entityTypes = ['Person', 'Project', 'Technology', 'Service', 'API', 'Product'];
+    const entityTypes = [
+      'Person',
+      'Project',
+      'Technology',
+      'Service',
+      'API',
+      'Product',
+    ];
     const type = entityTypes[Math.floor(Math.random() * entityTypes.length)];
 
     try {
@@ -199,7 +271,10 @@ export class DocumentsService {
         },
       });
     } catch (error) {
-      this.logger.warn(`Entity extraction skipped for document ${doc.id}`, error instanceof Error ? error.message : error);
+      this.logger.warn(
+        `Entity extraction skipped for document ${doc.id}`,
+        error instanceof Error ? error.message : error,
+      );
     }
   }
 }

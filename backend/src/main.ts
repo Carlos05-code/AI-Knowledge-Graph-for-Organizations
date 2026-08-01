@@ -41,7 +41,9 @@ async function bootstrap() {
 
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup(`${prefix}/docs`, app, document);
-    logger.log(`Swagger UI available at ${prefix}/docs (disabled in production)`);
+    logger.log(
+      `Swagger UI available at ${prefix}/docs (disabled in production)`,
+    );
   }
 
   const port = process.env.APP_PORT || 3000;

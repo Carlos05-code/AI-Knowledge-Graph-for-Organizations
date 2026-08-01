@@ -1,5 +1,11 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+} from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { Readable } from 'stream';
 
@@ -15,7 +21,11 @@ export class MinioStorageService {
     this.bucket = config.get('MINIO_BUCKET', 'knowledge-graph');
   }
 
-  async upload(key: string, body: Buffer | Readable, mimeType: string): Promise<string> {
+  async upload(
+    key: string,
+    body: Buffer | Readable,
+    mimeType: string,
+  ): Promise<string> {
     await this.s3Client.send(
       new PutObjectCommand({
         Bucket: this.bucket,

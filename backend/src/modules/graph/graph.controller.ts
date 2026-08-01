@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Param, Query, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
 import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
@@ -15,7 +23,11 @@ export class GraphController {
 
   @Get('nodes')
   @ApiOperation({ summary: 'Get graph nodes' })
-  getNodes(@Query('type') type?: string, @Query('limit') limit?: number, @Query('skip') skip?: number) {
+  getNodes(
+    @Query('type') type?: string,
+    @Query('limit') limit?: number,
+    @Query('skip') skip?: number,
+  ) {
     return this.neo4j.queryNodes(type, limit || 50, skip || 0);
   }
 

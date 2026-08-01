@@ -35,23 +35,35 @@ export class SearchService implements OnModuleInit {
     }
   }
 
-  async hybridSearch(organizationId: string, query: string, options: SearchOptions = {}) {
+  async hybridSearch(
+    organizationId: string,
+    query: string,
+    options: SearchOptions = {},
+  ) {
     const mode = options.mode || 'hybrid';
     const page = options.page || 1;
     const limit = Math.min(options.limit || 20, 100);
     const startTime = Date.now();
 
     const orgFilter = { organizationId };
-    let results: any[] = [];
+    const results: any[] = [];
 
     if (mode === 'keyword' || mode === 'hybrid') {
       const keywordResults = await this.keywordSearch(query, organizationId);
-      results.push(...keywordResults.map((r) => ({ ...r, searchType: 'keyword' })));
+      results.push(
+        ...keywordResults.map((r) => ({ ...r, searchType: 'keyword' })),
+      );
     }
 
     if (mode === 'semantic' || mode === 'hybrid') {
-      const semanticResults = await this.semanticSearch(query, organizationId, orgFilter);
-      results.push(...semanticResults.map((r) => ({ ...r, searchType: 'semantic' })));
+      const semanticResults = await this.semanticSearch(
+        query,
+        organizationId,
+        orgFilter,
+      );
+      results.push(
+        ...semanticResults.map((r) => ({ ...r, searchType: 'semantic' })),
+      );
     }
 
     if (mode === 'hybrid') {
@@ -137,13 +149,21 @@ export class SearchService implements OnModuleInit {
     ];
   }
 
-  private async semanticSearch(query: string, _organizationId: string, _filter: Record<string, unknown>) {
+  private async semanticSearch(
+    query: string,
+    _organizationId: string,
+    _filter: Record<string, unknown>,
+  ) {
     try {
       const vector = await this.embedding.generateEmbedding(query);
-      const qdrantResults = await this.qdrant.search(this.collectionName, vector, {
-        limit: 20,
-        scoreThreshold: 0.3,
-      });
+      const qdrantResults = await this.qdrant.search(
+        this.collectionName,
+        vector,
+        {
+          limit: 20,
+          scoreThreshold: 0.3,
+        },
+      );
 
       return qdrantResults.map((r) => ({
         id: r.id,
@@ -187,26 +207,49 @@ export class SearchService implements OnModuleInit {
   async getSearchSuggestions(query: string, organizationId: string) {
     const [documents, entities, chunks] = await Promise.all([
       this.prisma.document.findMany({
-        where: { organizationId, deletedAt: null, title: { contains: query, mode: 'insensitive' } },
+        where: {
+          organizationId,
+          deletedAt: null,
+          title: { contains: query, mode: 'insensitive' },
+        },
         select: { id: true, title: true },
         take: 5,
       }),
       this.neo4j.searchNodes(query, undefined, 5),
       this.prisma.chunk.findMany({
-        where: { content: { contains: query, mode: 'insensitive' }, document: { organizationId } },
+        where: {
+          content: { contains: query, mode: 'insensitive' },
+          document: { organizationId },
+        },
         select: { id: true, content: true },
         take: 3,
       }),
     ]);
 
     return [
-      ...documents.map((d) => ({ id: d.id, text: d.title, type: 'document' as const })),
-      ...entities.map((e: any) => ({ id: e.id, text: e.name, type: 'entity' as const })),
-      ...chunks.map((c) => ({ id: c.id, text: c.content.slice(0, 100), type: 'chunk' as const })),
+      ...documents.map((d) => ({
+        id: d.id,
+        text: d.title,
+        type: 'document' as const,
+      })),
+      ...entities.map((e: any) => ({
+        id: e.id,
+        text: e.name,
+        type: 'entity' as const,
+      })),
+      ...chunks.map((c) => ({
+        id: c.id,
+        text: c.content.slice(0, 100),
+        type: 'chunk' as const,
+      })),
     ];
   }
 
-  async indexDocumentChunks(documentId: string, organizationId: string, chunks: Array<{ id: string; content: string; index: number }>) {
+  async indexDocumentChunks(
+    documentId: string,
+    organizationId: string,
+    chunks: Array<{ id: string; content: string; index: number }>,
+  ) {
     try {
       const texts = chunks.map((c) => c.content);
       const vectors = await this.embedding.generateEmbeddings(texts);
@@ -225,27 +268,46 @@ export class SearchService implements OnModuleInit {
       }));
 
       await this.qdrant.upsertPoints(this.collectionName, points);
-      this.logger.log(`Indexed ${points.length} chunks for document ${documentId}`);
+      this.logger.log(
+        `Indexed ${points.length} chunks for document ${documentId}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to index document chunks: ${documentId}`, error);
+      this.logger.error(
+        `Failed to index document chunks: ${documentId}`,
+        error,
+      );
     }
   }
 
   async deleteDocumentChunks(documentId: string) {
     try {
-      const collectionInfo = await this.qdrant.getCollectionInfo(this.collectionName);
+      const collectionInfo = await this.qdrant.getCollectionInfo(
+        this.collectionName,
+      );
       if (!collectionInfo) return;
 
-      const points = await this.qdrant.search(this.collectionName, Array(1536).fill(0), {
-        limit: 100,
-        filter: { must: [{ key: 'documentId', match: { value: documentId } }] },
-      });
+      const points = await this.qdrant.search(
+        this.collectionName,
+        Array(1536).fill(0),
+        {
+          limit: 100,
+          filter: {
+            must: [{ key: 'documentId', match: { value: documentId } }],
+          },
+        },
+      );
 
       if (points.length > 0) {
-        await this.qdrant.deletePoints(this.collectionName, points.map((p) => p.id));
+        await this.qdrant.deletePoints(
+          this.collectionName,
+          points.map((p) => p.id),
+        );
       }
     } catch (error) {
-      this.logger.error(`Failed to delete chunks for document ${documentId}`, error);
+      this.logger.error(
+        `Failed to delete chunks for document ${documentId}`,
+        error,
+      );
     }
   }
 }

@@ -30,7 +30,12 @@ export class AdminController {
     @Query('entity') entity?: string,
     @Query('action') action?: string,
   ) {
-    return this.adminService.getAuditLogs(user.organizationId, { page, limit, entity, action });
+    return this.adminService.getAuditLogs(user.organizationId, {
+      page,
+      limit,
+      entity,
+      action,
+    });
   }
 
   @Get('health')

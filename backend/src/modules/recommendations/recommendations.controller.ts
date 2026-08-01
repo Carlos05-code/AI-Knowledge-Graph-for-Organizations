@@ -14,12 +14,18 @@ export class RecommendationsController {
   @Get()
   @ApiOperation({ summary: 'Get personalized recommendations' })
   getRecommendations(@CurrentUser() user: any) {
-    return this.recommendationsService.getRecommendations(user.id, user.organizationId);
+    return this.recommendationsService.getRecommendations(
+      user.id,
+      user.organizationId,
+    );
   }
 
   @Get('feed')
   @ApiOperation({ summary: 'Get personalized feed' })
   getFeed(@CurrentUser() user: any) {
-    return this.recommendationsService.getPersonalizedFeed(user.id, user.organizationId);
+    return this.recommendationsService.getPersonalizedFeed(
+      user.id,
+      user.organizationId,
+    );
   }
 }

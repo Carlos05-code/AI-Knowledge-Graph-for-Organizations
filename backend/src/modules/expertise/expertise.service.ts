@@ -18,18 +18,35 @@ export class ExpertiseService {
       this.getDocumentAuthors(topic, organizationId, limit),
     ]);
 
-    const combined = this.mergeAndRank([...scores, ...graphResults, ...documentAuthors]);
+    const combined = this.mergeAndRank([
+      ...scores,
+      ...graphResults,
+      ...documentAuthors,
+    ]);
     return combined.slice(0, limit);
   }
 
-  private async getScoresByTopic(topic: string, organizationId: string, limit: number) {
+  private async getScoresByTopic(
+    topic: string,
+    organizationId: string,
+    limit: number,
+  ) {
     const scores = await this.prisma.expertiseScore.findMany({
       where: {
         topic: { contains: topic, mode: 'insensitive' },
         user: { organizationId, isActive: true },
       },
       include: {
-        user: { select: { id: true, firstName: true, lastName: true, email: true, title: true, avatar: true } },
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            title: true,
+            avatar: true,
+          },
+        },
       },
       orderBy: { score: 'desc' },
       take: limit,
@@ -61,21 +78,28 @@ export class ExpertiseService {
         user: {
           id: r.person.properties.id,
           firstName: r.person.properties.name?.split(' ')[0] || '',
-          lastName: r.person.properties.name?.split(' ').slice(1).join(' ') || '',
+          lastName:
+            r.person.properties.name?.split(' ').slice(1).join(' ') || '',
           email: r.person.properties.email || '',
           title: r.person.properties.title || '',
         },
         score: Math.min(0.5 + (r.connections || 0) * 0.05, 0.95),
         source: 'graph',
         topic,
-        evidence: [`Connected to ${r.connections || 0} relevant entities in the knowledge graph`],
+        evidence: [
+          `Connected to ${r.connections || 0} relevant entities in the knowledge graph`,
+        ],
       }));
     } catch {
       return [];
     }
   }
 
-  private async getDocumentAuthors(topic: string, organizationId: string, limit: number) {
+  private async getDocumentAuthors(
+    topic: string,
+    organizationId: string,
+    limit: number,
+  ) {
     const docs = await this.prisma.document.findMany({
       where: {
         organizationId,
@@ -89,16 +113,31 @@ export class ExpertiseService {
       },
       select: {
         authorId: true,
-        author: { select: { id: true, firstName: true, lastName: true, email: true, title: true } },
+        author: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            title: true,
+          },
+        },
         title: true,
       },
       take: limit,
     });
 
-    const authorMap = new Map<string, { user: any; count: number; docs: string[] }>();
+    const authorMap = new Map<
+      string,
+      { user: any; count: number; docs: string[] }
+    >();
     for (const doc of docs) {
       if (!doc.authorId || !doc.author) continue;
-      const existing = authorMap.get(doc.authorId) || { user: doc.author, count: 0, docs: [] };
+      const existing = authorMap.get(doc.authorId) || {
+        user: doc.author,
+        count: 0,
+        docs: [],
+      };
       existing.count++;
       existing.docs.push(doc.title);
       authorMap.set(doc.authorId, existing);
@@ -109,7 +148,10 @@ export class ExpertiseService {
       score: Math.min(0.3 + entry.count * 0.1, 0.8),
       source: 'documents',
       topic,
-      evidence: [`Authored ${entry.count} document(s) about this topic`, ...entry.docs.map((d) => `- ${d}`)],
+      evidence: [
+        `Authored ${entry.count} document(s) about this topic`,
+        ...entry.docs.map((d) => `- ${d}`),
+      ],
     }));
   }
 
@@ -141,7 +183,10 @@ export class ExpertiseService {
       orderBy: { score: 'desc' },
     });
 
-    const topicSummary = new Map<string, { totalScore: number; count: number; topExperts: any[] }>();
+    const topicSummary = new Map<
+      string,
+      { totalScore: number; count: number; topExperts: any[] }
+    >();
     for (const s of scores) {
       if (!topicSummary.has(s.topic)) {
         topicSummary.set(s.topic, { totalScore: 0, count: 0, topExperts: [] });
@@ -150,7 +195,10 @@ export class ExpertiseService {
       entry.totalScore += s.score;
       entry.count++;
       if (entry.topExperts.length < 3) {
-        entry.topExperts.push({ name: `${s.user.firstName} ${s.user.lastName}`, score: s.score });
+        entry.topExperts.push({
+          name: `${s.user.firstName} ${s.user.lastName}`,
+          score: s.score,
+        });
       }
     }
 

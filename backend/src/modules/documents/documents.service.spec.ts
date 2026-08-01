@@ -22,8 +22,13 @@ describe('DocumentsService', () => {
   };
 
   const mockNeo4j = { createNode: jest.fn(), deleteNode: jest.fn() };
-  const mockEmbedding = { generateEmbeddings: jest.fn().mockResolvedValue([Array(1536).fill(0.1)]) };
-  const mockSearch = { indexDocumentChunks: jest.fn(), deleteDocumentChunks: jest.fn() };
+  const mockEmbedding = {
+    generateEmbeddings: jest.fn().mockResolvedValue([Array(1536).fill(0.1)]),
+  };
+  const mockSearch = {
+    indexDocumentChunks: jest.fn(),
+    deleteDocumentChunks: jest.fn(),
+  };
   const mockEventBus = { publish: jest.fn() };
 
   beforeEach(async () => {
@@ -62,7 +67,9 @@ describe('DocumentsService', () => {
   });
 
   it('should find documents by organization', async () => {
-    mockPrisma.document.findMany.mockResolvedValue([{ id: '1', title: 'Doc 1' }]);
+    mockPrisma.document.findMany.mockResolvedValue([
+      { id: '1', title: 'Doc 1' },
+    ]);
     mockPrisma.document.count.mockResolvedValue(1);
 
     const result = await service.findAll('org-1', { page: 1, limit: 20 });

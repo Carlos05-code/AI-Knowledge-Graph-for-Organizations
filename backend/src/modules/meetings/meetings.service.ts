@@ -30,13 +30,29 @@ export class MeetingsService {
           ? { create: data.participantIds.map((userId) => ({ userId })) }
           : undefined,
       },
-      include: { participants: { include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } } } },
+      include: {
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return meeting;
   }
 
-  async findAll(organizationId: string, params: { page: number; limit: number }) {
+  async findAll(
+    organizationId: string,
+    params: { page: number; limit: number },
+  ) {
     const where = { organizationId, deletedAt: null };
     const [data, total] = await Promise.all([
       this.prisma.meeting.findMany({
@@ -46,7 +62,9 @@ export class MeetingsService {
         orderBy: { meetingDate: 'desc' },
         include: {
           participants: {
-            include: { user: { select: { id: true, firstName: true, lastName: true } } },
+            include: {
+              user: { select: { id: true, firstName: true, lastName: true } },
+            },
           },
         },
       }),
@@ -55,7 +73,14 @@ export class MeetingsService {
 
     return {
       data,
-      meta: { total, page: params.page, limit: params.limit, totalPages: Math.ceil(total / params.limit), hasNext: params.page * params.limit < total, hasPrevious: params.page > 1 },
+      meta: {
+        total,
+        page: params.page,
+        limit: params.limit,
+        totalPages: Math.ceil(total / params.limit),
+        hasNext: params.page * params.limit < total,
+        hasPrevious: params.page > 1,
+      },
     };
   }
 
@@ -64,7 +89,17 @@ export class MeetingsService {
       where: { id, organizationId, deletedAt: null },
       include: {
         participants: {
-          include: { user: { select: { id: true, firstName: true, lastName: true, email: true, title: true } } },
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                title: true,
+              },
+            },
+          },
         },
       },
     });

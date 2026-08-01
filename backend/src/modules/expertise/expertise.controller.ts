@@ -13,7 +13,11 @@ export class ExpertiseController {
 
   @Get('search')
   @ApiOperation({ summary: 'Find experts by topic' })
-  findExperts(@CurrentUser() user: any, @Query('topic') topic: string, @Query('limit') limit?: number) {
+  findExperts(
+    @CurrentUser() user: any,
+    @Query('topic') topic: string,
+    @Query('limit') limit?: number,
+  ) {
     return this.expertiseService.findExperts(topic, user.organizationId, limit);
   }
 

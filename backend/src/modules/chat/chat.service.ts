@@ -27,7 +27,11 @@ export class ChatService {
   ) {}
 
   async sendMessage(userId: string, content: string, conversationId?: string) {
-    const conversation = await this.getOrCreateConversation(userId, content, conversationId);
+    const conversation = await this.getOrCreateConversation(
+      userId,
+      content,
+      conversationId,
+    );
 
     await this.prisma.message.create({
       data: { conversationId: conversation.id, role: 'USER', content },
@@ -50,9 +54,15 @@ export class ChatService {
     return { message, conversationId: conversation.id };
   }
 
-  async getOrCreateConversation(userId: string, content: string, conversationId?: string) {
+  async getOrCreateConversation(
+    userId: string,
+    content: string,
+    conversationId?: string,
+  ) {
     if (conversationId) {
-      const existing = await this.prisma.conversation.findUnique({ where: { id: conversationId } });
+      const existing = await this.prisma.conversation.findUnique({
+        where: { id: conversationId },
+      });
       if (existing) return existing;
     }
     return this.prisma.conversation.create({
@@ -66,7 +76,11 @@ export class ChatService {
     });
   }
 
-  async saveAssistantMessage(conversationId: string, content: string, sources: any[]) {
+  async saveAssistantMessage(
+    conversationId: string,
+    content: string,
+    sources: any[],
+  ) {
     return this.prisma.message.create({
       data: { conversationId, role: 'ASSISTANT', content, sources },
     });
@@ -202,7 +216,8 @@ Context:\n${contextText}`,
       return {
         text: choice?.message?.content || 'Unable to generate answer',
         sources: this.extractCitations(context),
-        confidence: finishReason === 'stop' ? 0.9 : finishReason === 'length' ? 0.6 : 0.4,
+        confidence:
+          finishReason === 'stop' ? 0.9 : finishReason === 'length' ? 0.6 : 0.4,
         tokensUsed: completion.usage?.total_tokens || 0,
       };
     } catch (error) {
@@ -226,7 +241,9 @@ Context:\n${contextText}`,
       .join('\n---\n');
   }
 
-  private extractCitations(context: any[]): Array<{ title: string; id: string; type: string }> {
+  private extractCitations(
+    context: any[],
+  ): Array<{ title: string; id: string; type: string }> {
     return context.slice(0, 5).map((c) => ({
       title: c.title || 'Source',
       id: c.id || '',

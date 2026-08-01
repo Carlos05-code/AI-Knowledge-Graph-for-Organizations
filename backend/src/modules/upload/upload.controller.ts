@@ -1,6 +1,21 @@
-import { Controller, Post, UseInterceptors, UploadedFile, MaxFileSizeValidator, ParseFilePipe, FileTypeValidator, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  MaxFileSizeValidator,
+  ParseFilePipe,
+  FileTypeValidator,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiConsumes,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { v4 as uuid } from 'uuid';
@@ -42,7 +57,10 @@ export class UploadController {
         if (allowedMimes.includes(file.mimetype)) {
           cb(null, true);
         } else {
-          cb(new BadRequestException(`Unsupported file type: ${file.mimetype}`), false);
+          cb(
+            new BadRequestException(`Unsupported file type: ${file.mimetype}`),
+            false,
+          );
         }
       },
     }),
@@ -54,7 +72,9 @@ export class UploadController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 50 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: '.(pdf|docx|pptx|xlsx|md|txt|html|png|jpg|jpeg|tiff)' }),
+          new FileTypeValidator({
+            fileType: '.(pdf|docx|pptx|xlsx|md|txt|html|png|jpg|jpeg|tiff)',
+          }),
         ],
       }),
     )
@@ -65,7 +85,10 @@ export class UploadController {
     const crypto = require('crypto');
 
     const fileBuffer = fs.readFileSync(file.path);
-    const checksum = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+    const checksum = crypto
+      .createHash('sha256')
+      .update(fileBuffer)
+      .digest('hex');
 
     const doc = await this.documentsService.create(
       {

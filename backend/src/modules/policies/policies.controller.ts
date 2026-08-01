@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Put, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PoliciesService } from './policies.service';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
@@ -18,7 +28,10 @@ export class PoliciesController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a policy' })
   create(@Body() dto: any, @CurrentUser() user: any) {
-    return this.policiesService.create({ ...dto, organizationId: user.organizationId });
+    return this.policiesService.create({
+      ...dto,
+      organizationId: user.organizationId,
+    });
   }
 
   @Get()
@@ -30,7 +43,12 @@ export class PoliciesController {
     @Query('category') category?: string,
     @Query('active') active?: boolean,
   ) {
-    return this.policiesService.findAll(user.organizationId, { page, limit, category, active });
+    return this.policiesService.findAll(user.organizationId, {
+      page,
+      limit,
+      category,
+      active,
+    });
   }
 
   @Get('search')

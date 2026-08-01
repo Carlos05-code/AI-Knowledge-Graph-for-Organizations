@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../../database/prisma.service';
-import { DocumentProcessedEvent, ConnectorSyncCompletedEvent } from '../domain-events';
+import {
+  DocumentProcessedEvent,
+  ConnectorSyncCompletedEvent,
+} from '../domain-events';
 
 @Injectable()
 export class NotificationHandler {
@@ -39,7 +42,11 @@ export class NotificationHandler {
       if (!connector) return;
 
       const admins = await this.prisma.user.findMany({
-        where: { organizationId: connector.organizationId, role: 'ADMIN', isActive: true },
+        where: {
+          organizationId: connector.organizationId,
+          role: 'ADMIN',
+          isActive: true,
+        },
         select: { id: true },
       });
 
@@ -50,7 +57,12 @@ export class NotificationHandler {
             type: 'SYNC_COMPLETED',
             title: `Sync Complete: ${connector.name}`,
             message: `Synced ${event.documentsSynced} documents with ${event.errors} errors`,
-            data: { connectorId: event.connectorId, runId: event.runId, documentsSynced: event.documentsSynced, errors: event.errors } as any,
+            data: {
+              connectorId: event.connectorId,
+              runId: event.runId,
+              documentsSynced: event.documentsSynced,
+              errors: event.errors,
+            } as any,
           },
         });
       }

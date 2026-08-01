@@ -40,7 +40,15 @@ describe('GapsService', () => {
 
   it('should list knowledge gaps with pagination', async () => {
     mockPrisma.knowledgeGap.findMany.mockResolvedValue([
-      { id: 'gap-1', title: 'Undocumented API', description: 'Missing docs', severity: 'HIGH', category: 'documentation', resolvedAt: null, createdAt: new Date() },
+      {
+        id: 'gap-1',
+        title: 'Undocumented API',
+        description: 'Missing docs',
+        severity: 'HIGH',
+        category: 'documentation',
+        resolvedAt: null,
+        createdAt: new Date(),
+      },
     ]);
     mockPrisma.knowledgeGap.count.mockResolvedValue(1);
 
@@ -85,7 +93,9 @@ describe('GapsService', () => {
     mockNeo4j.executeRaw.mockResolvedValue([]);
     const oldDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000);
     mockPrisma.document.findMany
-      .mockResolvedValueOnce([{ id: 'doc-1', title: 'Old Doc', updatedAt: oldDate }])
+      .mockResolvedValueOnce([
+        { id: 'doc-1', title: 'Old Doc', updatedAt: oldDate },
+      ])
       .mockResolvedValueOnce([]);
     mockPrisma.policy.findMany.mockResolvedValue([]);
 

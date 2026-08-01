@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -26,7 +31,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const passwordValid = await bcrypt.compare(dto.password, user.password || '');
+    const passwordValid = await bcrypt.compare(
+      dto.password,
+      user.password || '',
+    );
     if (!passwordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -52,7 +60,11 @@ export class AuthService {
       role: user.role,
       organizationId: user.organizationId,
       organization: user.organization
-        ? { id: user.organization.id, name: user.organization.name, slug: user.organization.slug }
+        ? {
+            id: user.organization.id,
+            name: user.organization.name,
+            slug: user.organization.slug,
+          }
         : null,
     };
   }

@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ConnectorsService } from './connectors.service';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
@@ -18,8 +27,21 @@ export class ConnectorsController {
   @Post()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new connector' })
-  create(@Body() dto: { name: string; type: ConnectorType; credentials: string; config?: Record<string, unknown>; syncInterval?: number }, @CurrentUser() user: any) {
-    return this.connectorsService.create({ ...dto, organizationId: user.organizationId });
+  create(
+    @Body()
+    dto: {
+      name: string;
+      type: ConnectorType;
+      credentials: string;
+      config?: Record<string, unknown>;
+      syncInterval?: number;
+    },
+    @CurrentUser() user: any,
+  ) {
+    return this.connectorsService.create({
+      ...dto,
+      organizationId: user.organizationId,
+    });
   }
 
   @Get()

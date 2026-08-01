@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TerminusModule } from '@nestjs/terminus';
 import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 import { ConnectorsModule } from './modules/connectors/connectors.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { GraphModule } from './modules/graph/graph.module';
@@ -64,6 +65,7 @@ import { ConfigService } from '@nestjs/config';
     ConnectorRegistryModule,
     UploadModule,
     AuthModule,
+    UsersModule,
     ConnectorsModule,
     DocumentsModule,
     GraphModule,

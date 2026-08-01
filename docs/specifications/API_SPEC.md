@@ -31,7 +31,15 @@ Swagger at `/api/v1/docs`).
 | POST | `/auth/login` | Public | `{ email, password }` → tokens + user |
 | POST | `/auth/register` | Public | `{ email, firstName, lastName, password, organizationName? }` → tokens; auto-creates org; role ADMIN |
 | POST | `/auth/refresh` | Public | `{ refreshToken }` → new tokens |
-| GET | `/auth/me` | JWT | current profile + organization |
+| GET | `/auth/me` | JWT | current profile + organization (legacy alias of `/users/me`) |
+
+### Users
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/users/me` | JWT | current profile + organization |
+| PATCH | `/users/me` | JWT | update own `firstName, lastName, title, department` |
+| GET | `/users` | JWT, ADMIN | org members; `page, limit(≤100), q?` → `{ data, meta }` |
+| PATCH | `/users/:id` | JWT, ADMIN | change `role` or `isActive`; self-demotion/deactivation blocked (400) |
 
 ### Documents
 | Method | Path | Auth | Notes |

@@ -20,6 +20,8 @@ lib/
 │   └── widgets/app_shell.dart   # NavigationRail shell
 └── features/
     ├── auth/                    # login, register, AuthNotifier, AuthState
+    ├── admin/                   # admin_screen (members list, role/status management)
+    ├── settings/                # settings_screen (profile edit)
     ├── chat/                    # chat_screen + chat_provider (state next to screen)
     ├── search/                  # search_screen + search_provider
     ├── graph/                   # graph_explorer_screen (CustomPaint)
@@ -27,8 +29,8 @@ lib/
     └── shell/                   # ShellPlaceholder ("Coming soon")
 ```
 
-Unused placeholder feature dirs (empty): `documents/`, `connectors/`, `meetings/`,
-`admin/` — planned next.
+Remaining placeholder feature dirs (empty): `documents/`, `connectors/`, `meetings/`,
+`policies/` — planned next.
 
 ## 3. Routing
 
@@ -41,7 +43,9 @@ Unused placeholder feature dirs (empty): `documents/`, `connectors/`, `meetings/
 | `/search` | SearchScreen | JWT |
 | `/documents` | ShellPlaceholder | JWT |
 | `/graph` | GraphExplorerScreen | JWT |
-| `/connectors` `/meetings` `/policies` `/admin` `/settings` | ShellPlaceholder | JWT |
+| `/connectors` `/meetings` `/policies` | ShellPlaceholder | JWT |
+| `/admin` | AdminScreen (members + RBAC; non-admin gets locked view) | JWT |
+| `/settings` | SettingsScreen (profile edit) | JWT |
 
 Redirect rule: unauthenticated → `/login` (unless on `/login|/register`); authenticated on
 auth route → `/`.
@@ -51,7 +55,7 @@ auth route → `/`.
 | Provider | Type | Purpose |
 |---|---|---|
 | `apiClientProvider` | Provider | Dio client (base `http://localhost:3000/api/v1`) |
-| `authService/chatService/searchService/graphService/documentsService` providers | Provider | API wrappers |
+| `authService/chatService/searchService/graphService/documentsService/usersService` providers | Provider | API wrappers |
 | `appRouterProvider` | Provider | GoRouter (watches auth) |
 | `authProvider` | StateNotifierProvider | `AuthInitial/Loading/Authenticated/Unauthenticated`; `checkAuth/login/register/logout` |
 | `chatProvider` | StateNotifierProvider | messages, conversationId, sending/error; optimistic send |
@@ -68,7 +72,7 @@ Graph explorer intentionally uses local `setState` + `ref.read` (self-contained 
 - Response unwrapping: tolerates `{ data: ... }` envelope and raw bodies; string bodies
   JSON-decoded.
 - Services: `AuthService`, `ChatService`, `SearchService`, `GraphService`,
-  `DocumentsService` (hand-written Dio calls; retrofit unused).
+  `DocumentsService`, `UsersService` (hand-written Dio calls; retrofit unused).
 
 ## 6. Design system
 
@@ -98,7 +102,7 @@ See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) for full tokens. Highlights:
 
 ## 10. Known gaps (documented, tracked)
 
-- 6 placeholder routes ("Coming soon").
+- 4 placeholder routes ("Coming soon": documents, connectors, meetings, policies).
 - No typed models (`Map<String, dynamic>` everywhere) — freezed planned.
 - `widget_test.dart` tests are not runnable as written (no `ProviderScope`).
 - Android release manifest lacks `INTERNET` permission (debug/profile only).

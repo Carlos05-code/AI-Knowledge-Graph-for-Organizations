@@ -11,6 +11,8 @@ import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/search/presentation/search_screen.dart';
 import '../../features/graph/presentation/graph_explorer_screen.dart';
 import '../../features/shell/shell_placeholder.dart';
+import '../../features/settings/settings_screen.dart';
+import '../../features/admin/admin_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -55,8 +57,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/connectors', builder: (_, __) => const ShellPlaceholder(title: 'Connectors', icon: Icons.link_outlined)),
           GoRoute(path: '/meetings', builder: (_, __) => const ShellPlaceholder(title: 'Meetings', icon: Icons.meeting_room_outlined)),
           GoRoute(path: '/policies', builder: (_, __) => const ShellPlaceholder(title: 'Policies', icon: Icons.policy_outlined)),
-          GoRoute(path: '/admin', builder: (_, __) => const ShellPlaceholder(title: 'Admin', icon: Icons.admin_panel_settings_outlined)),
-          GoRoute(path: '/settings', builder: (_, __) => const ShellPlaceholder(title: 'Settings', icon: Icons.settings_outlined)),
+          GoRoute(path: '/admin', builder: (_, __) => const AdminScreen()),
+          GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
         ],
       ),
     ],

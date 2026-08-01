@@ -24,7 +24,10 @@ export class NotificationsService {
     });
   }
 
-  async findAll(userId: string, params: { page: number; limit: number; unreadOnly?: boolean }) {
+  async findAll(
+    userId: string,
+    params: { page: number; limit: number; unreadOnly?: boolean },
+  ) {
     const where: any = { userId };
     if (params.unreadOnly) where.isRead = false;
 
@@ -40,7 +43,14 @@ export class NotificationsService {
 
     return {
       data,
-      meta: { total, page: params.page, limit: params.limit, totalPages: Math.ceil(total / params.limit), hasNext: params.page * params.limit < total, hasPrevious: params.page > 1 },
+      meta: {
+        total,
+        page: params.page,
+        limit: params.limit,
+        totalPages: Math.ceil(total / params.limit),
+        hasNext: params.page * params.limit < total,
+        hasPrevious: params.page > 1,
+      },
     };
   }
 

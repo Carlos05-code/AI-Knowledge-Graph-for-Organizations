@@ -1,20 +1,36 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { DiskHealthIndicator, PrismaHealthIndicator, MemoryHealthIndicator } from '@nestjs/terminus';
+import {
+  DiskHealthIndicator,
+  PrismaHealthIndicator,
+  MemoryHealthIndicator,
+} from '@nestjs/terminus';
 import request from 'supertest';
 jest.mock('uuid', () => ({ v4: () => 'fixed-uuid-for-testing' }));
 jest.mock('amqplib', () => ({
-  connect: jest.fn().mockResolvedValue({ createChannel: jest.fn().mockResolvedValue({ assertQueue: jest.fn(), consume: jest.fn(), ack: jest.fn() }) }),
+  connect: jest.fn().mockResolvedValue({
+    createChannel: jest.fn().mockResolvedValue({
+      assertQueue: jest.fn(),
+      consume: jest.fn(),
+      ack: jest.fn(),
+    }),
+  }),
 }));
 jest.mock('amqp-connection-manager', () => ({
-  connect: jest.fn().mockReturnValue({ createChannel: jest.fn().mockResolvedValue({}) }),
+  connect: jest
+    .fn()
+    .mockReturnValue({ createChannel: jest.fn().mockResolvedValue({}) }),
 }));
 jest.mock('cache-manager-redis-yet', () => ({
-  redisStore: jest.fn().mockResolvedValue({ get: jest.fn(), set: jest.fn(), del: jest.fn() }),
+  redisStore: jest
+    .fn()
+    .mockResolvedValue({ get: jest.fn(), set: jest.fn(), del: jest.fn() }),
 }));
 jest.mock('bcrypt', () => ({
   hash: jest.fn().mockResolvedValue('$2b$10$hashedpassword'),
-  compare: jest.fn().mockImplementation((pw, hash) => Promise.resolve(pw === 'password123')),
+  compare: jest
+    .fn()
+    .mockImplementation((pw, hash) => Promise.resolve(pw === 'password123')),
 }));
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/infrastructure/database/prisma.service';
@@ -168,7 +184,9 @@ describe('API Integration (e2e)', () => {
 
   const mockEmbedding = {
     generateEmbedding: jest.fn().mockResolvedValue(new Array(1536).fill(0.1)),
-    generateEmbeddings: jest.fn().mockResolvedValue([new Array(1536).fill(0.1)]),
+    generateEmbeddings: jest
+      .fn()
+      .mockResolvedValue([new Array(1536).fill(0.1)]),
   };
 
   const mockMinio = {
@@ -193,22 +211,44 @@ describe('API Integration (e2e)', () => {
       .overrideProvider(MinioStorageService)
       .useValue(mockMinio)
       .overrideProvider(DiskHealthIndicator)
-      .useValue({ checkStorage: jest.fn().mockResolvedValue({ disk: { status: 'up', free: 1000000 } }) })
+      .useValue({
+        checkStorage: jest
+          .fn()
+          .mockResolvedValue({ disk: { status: 'up', free: 1000000 } }),
+      })
       .overrideProvider(PrismaHealthIndicator)
-      .useValue({ pingCheck: jest.fn().mockResolvedValue({ database: { status: 'up' } }) })
+      .useValue({
+        pingCheck: jest.fn().mockResolvedValue({ database: { status: 'up' } }),
+      })
       .overrideProvider(MemoryHealthIndicator)
-      .useValue({ checkHeap: jest.fn().mockResolvedValue({ memory_heap: { status: 'up' } }) })
+      .useValue({
+        checkHeap: jest
+          .fn()
+          .mockResolvedValue({ memory_heap: { status: 'up' } }),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     app.setGlobalPrefix('/api/v1');
     await app.init();
 
     jwtService = app.get(JwtService);
 
-    validToken = jwtService.sign({ sub: 'user-1', email: 'user@test.com', orgId: 'org-1', role: 'USER' });
-    adminToken = jwtService.sign({ sub: 'admin-1', email: 'admin@test.com', orgId: 'org-1', role: 'ADMIN' });
+    validToken = jwtService.sign({
+      sub: 'user-1',
+      email: 'user@test.com',
+      orgId: 'org-1',
+      role: 'USER',
+    });
+    adminToken = jwtService.sign({
+      sub: 'admin-1',
+      email: 'admin@test.com',
+      orgId: 'org-1',
+      role: 'ADMIN',
+    });
   });
 
   afterAll(async () => {
@@ -218,8 +258,13 @@ describe('API Integration (e2e)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPrisma.user.findUnique.mockResolvedValue({
-      id: 'user-1', email: 'user@test.com', firstName: 'John', lastName: 'Doe',
-      role: 'USER', isActive: true, organizationId: 'org-1',
+      id: 'user-1',
+      email: 'user@test.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      role: 'USER',
+      isActive: true,
+      organizationId: 'org-1',
       organization: { id: 'org-1', name: 'Test Org' },
     });
     // Default return values for commonly used mocks
@@ -278,12 +323,23 @@ describe('API Integration (e2e)', () => {
 
   describe('Auth', () => {
     const loginDto = { email: 'new@test.com', password: 'password123' };
-    const registerDto = { email: 'new@test.com', firstName: 'John', lastName: 'Doe', password: 'password123' };
+    const registerDto = {
+      email: 'new@test.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      password: 'password123',
+    };
 
     it('POST /api/v1/auth/register should create user and return tokens', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       const org = { id: 'org-1', name: 'Test Org' };
-      const user = { id: 'user-2', email: registerDto.email, firstName: registerDto.firstName, lastName: registerDto.lastName, role: 'USER' };
+      const user = {
+        id: 'user-2',
+        email: registerDto.email,
+        firstName: registerDto.firstName,
+        lastName: registerDto.lastName,
+        role: 'USER',
+      };
       const tokens = { accessToken: 'at', refreshToken: 'rt', user };
 
       mockPrisma.organization.create.mockResolvedValue(org);
@@ -341,7 +397,11 @@ describe('API Integration (e2e)', () => {
     };
 
     it('POST /api/v1/documents should create document (ADMIN)', async () => {
-      mockPrisma.document.create.mockResolvedValue({ id: 'doc-1', ...createDto, status: 'PENDING' });
+      mockPrisma.document.create.mockResolvedValue({
+        id: 'doc-1',
+        ...createDto,
+        status: 'PENDING',
+      });
       mockNeo4j.createNode.mockResolvedValue(undefined);
 
       await request(app.getHttpServer())
@@ -355,7 +415,9 @@ describe('API Integration (e2e)', () => {
     });
 
     it('GET /api/v1/documents should list documents', async () => {
-      mockPrisma.document.findMany.mockResolvedValue([{ id: 'doc-1', title: 'Doc 1' }]);
+      mockPrisma.document.findMany.mockResolvedValue([
+        { id: 'doc-1', title: 'Doc 1' },
+      ]);
       mockPrisma.document.count.mockResolvedValue(1);
 
       await request(app.getHttpServer())
@@ -377,13 +439,34 @@ describe('API Integration (e2e)', () => {
   describe('Search', () => {
     it('GET /api/v1/search should return results', async () => {
       mockQdrant.search.mockResolvedValue([
-        { id: 'chunk-1', score: 0.95, payload: { documentId: 'doc-1', text: 'test content', title: 'Doc 1', content: 'test content', type: 'chunk' } },
+        {
+          id: 'chunk-1',
+          score: 0.95,
+          payload: {
+            documentId: 'doc-1',
+            text: 'test content',
+            title: 'Doc 1',
+            content: 'test content',
+            type: 'chunk',
+          },
+        },
       ]);
       mockPrisma.document.findMany.mockResolvedValue([
-        { id: 'doc-1', title: 'Doc 1', description: 'Test', fileType: 'pdf', source: null },
+        {
+          id: 'doc-1',
+          title: 'Doc 1',
+          description: 'Test',
+          fileType: 'pdf',
+          source: null,
+        },
       ]);
       mockPrisma.chunk.findMany.mockResolvedValue([
-        { id: 'chunk-1', content: 'test content', documentId: 'doc-1', document: { title: 'Doc 1' } },
+        {
+          id: 'chunk-1',
+          content: 'test content',
+          documentId: 'doc-1',
+          document: { title: 'Doc 1' },
+        },
       ]);
       mockNeo4j.searchNodes.mockResolvedValue([]);
 
@@ -408,9 +491,7 @@ describe('API Integration (e2e)', () => {
 
   describe('Graph', () => {
     it('GET /api/v1/graph/nodes should require auth', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/graph/nodes')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/graph/nodes').expect(401);
     });
 
     it('GET /api/v1/graph/nodes should list nodes with auth', async () => {
@@ -425,7 +506,9 @@ describe('API Integration (e2e)', () => {
     });
 
     it('POST /api/v1/graph/query should require ADMIN role', async () => {
-      mockNeo4j.executeRaw.mockResolvedValue([{ n: { id: '1', name: 'Result' } }]);
+      mockNeo4j.executeRaw.mockResolvedValue([
+        { n: { id: '1', name: 'Result' } },
+      ]);
 
       await request(app.getHttpServer())
         .post('/api/v1/graph/query')
@@ -434,8 +517,13 @@ describe('API Integration (e2e)', () => {
         .expect(403);
 
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'admin-1', email: 'admin@test.com', firstName: 'Admin', lastName: 'User',
-        role: 'ADMIN', isActive: true, organizationId: 'org-1',
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
         organization: { id: 'org-1', name: 'Test Org' },
       });
 
@@ -452,8 +540,16 @@ describe('API Integration (e2e)', () => {
   describe('Chat', () => {
     it('POST /api/v1/chat/messages should send message and get reply', async () => {
       mockPrisma.conversation.findFirst.mockResolvedValue(null);
-      mockPrisma.conversation.create.mockResolvedValue({ id: 'conv-1', title: 'Test', userId: 'user-1' });
-      mockPrisma.message.create.mockResolvedValue({ id: 'msg-1', role: 'assistant', content: 'AI response' });
+      mockPrisma.conversation.create.mockResolvedValue({
+        id: 'conv-1',
+        title: 'Test',
+        userId: 'user-1',
+      });
+      mockPrisma.message.create.mockResolvedValue({
+        id: 'msg-1',
+        role: 'assistant',
+        content: 'AI response',
+      });
 
       await request(app.getHttpServer())
         .post('/api/v1/chat/messages')
@@ -467,7 +563,12 @@ describe('API Integration (e2e)', () => {
 
     it('GET /api/v1/chat/conversations should list conversations', async () => {
       mockPrisma.conversation.findMany.mockResolvedValue([
-        { id: 'conv-1', title: 'Deployment', userId: 'user-1', createdAt: new Date() },
+        {
+          id: 'conv-1',
+          title: 'Deployment',
+          userId: 'user-1',
+          createdAt: new Date(),
+        },
       ]);
 
       await request(app.getHttpServer())
@@ -481,7 +582,11 @@ describe('API Integration (e2e)', () => {
 
   describe('Connectors', () => {
     it('POST /api/v1/connectors should require ADMIN', async () => {
-      const dto = { name: 'Test Drive', type: 'google_drive', credentials: '{"key":"val"}' };
+      const dto = {
+        name: 'Test Drive',
+        type: 'google_drive',
+        credentials: '{"key":"val"}',
+      };
       mockNeo4j.executeRaw.mockResolvedValue([]);
 
       await request(app.getHttpServer())
@@ -491,8 +596,13 @@ describe('API Integration (e2e)', () => {
         .expect(403);
 
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'admin-1', email: 'admin@test.com', firstName: 'Admin', lastName: 'User',
-        role: 'ADMIN', isActive: true, organizationId: 'org-1',
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
         organization: { id: 'org-1', name: 'Test Org' },
       });
       mockPrisma.connector.findMany.mockResolvedValue([]);
@@ -509,7 +619,13 @@ describe('API Integration (e2e)', () => {
   describe('Notifications', () => {
     it('GET /api/v1/notifications should list user notifications', async () => {
       mockPrisma.notification.findMany.mockResolvedValue([
-        { id: 'notif-1', title: 'Doc processed', message: 'Your document is ready', isRead: false, createdAt: new Date() },
+        {
+          id: 'notif-1',
+          title: 'Doc processed',
+          message: 'Your document is ready',
+          isRead: false,
+          createdAt: new Date(),
+        },
       ]);
       mockPrisma.notification.count.mockResolvedValue(1);
 
@@ -525,7 +641,13 @@ describe('API Integration (e2e)', () => {
   describe('Expertise', () => {
     it('GET /api/v1/expertise/search should find experts', async () => {
       mockPrisma.user.findMany.mockResolvedValue([
-        { id: 'user-2', firstName: 'Jane', lastName: 'Doe', title: 'ML Engineer', expertiseScores: [] },
+        {
+          id: 'user-2',
+          firstName: 'Jane',
+          lastName: 'Doe',
+          title: 'ML Engineer',
+          expertiseScores: [],
+        },
       ]);
 
       await request(app.getHttpServer())
@@ -540,7 +662,13 @@ describe('API Integration (e2e)', () => {
   describe('Gaps', () => {
     it('GET /api/v1/gaps should list knowledge gaps', async () => {
       mockPrisma.knowledgeGap.findMany.mockResolvedValue([
-        { id: 'gap-1', topic: 'API Documentation', description: 'Missing', severity: 'high', resolvedAt: null },
+        {
+          id: 'gap-1',
+          topic: 'API Documentation',
+          description: 'Missing',
+          severity: 'high',
+          resolvedAt: null,
+        },
       ]);
       mockPrisma.knowledgeGap.findUnique.mockResolvedValue(null);
 
@@ -555,7 +683,16 @@ describe('API Integration (e2e)', () => {
 
   describe('Recommendations', () => {
     it('GET /api/v1/recommendations should return personalized recommendations', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'user-1', email: 'user@test.com', title: 'Engineer', department: 'Engineering', isActive: true, organizationId: 'org-1', role: 'USER', organization: { id: 'org-1', name: 'Test Org' } });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@test.com',
+        title: 'Engineer',
+        department: 'Engineering',
+        isActive: true,
+        organizationId: 'org-1',
+        role: 'USER',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
       mockPrisma.user.findMany.mockResolvedValue([]);
       mockPrisma.message.findMany.mockResolvedValue([]);
 
@@ -570,9 +707,7 @@ describe('API Integration (e2e)', () => {
 
   describe('Upload', () => {
     it('POST /api/v1/upload should require authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/api/v1/upload')
-        .expect(401);
+      await request(app.getHttpServer()).post('/api/v1/upload').expect(401);
     });
   });
 
@@ -589,14 +724,166 @@ describe('API Integration (e2e)', () => {
       mockPrisma.user.count.mockResolvedValue(5);
       mockPrisma.notification.count.mockResolvedValue(3);
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'admin-1', email: 'admin@test.com', firstName: 'Admin', lastName: 'User',
-        role: 'ADMIN', isActive: true, organizationId: 'org-1',
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
         organization: { id: 'org-1', name: 'Test Org' },
       });
       await request(app.getHttpServer())
         .get('/api/v1/admin/dashboard')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
+    });
+  });
+
+  // ─── Users ────────────────────────────────────────────────────
+
+  describe('Users', () => {
+    it('GET /api/v1/users/me should return current profile', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@test.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        title: 'Engineer',
+        department: 'Eng',
+        role: 'USER',
+        isActive: true,
+        lastLoginAt: new Date('2026-08-01T00:00:00Z'),
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org', slug: 'test-org' },
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/v1/users/me')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.success).toBe(true);
+          expect(res.body.data.email).toBe('user@test.com');
+          expect(res.body.data.organization.name).toBe('Test Org');
+        });
+    });
+
+    it('GET /api/v1/users/me should reject unauthenticated request', () => {
+      return request(app.getHttpServer()).get('/api/v1/users/me').expect(401);
+    });
+
+    it('PATCH /api/v1/users/me should update profile fields', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@test.com',
+        role: 'USER',
+        isActive: true,
+        organizationId: 'org-1',
+      });
+      mockPrisma.user.update.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@test.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        title: 'Senior Engineer',
+        department: 'Eng',
+        role: 'USER',
+        isActive: true,
+        lastLoginAt: null,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org', slug: 'test-org' },
+      });
+
+      await request(app.getHttpServer())
+        .patch('/api/v1/users/me')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ title: 'Senior Engineer', department: 'Eng' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.title).toBe('Senior Engineer');
+        });
+    });
+
+    it('GET /api/v1/users should require ADMIN role', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/users')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(403);
+
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: 'user-1',
+          email: 'user@test.com',
+          firstName: 'John',
+          lastName: 'Doe',
+          role: 'USER',
+          isActive: true,
+        },
+      ]);
+      mockPrisma.user.count.mockResolvedValue(1);
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/v1/users')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.meta.total).toBe(1);
+          expect(res.body.data.data).toHaveLength(1);
+        });
+    });
+
+    it('PATCH /api/v1/users/:id should update member role (admin only)', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/users/user-1')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ role: 'VIEWER' })
+        .expect(403);
+
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce({
+          id: 'admin-1',
+          email: 'admin@test.com',
+          firstName: 'Admin',
+          lastName: 'User',
+          role: 'ADMIN',
+          isActive: true,
+          organizationId: 'org-1',
+          organization: { id: 'org-1', name: 'Test Org' },
+        })
+        .mockResolvedValue({
+          id: 'user-1',
+          email: 'user@test.com',
+          role: 'USER',
+          isActive: true,
+          organizationId: 'org-1',
+          deletedAt: null,
+        });
+      mockPrisma.user.update.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@test.com',
+        role: 'VIEWER',
+        isActive: true,
+      });
+
+      await request(app.getHttpServer())
+        .patch('/api/v1/users/user-1')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ role: 'VIEWER' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.role).toBe('VIEWER');
+        });
     });
   });
 

@@ -42,22 +42,41 @@ export class RecommendationsService {
         organizationId,
         isActive: true,
         id: { not: userId },
-        ...(user?.title ? { title: { contains: user.title.split(' ')[0], mode: 'insensitive' } } : {}),
+        ...(user?.title
+          ? {
+              title: {
+                contains: user.title.split(' ')[0],
+                mode: 'insensitive',
+              },
+            }
+          : {}),
       },
       select: {
         id: true,
         firstName: true,
         lastName: true,
         title: true,
-        expertiseScores: { select: { topic: true, score: true }, orderBy: { score: 'desc' }, take: 3 },
+        expertiseScores: {
+          select: { topic: true, score: true },
+          orderBy: { score: 'desc' },
+          take: 3,
+        },
       },
       take: 10,
     });
 
     return similarRoleUsers.map((u) => ({
-      user: { id: u.id, firstName: u.firstName, lastName: u.lastName, title: u.title },
+      user: {
+        id: u.id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        title: u.title,
+      },
       reason: 'Similar role and expertise area',
-      topics: u.expertiseScores.map((e) => ({ topic: e.topic, score: e.score })),
+      topics: u.expertiseScores.map((e) => ({
+        topic: e.topic,
+        score: e.score,
+      })),
     }));
   }
 
@@ -82,9 +101,15 @@ export class RecommendationsService {
 
     try {
       const vector = await this.embedding.generateEmbedding(userInterests);
-      const results = await this.qdrant.search('knowledge_chunks', vector, { limit: 10 });
+      const results = await this.qdrant.search('knowledge_chunks', vector, {
+        limit: 10,
+      });
 
-      const docIds = [...new Set(results.map((r) => r.payload.documentId as string).filter(Boolean))];
+      const docIds = [
+        ...new Set(
+          results.map((r) => r.payload.documentId as string).filter(Boolean),
+        ),
+      ];
 
       if (docIds.length > 0) {
         const docs = await this.prisma.document.findMany({
@@ -123,7 +148,11 @@ export class RecommendationsService {
         title: true,
         summary: true,
         meetingDate: true,
-        participants: { include: { user: { select: { id: true, firstName: true, lastName: true } } } },
+        participants: {
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true } },
+          },
+        },
       },
       orderBy: { meetingDate: 'desc' },
       take: 5,
@@ -155,30 +184,37 @@ export class RecommendationsService {
   }
 
   async getPersonalizedFeed(userId: string, organizationId: string) {
-    const [recentDocs, recentMeetings, recentNotifications, pendingGaps] = await Promise.all([
-      this.prisma.document.findMany({
-        where: { organizationId, deletedAt: null, status: 'INDEXED' },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-        select: { id: true, title: true, createdAt: true, fileType: true },
-      }),
-      this.prisma.meeting.findMany({
-        where: { organizationId, deletedAt: null, meetingDate: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
-        orderBy: { meetingDate: 'desc' },
-        take: 3,
-        select: { id: true, title: true, meetingDate: true },
-      }),
-      this.prisma.notification.findMany({
-        where: { userId, isRead: false },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-      }),
-      this.prisma.knowledgeGap.findMany({
-        where: { resolvedAt: null },
-        orderBy: { severity: 'asc' },
-        take: 3,
-      }),
-    ]);
+    const [recentDocs, recentMeetings, recentNotifications, pendingGaps] =
+      await Promise.all([
+        this.prisma.document.findMany({
+          where: { organizationId, deletedAt: null, status: 'INDEXED' },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: { id: true, title: true, createdAt: true, fileType: true },
+        }),
+        this.prisma.meeting.findMany({
+          where: {
+            organizationId,
+            deletedAt: null,
+            meetingDate: {
+              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            },
+          },
+          orderBy: { meetingDate: 'desc' },
+          take: 3,
+          select: { id: true, title: true, meetingDate: true },
+        }),
+        this.prisma.notification.findMany({
+          where: { userId, isRead: false },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        }),
+        this.prisma.knowledgeGap.findMany({
+          where: { resolvedAt: null },
+          orderBy: { severity: 'asc' },
+          take: 3,
+        }),
+      ]);
 
     return {
       recentDocuments: recentDocs,

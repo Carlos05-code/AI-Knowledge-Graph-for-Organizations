@@ -40,7 +40,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: AuthenticatedSocket) {
     try {
-      const token = client.handshake.auth?.token || client.handshake.query?.token;
+      const token =
+        client.handshake.auth?.token || client.handshake.query?.token;
       if (!token) {
         client.emit('error', { message: 'Authentication required' });
         client.disconnect();
@@ -78,28 +79,48 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { content: string; conversationId?: string },
   ) {
     if (!client.user) throw new WsException('Unauthenticated');
-    if (!data.content?.trim()) throw new WsException('Message content required');
+    if (!data.content?.trim())
+      throw new WsException('Message content required');
 
     const { content, conversationId } = data;
     const userId = client.user.id;
 
     try {
-      const conversation = await this.chatService.getOrCreateConversation(userId, content, conversationId);
+      const conversation = await this.chatService.getOrCreateConversation(
+        userId,
+        content,
+        conversationId,
+      );
 
       await this.chatService.saveUserMessage(conversation.id, content);
-      client.emit('message:user', { conversationId: conversation.id, content, createdAt: new Date() });
+      client.emit('message:user', {
+        conversationId: conversation.id,
+        content,
+        createdAt: new Date(),
+      });
 
       const context = await this.chatService.retrieveContext(content);
       await this.streamResponse(client, conversation.id, content, context);
     } catch (error) {
       this.logger.error('Message handling failed', error);
-      client.emit('error', { message: 'Failed to process message', conversationId });
+      client.emit('error', {
+        message: 'Failed to process message',
+        conversationId,
+      });
     }
   }
 
-  private async streamResponse(client: AuthenticatedSocket, conversationId: string, query: string, context: any[]) {
+  private async streamResponse(
+    client: AuthenticatedSocket,
+    conversationId: string,
+    query: string,
+    context: any[],
+  ) {
     const contextText = context
-      .map((c: any, i: number) => `[Source #${i + 1}] ${c.title || 'Untitled'}\n${(c.content || '').slice(0, 1000)}`)
+      .map(
+        (c: any, i: number) =>
+          `[Source #${i + 1}] ${c.title || 'Untitled'}\n${(c.content || '').slice(0, 1000)}`,
+      )
       .join('\n---\n');
 
     const { OpenAI } = require('openai');
@@ -138,7 +159,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       type: c.type || 'document',
     }));
 
-    await this.chatService.saveAssistantMessage(conversationId, fullContent, sources);
+    await this.chatService.saveAssistantMessage(
+      conversationId,
+      fullContent,
+      sources,
+    );
 
     client.emit('message:token', {
       conversationId,
@@ -150,9 +175,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('conversation:list')
-  async handleListConversations(@ConnectedSocket() client: AuthenticatedSocket) {
+  async handleListConversations(
+    @ConnectedSocket() client: AuthenticatedSocket,
+  ) {
     if (!client.user) throw new WsException('Unauthenticated');
-    const conversations = await this.chatService.listConversations(client.user.id);
+    const conversations = await this.chatService.listConversations(
+      client.user.id,
+    );
     client.emit('conversation:list', conversations);
   }
 
@@ -161,7 +190,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { conversationId: string },
   ) {
-    const conversation = await this.chatService.getConversationHistory(data.conversationId);
+    const conversation = await this.chatService.getConversationHistory(
+      data.conversationId,
+    );
     client.emit('conversation:get', conversation);
   }
 
@@ -171,7 +202,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { conversationId: string },
   ) {
     if (!client.user) throw new WsException('Unauthenticated');
-    await this.chatService.deleteConversation(data.conversationId, client.user.id);
-    client.emit('conversation:deleted', { conversationId: data.conversationId });
+    await this.chatService.deleteConversation(
+      data.conversationId,
+      client.user.id,
+    );
+    client.emit('conversation:deleted', {
+      conversationId: data.conversationId,
+    });
   }
 }
