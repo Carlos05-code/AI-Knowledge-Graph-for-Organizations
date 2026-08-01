@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
 import { QdrantService } from '../../infrastructure/vector/qdrant.service';
@@ -13,7 +13,7 @@ interface SearchOptions {
 }
 
 @Injectable()
-export class SearchService {
+export class SearchService implements OnModuleInit {
   private readonly logger = new Logger(SearchService.name);
   private readonly collectionName = 'knowledge_chunks';
 
@@ -22,8 +22,17 @@ export class SearchService {
     private neo4j: Neo4jService,
     private qdrant: QdrantService,
     private embedding: EmbeddingService,
-  ) {
-    this.qdrant.ensureCollection(this.collectionName);
+  ) {}
+
+  async onModuleInit() {
+    try {
+      await this.qdrant.ensureCollection(this.collectionName);
+    } catch (error) {
+      this.logger.warn(
+        `Knowledge chunk collection unavailable — semantic search disabled`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   async hybridSearch(organizationId: string, query: string, options: SearchOptions = {}) {

@@ -2,7 +2,7 @@
 
 > An enterprise AI-powered Organizational Knowledge Engine that connects scattered information across your company into a searchable, queryable knowledge graph.
 
-[![CI](https://github.com/your-org/ai-knowledge-graph/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/ai-knowledge-graph/actions/workflows/ci.yml)
+[![CI](https://github.com/Carlos05-code/AI-Knowledge-Graph-for-Organizations/actions/workflows/ci.yml/badge.svg)](https://github.com/Carlos05-code/AI-Knowledge-Graph-for-Organizations/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196)](https://conventionalcommits.org)
 
@@ -127,11 +127,11 @@ Experts, similar incidents, relevant docs, reusable code, related meetings.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/ai-knowledge-graph.git
+git clone https://github.com/Carlos05-code/AI-Knowledge-Graph-for-Organizations.git
 cd ai-knowledge-graph
 
 # Start infrastructure
-docker-compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # Install backend dependencies
 cd backend
@@ -210,8 +210,15 @@ ai-knowledge-graph/
 ## API Documentation
 
 Once running, API docs are available at:
-- Swagger: `http://localhost:3000/api/docs`
-- OpenAPI JSON: `http://localhost:3000/api/docs-json`
+- Swagger: `http://localhost:3000/api/v1/docs`
+- OpenAPI JSON: `http://localhost:3000/api/v1/docs-json` (also vendored in [`docs/api/openapi.json`](docs/api/openapi.json))
+
+---
+
+## Documentation
+
+- [Architecture overview](ARCHITECTURE.md) and [Roadmap](ROADMAP.md)
+- [Full documentation suite](docs/README.md) — specs, ADRs, design system, testing, security, devops
 
 ---
 
@@ -249,4 +256,3 @@ MIT License — see [LICENSE](LICENSE)
 ## Security
 
 See [SECURITY.md](SECURITY.md) for security policies and vulnerability reporting.
-# AI-Knowledge-Graph-for-Organizations.

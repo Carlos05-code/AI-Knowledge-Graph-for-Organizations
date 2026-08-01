@@ -31,8 +31,15 @@ export class QdrantService implements OnModuleInit {
       https: false,
     });
 
-    await this.ensureCollection(this.defaultCollection);
-    this.logger.log(`Connected to Qdrant at ${host}:${port}`);
+    try {
+      await this.ensureCollection(this.defaultCollection);
+      this.logger.log(`Connected to Qdrant at ${host}:${port}`);
+    } catch (error) {
+      this.logger.warn(
+        `Qdrant unavailable at ${host}:${port} — vector search disabled. Start Qdrant and restart to enable.`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   async ensureCollection(name: string): Promise<void> {

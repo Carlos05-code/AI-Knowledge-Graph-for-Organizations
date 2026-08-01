@@ -21,6 +21,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> register(String email, String password, String firstName, String lastName, {String? organizationName}) async {
+    state = const AuthLoading();
+    try {
+      final result = await _authService.register(email, password, firstName, lastName, organizationName: organizationName);
+      state = Authenticated(
+        userId: result['user']?['id'] ?? result['id'] ?? '',
+        email: result['user']?['email'] ?? email,
+        role: result['user']?['role'] ?? 'ADMIN',
+      );
+    } catch (e) {
+      state = Unauthenticated(error: e.toString());
+    }
+  }
+
   Future<void> checkAuth() async {
     try {
       final profile = await _authService.getProfile();

@@ -29,17 +29,21 @@ export class DocumentsService {
       },
     });
 
-    await this.neo4j.createNode({
-      id: doc.id,
-      type: 'Document',
-      name: doc.title,
-      properties: {
-        fileType: doc.fileType,
-        source: doc.source,
-        status: doc.status,
-        organizationId,
-      },
-    });
+    try {
+      await this.neo4j.createNode({
+        id: doc.id,
+        type: 'Document',
+        name: doc.title,
+        properties: {
+          fileType: doc.fileType,
+          source: doc.source,
+          status: doc.status,
+          organizationId,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(`Knowledge graph node not created for document ${doc.id}`, error instanceof Error ? error.message : error);
+    }
 
     await this.eventBus.publish(new DocumentUploadedEvent(
       doc.id, organizationId, authorId || '', doc.title, doc.fileType, doc.fileSize,
@@ -93,7 +97,11 @@ export class DocumentsService {
       where: { id },
       data: { deletedAt: new Date(), status: 'DELETED' },
     });
-    await this.neo4j.deleteNode(id);
+    try {
+      await this.neo4j.deleteNode(id);
+    } catch (error) {
+      this.logger.warn(`Graph node cleanup skipped for document ${id}`, error instanceof Error ? error.message : error);
+    }
     await this.search.deleteDocumentChunks(id);
     await this.eventBus.publish(new DocumentDeletedEvent(id, organizationId, ''));
   }
@@ -179,15 +187,19 @@ export class DocumentsService {
     const entityTypes = ['Person', 'Project', 'Technology', 'Service', 'API', 'Product'];
     const type = entityTypes[Math.floor(Math.random() * entityTypes.length)];
 
-    await this.neo4j.createNode({
-      id: `entity_${doc.id}_auto`,
-      type,
-      name: `${type}_from_${doc.title}`,
-      properties: {
-        source: doc.id,
-        sourceType: 'document',
-        autoExtracted: true,
-      },
-    });
+    try {
+      await this.neo4j.createNode({
+        id: `entity_${doc.id}_auto`,
+        type,
+        name: `${type}_from_${doc.title}`,
+        properties: {
+          source: doc.id,
+          sourceType: 'document',
+          autoExtracted: true,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(`Entity extraction skipped for document ${doc.id}`, error instanceof Error ? error.message : error);
+    }
   }
 }

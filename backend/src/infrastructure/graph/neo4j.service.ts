@@ -29,9 +29,16 @@ export class Neo4jService implements OnModuleInit, OnModuleDestroy {
     const user = this.config.get('NEO4J_USER', 'neo4j');
     const password = this.config.get('NEO4J_PASSWORD', 'neo4j-password');
 
-    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
-    await this.driver.verifyConnectivity();
-    this.logger.log('Connected to Neo4j');
+    try {
+      this.driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
+      await this.driver.verifyConnectivity();
+      this.logger.log('Connected to Neo4j');
+    } catch (error) {
+      this.logger.warn(
+        `Neo4j unavailable at ${uri} — graph features disabled. Start Neo4j and restart to enable.`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   async onModuleDestroy() {

@@ -165,7 +165,6 @@ model Chunk {
   index      Int
   metadata   Json     @default("{}")
   tokenCount Int?
-  embedding  Unsupported("vector(1536)")?
   createdAt  DateTime @default(now())
 
   document Document @relation(fields: [documentId], references: [id])

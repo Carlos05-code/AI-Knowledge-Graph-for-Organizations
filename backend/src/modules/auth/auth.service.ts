@@ -34,6 +34,29 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { organization: true },
+    });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User not found or inactive');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      organizationId: user.organizationId,
+      organization: user.organization
+        ? { id: user.organization.id, name: user.organization.name, slug: user.organization.slug }
+        : null,
+    };
+  }
+
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
