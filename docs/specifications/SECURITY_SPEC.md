@@ -47,16 +47,16 @@ Viewable by admins (`GET /admin/audit-logs`).
 ## 6. OWASP checklist status
 
 | Control | Status |
-|---|---|
+|---|---|---|
 | Input validation (whitelist + forbidNonWhitelisted) | ✅ |
 | SQL injection (Prisma parameterized) | ✅ |
 | XSS (Helmet, JSON API, Flutter rendering) | ✅ |
 | CSRF (bearer tokens, CORS allowlist) | ✅ |
-| Rate limiting | ⚠️ configured, guard not bound |
+| Rate limiting | ✅ global `ThrottlerBehindProxyGuard` (100 req / 60 s, proxy-aware; `RATE_LIMIT_TTL`/`RATE_LIMIT_MAX` configurable) |
 | Security headers (Helmet) | ✅ |
 | Upload validation (size 50 MB, MIME allowlist, ParseFilePipe) | ✅ |
-| Auth on all endpoints | ⚠️ `GraphController` + `HealthController` public (graph raw Cypher is public!) |
-| Swagger disabled in prod | ⚠️ currently always enabled |
+| Auth on all endpoints | ✅ graph endpoints now JWT-protected; raw Cypher admin-only; only Health + metrics public (probes) |
+| Swagger disabled in prod | ✅ gated by `NODE_ENV=production` |
 | Secrets in code | ✅ none committed (verified at first commit) |
 | Dependency audit | ⚠️ run `npm audit`/`dart pub outdated` in CI (planned) |
 

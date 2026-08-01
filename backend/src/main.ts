@@ -30,16 +30,19 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('AI Knowledge Graph API')
-    .setDescription('Enterprise AI-powered Organizational Knowledge Engine')
-    .setVersion('1.0.0')
-    .addBearerAuth()
-    .addApiKey()
-    .build();
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('AI Knowledge Graph API')
+      .setDescription('Enterprise AI-powered Organizational Knowledge Engine')
+      .setVersion('1.0.0')
+      .addBearerAuth()
+      .addApiKey()
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup(`${prefix}/docs`, app, document);
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup(`${prefix}/docs`, app, document);
+    logger.log(`Swagger UI available at ${prefix}/docs (disabled in production)`);
+  }
 
   const port = process.env.APP_PORT || 3000;
   await app.listen(port);

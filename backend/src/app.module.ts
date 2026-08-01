@@ -28,10 +28,12 @@ import { AIModule } from './infrastructure/ai/ai.module';
 import { ConnectorRegistryModule } from './infrastructure/connectors/connector-registry.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { HealthController } from './presentation/health/health.controller';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AllExceptionsFilter } from './presentation/filters/http-exception.filter';
 import { TransformInterceptor } from './presentation/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './presentation/interceptors/logging.interceptor';
+import { ThrottlerBehindProxyGuard } from './presentation/guards/throttler-behind-proxy.guard';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -39,7 +41,15 @@ import { LoggingInterceptor } from './presentation/interceptors/logging.intercep
       isGlobal: true,
       envFilePath: ['.env', '.env.local'],
     }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: config.get<number>('RATE_LIMIT_TTL', 60) * 1000,
+          limit: config.get<number>('RATE_LIMIT_MAX', 100),
+        },
+      ],
+    }),
     TerminusModule,
     DatabaseModule,
     Neo4jModule,
@@ -70,6 +80,7 @@ import { LoggingInterceptor } from './presentation/interceptors/logging.intercep
   controllers: [HealthController],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_GUARD, useClass: ThrottlerBehindProxyGuard },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
   ],

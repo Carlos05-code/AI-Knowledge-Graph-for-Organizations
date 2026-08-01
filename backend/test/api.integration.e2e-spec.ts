@@ -407,21 +407,41 @@ describe('API Integration (e2e)', () => {
   // ─── Graph ─────────────────────────────────────────────────────
 
   describe('Graph', () => {
-    it('GET /api/v1/graph/nodes should list nodes (no auth)', async () => {
+    it('GET /api/v1/graph/nodes should require auth', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/graph/nodes')
+        .expect(401);
+    });
+
+    it('GET /api/v1/graph/nodes should list nodes with auth', async () => {
       mockNeo4j.findNodes.mockResolvedValue([
         { id: 'node-1', name: 'Entity 1', type: 'document' },
       ]);
 
       await request(app.getHttpServer())
         .get('/api/v1/graph/nodes')
+        .set('Authorization', `Bearer ${validToken}`)
         .expect(200);
     });
 
-    it('POST /api/v1/graph/query should run Cypher query (no auth)', async () => {
+    it('POST /api/v1/graph/query should require ADMIN role', async () => {
       mockNeo4j.executeRaw.mockResolvedValue([{ n: { id: '1', name: 'Result' } }]);
 
       await request(app.getHttpServer())
         .post('/api/v1/graph/query')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ query: 'MATCH (n) RETURN n LIMIT 10' })
+        .expect(403);
+
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1', email: 'admin@test.com', firstName: 'Admin', lastName: 'User',
+        role: 'ADMIN', isActive: true, organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/graph/query')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ query: 'MATCH (n) RETURN n LIMIT 10' })
         .expect(201);
     });

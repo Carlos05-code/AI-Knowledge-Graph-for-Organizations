@@ -44,7 +44,7 @@ Helmet + Compression
 |---|---|
 | `JwtAuthGuard` | `AuthGuard('jwt')`; honors `@Public()`; 401 `Invalid or expired token` |
 | `RolesGuard` | reads `@Roles()`; enforces `user.role`; 403 otherwise |
-| `ThrottlerBehindProxyGuard` | exists; **not registered** (gap) |
+| `ThrottlerBehindProxyGuard` | global (`APP_GUARD`); 100 req / 60 s per IP (proxy-aware, first `X-Forwarded-For` hop); configurable via `RATE_LIMIT_TTL`/`RATE_LIMIT_MAX` |
 
 ## 6. Interceptors / filters
 

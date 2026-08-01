@@ -39,16 +39,13 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 20 | Admin dashboard | 🔄 | Metrics + audit logs API; dashboard UI pending |
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
-| 23 | Security hardening | 🔄 | Helmet, bcrypt, validation; see SECURITY_SPEC gaps |
+| 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate — see SECURITY_SPEC remaining items |
 | 24 | Testing | 🔄 | 28 unit + 23 e2e; widget/load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
 
-- Rate limiting configured but not bound to a global guard (`ThrottlerBehindProxyGuard` exists, needs `APP_GUARD` registration).
 - Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
-- `GraphController` and `HealthController` are unguarded (public) — graph write endpoints need auth.
-- Swagger UI exposed in production — should be disabled via env flag.
 - Android release manifest lacks the `INTERNET` permission (only debug/profile have it).
 - Frontend: 6 of 13 routes are "Coming soon" placeholders; typed models (freezed) planned.
 - Frontend `widget_test.dart` needs a `ProviderScope` wrapper to be runnable.
@@ -56,9 +53,8 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 
 ## Quarter ahead (priority order)
 
-1. Bind rate limiting globally; protect graph/admin endpoints.
-2. User management (profile, org invites, roles UI).
-3. Documents feature UI (list/upload/process/delete).
-4. Connector UI + real Slack adapter.
-5. Widget test suite with Riverpod harness; fix `widget_test.dart`.
-6. Release hardening: JWT rotation, Swagger toggle, Android INTERNET permission, secrets management.
+1. User management (profile, org invites, roles UI).
+2. Documents feature UI (list/upload/process/delete).
+3. Connector UI + real Slack adapter.
+4. Widget test suite with Riverpod harness; fix `widget_test.dart`.
+5. Release hardening: JWT rotation, Android INTERNET permission, secrets management, `npm audit` CI gate.

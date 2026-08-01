@@ -17,8 +17,9 @@ Swagger at `/api/v1/docs`).
   `meta: { total, page, limit, totalPages, hasNext, hasPrevious }` where applicable.
 - **Validation**: global `ValidationPipe` — `whitelist`, `forbidNonWhitelisted`,
   `transform`. 400 on violation.
-- **Rate limiting**: throttler module configured (100 req/60 s) — **not yet bound**
-  (see Security gaps).
+- **Rate limiting**: global throttler — 100 req / 60 s per IP (proxy-aware
+  `ThrottlerBehindProxyGuard`; `RATE_LIMIT_TTL`/`RATE_LIMIT_MAX` configurable); 429 on
+  exceed.
 - **Error mapping**: `HttpException` → status + message; unknown errors → 500 with
   `"Internal server error"` (stack logged).
 
@@ -67,13 +68,11 @@ Swagger at `/api/v1/docs`).
 ### Knowledge Graph
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/graph/nodes` | Public* | `type? limit?(50) skip?(0)` |
-| GET | `/graph/nodes/:id` | Public* | |
-| GET | `/graph/search` | Public* | `q type?` |
-| GET | `/graph/subgraph/:id` | Public* | `depth?` (2) via APOC |
-| POST | `/graph/query` | Public* | raw Cypher `{ query, params? }` |
-
-\* Currently unguarded — flagged for hardening (ROADMAP).
+| GET | `/graph/nodes` | JWT | `type? limit?(50) skip?(0)` |
+| GET | `/graph/nodes/:id` | JWT | |
+| GET | `/graph/search` | JWT | `q type?` |
+| GET | `/graph/subgraph/:id` | JWT | `depth?` (2) via APOC |
+| POST | `/graph/query` | JWT, ADMIN | raw Cypher `{ query, params? }` |
 
 ### Expertise
 | Method | Path | Auth | Notes |

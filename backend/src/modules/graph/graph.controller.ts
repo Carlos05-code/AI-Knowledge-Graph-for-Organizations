@@ -1,9 +1,15 @@
-import { Controller, Get, Post, Param, Query, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Param, Query, Body, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
+import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
+import { RolesGuard } from '../../presentation/guards/roles.guard';
+import { Roles } from '../../shared/decorators/roles.decorator';
+import { UserRole } from '../../domain/entities/user.entity';
 
 @ApiTags('Knowledge Graph')
 @Controller('graph')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class GraphController {
   constructor(private neo4j: Neo4jService) {}
 
@@ -32,7 +38,9 @@ export class GraphController {
   }
 
   @Post('query')
-  @ApiOperation({ summary: 'Execute raw Cypher query' })
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Execute raw Cypher query (admin only)' })
   query(@Body() body: { query: string; params?: Record<string, unknown> }) {
     return this.neo4j.executeRaw(body.query, body.params);
   }
