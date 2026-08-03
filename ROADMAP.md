@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat w/ citations, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies, notifications)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 42 unit + 36 e2e + 20 frontend tests, all passing
+- ✅ Tests: 42 unit + 41 e2e + 25 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -21,7 +21,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 2 | Flutter application shell | ✅ | Auth, shell, routing, theme |
 | 3 | Backend foundation | ✅ | NestJS modules, global pipe/filters/interceptors |
 | 4 | Authentication | ✅ | JWT login/register/refresh/me, RBAC roles |
-| 5 | User management | ✅ | Profile edit, org members list + search, role/status management (ADMIN), self-demotion guard; invites pending |
+| 5 | User management | ✅ | Profile edit, org members list + search, role/status management (ADMIN), self-demotion guard; org invitations (invite/accept/revoke) |
 | 6 | Connector framework | ✅ | Registry + adapters (Slack real: auth.test, files.list/download, channel export; GitHub adapter stubs); CRUD/test/sync UI + run history |
 | 7 | Document ingestion pipeline | ✅ | Upload → checksum → chunk (512/64) → Qdrant; docs UI (list/upload/detail/process/delete); OCR & versions partial |
 | 8 | OCR pipeline | ⬜ | Tesseract integration for scanned PDFs/images |
@@ -40,7 +40,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 42 unit + 36 e2e + 20 frontend tests; load/security suites pending |
+| 24 | Testing | 🔄 | 42 unit + 41 e2e + 25 frontend tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
@@ -49,11 +49,11 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned.
 - Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
 - All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned. `freezed`/`json_serializable` were pruned with the other dead deps; a small `json_annotation`-only codegen for models could return later.
-- Widget test suite: 9 widget + 11 provider tests (login/register, admin gating, chat citations, notifications UI + provider, router redirect/shell; search/chat providers).
+- Widget test suite: 10 widget + 15 provider tests (login/register, admin gating + invites, chat citations, notifications UI + provider, router redirect/shell; search/chat/notifications/invitations providers).
 - Backend `npm run lint` fails on legacy `no-unsafe-*` violations (type-checked config; fix on install) — resolved deps missing previously.
 
 ## Quarter ahead (priority order)
 
-1. Org invitations for user management (admin invite via email + accept flow).
-2. Release hardening: JWT rotation, secrets management, `npm audit` CI gate.
-3. OCR pipeline (milestone 8): Tesseract integration for scanned PDFs/images.
+1. Release hardening: JWT rotation, secrets management, `npm audit` CI gate.
+2. OCR pipeline (milestone 8): Tesseract integration for scanned PDFs/images.
+3. Invitation email delivery (accept-link email via infra mailer; token endpoint already ships).

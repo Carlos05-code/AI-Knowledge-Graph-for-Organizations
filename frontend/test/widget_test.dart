@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ai_knowledge_graph/features/auth/presentation/login_screen.dart';
 import 'package:ai_knowledge_graph/features/auth/presentation/register_screen.dart';
 import 'package:ai_knowledge_graph/features/admin/admin_screen.dart';
+import 'package:ai_knowledge_graph/features/admin/data/invitations_service.dart';
 import 'package:ai_knowledge_graph/features/chat/presentation/chat_provider.dart';
 import 'package:ai_knowledge_graph/features/chat/presentation/chat_screen.dart';
 import 'package:ai_knowledge_graph/features/notifications/data/notifications_service.dart';
@@ -14,9 +15,11 @@ import 'package:ai_knowledge_graph/core/api/api_client.dart';
 import 'package:ai_knowledge_graph/core/api/api_providers.dart';
 import 'package:ai_knowledge_graph/core/api/auth_service.dart';
 import 'package:ai_knowledge_graph/core/api/chat_service.dart';
+import 'package:ai_knowledge_graph/core/api/users_service.dart';
 import 'package:ai_knowledge_graph/core/routing/app_router.dart';
 import 'package:ai_knowledge_graph/features/auth/domain/auth_provider.dart';
 import 'package:ai_knowledge_graph/features/auth/domain/auth_state.dart';
+import 'package:ai_knowledge_graph/features/admin/data/admin_service.dart';
 
 Widget _wrap(Widget child) {
   return ProviderScope(child: MaterialApp(home: child));
@@ -84,6 +87,53 @@ void main() {
       await tester.pump();
 
       expect(find.text('Administrator access required'), findsOneWidget);
+    });
+
+    testWidgets('members tab lists pending invitations and invites a user',
+        (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authProvider.overrideWith(
+              (ref) => _FakeAuthNotifier(
+                const Authenticated(
+                  userId: 'admin-1',
+                  email: 'admin@test.com',
+                  role: 'ADMIN',
+                ),
+              ),
+            ),
+            invitationsServiceProvider
+                .overrideWithValue(FakeInvitationsService()),
+            adminServiceProvider.overrideWithValue(FakeAdminService()),
+            usersServiceProvider.overrideWithValue(FakeUsersService()),
+          ],
+          child: const MaterialApp(home: AdminScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Members'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pending invitations'), findsOneWidget);
+      expect(find.text('jane@company.com'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Invite member'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(TextField),
+        ),
+        'bob@company.com',
+      );
+      await tester.tap(find.text('Send invite'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Invitation sent to bob@company.com'), findsOneWidget);
+      expect(find.text('bob@company.com'), findsOneWidget);
     });
   });
 
@@ -195,6 +245,114 @@ class _FakeAuthNotifier extends AuthNotifier {
 
 class _StubAuthService extends AuthService {
   _StubAuthService() : super(ApiClient());
+}
+
+class FakeAdminService extends AdminService {
+  FakeAdminService() : super(ApiClient());
+
+  @override
+  Future<Map<String, dynamic>> getDashboard() async {
+    return {
+      'documents': {'total': 10, 'indexed': 8, 'pending': 2},
+      'users': {'total': 5},
+      'connectors': {'active': 2},
+      'meetings': {'total': 3},
+      'policies': {'total': 4},
+      'recentActivity': <Map<String, dynamic>>[],
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> getAuditLogs({
+    int page = 1,
+    int limit = 20,
+    String? entity,
+    String? action,
+  }) async {
+    return {
+      'data': <Map<String, dynamic>>[],
+      'meta': {'total': 0, 'page': 1, 'limit': 20},
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> getHealth() async {
+    return {};
+  }
+}
+
+class FakeUsersService extends UsersService {
+  FakeUsersService() : super(ApiClient());
+
+  @override
+  Future<Map<String, dynamic>> listMembers({
+    int page = 1,
+    int limit = 50,
+    String? query,
+  }) async {
+    return {
+      'data': <Map<String, dynamic>>[],
+      'meta': {'total': 0, 'page': 1, 'limit': 50},
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateMember(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    return {'id': id, ...data};
+  }
+}
+
+class FakeInvitationsService extends InvitationsService {
+  FakeInvitationsService() : super(ApiClient());
+  final List<Map<String, dynamic>> _invites = [
+    {
+      'id': 'inv-1',
+      'email': 'jane@company.com',
+      'role': 'USER',
+      'status': 'PENDING',
+      'expiresAt':
+          DateTime.now().add(const Duration(days: 5)).toIso8601String(),
+    },
+  ];
+
+  @override
+  Future<Map<String, dynamic>> list({
+    int page = 1,
+    int limit = 20,
+    String? status,
+  }) async {
+    return {
+      'data': List.of(_invites),
+      'meta': {'total': _invites.length, 'page': 1, 'limit': 20},
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> create({
+    required String email,
+    String role = 'USER',
+    int? expiresInDays,
+  }) async {
+    final invitation = {
+      'id': 'inv-new-${_invites.length}',
+      'email': email,
+      'role': role,
+      'status': 'PENDING',
+      'expiresAt':
+          DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+    };
+    _invites.add(invitation);
+    return invitation;
+  }
+
+  @override
+  Future<Map<String, dynamic>> revoke(String id) async {
+    _invites.removeWhere((i) => i['id'] == id);
+    return {'id': id, 'status': 'REVOKED'};
+  }
 }
 
 class _FakeChatNotifier extends ChatNotifier {

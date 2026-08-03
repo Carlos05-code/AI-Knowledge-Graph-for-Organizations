@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/api/api_providers.dart';
 import '../auth/domain/auth_provider.dart';
 import '../auth/domain/auth_state.dart';
+import 'presentation/invitations_provider.dart';
 
 class AdminScreen extends ConsumerStatefulWidget {
   const AdminScreen({super.key});
@@ -243,12 +244,15 @@ class _MembersTab extends ConsumerStatefulWidget {
 
 class _MembersTabState extends ConsumerState<_MembersTab> {
   final _searchController = TextEditingController();
+  final _inviteEmailController = TextEditingController();
   List<Map<String, dynamic>> _members = [];
   Map<String, dynamic>? _meta;
   String? _error;
   bool _loading = true;
   int _page = 1;
   String? _busyId;
+  bool _inviteBusy = false;
+  String _inviteRole = 'USER';
 
   static const _roles = ['ADMIN', 'USER', 'VIEWER'];
   static const _roleLabels = {
@@ -261,11 +265,17 @@ class _MembersTabState extends ConsumerState<_MembersTab> {
   void initState() {
     super.initState();
     _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(invitationsProvider.notifier).load();
+      }
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _inviteEmailController.dispose();
     super.dispose();
   }
 
@@ -327,12 +337,103 @@ class _MembersTabState extends ConsumerState<_MembersTab> {
     }
   }
 
+  Future<void> _showInviteDialog() async {
+    _inviteEmailController.clear();
+    _inviteRole = 'USER';
+    final submitted = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Invite member'),
+        content: StatefulBuilder(
+          builder: (dialogContext, setDialogState) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _inviteEmailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email address',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => Navigator.pop(dialogContext, 'submit'),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _inviteRole,
+                decoration: const InputDecoration(
+                  labelText: 'Role',
+                  border: OutlineInputBorder(),
+                ),
+                items: _roles
+                    .map(
+                      (r) => DropdownMenuItem(
+                        value: r,
+                        child: Text(_roleLabels[r] ?? r),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) {
+                    setDialogState(() => _inviteRole = v);
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, 'submit'),
+            child: const Text('Send invite'),
+          ),
+        ],
+      ),
+    );
+
+    if (submitted != 'submit') return;
+
+    final email = _inviteEmailController.text.trim();
+    if (email.isEmpty) {
+      _showSnack('Enter an email address');
+      return;
+    }
+
+    setState(() => _inviteBusy = true);
+    final ok = await ref
+        .read(invitationsProvider.notifier)
+        .invite(email, _inviteRole);
+    if (!mounted) return;
+    setState(() => _inviteBusy = false);
+    _showSnack(
+      ok
+          ? 'Invitation sent to $email'
+          : ref.read(invitationsProvider).error ?? 'Failed to send invitation',
+    );
+  }
+
+  Future<void> _revokeInvite(String id) async {
+    final ok = await ref.read(invitationsProvider.notifier).revoke(id);
+    if (!mounted) return;
+    _showSnack(ok ? 'Invitation revoked' : 'Failed to revoke invitation');
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authState = ref.watch(authProvider);
     final isAdmin = authState is Authenticated && authState.role == 'ADMIN';
     final myUserId = isAdmin ? authState.userId : null;
+    final invites = ref.watch(invitationsProvider);
 
     return Column(
       children: [
@@ -364,6 +465,21 @@ class _MembersTabState extends ConsumerState<_MembersTab> {
                 },
                 icon: const Icon(Icons.search),
               ),
+              const SizedBox(width: 8),
+              _inviteBusy
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : IconButton.filledTonal(
+                      tooltip: 'Invite member',
+                      onPressed: _showInviteDialog,
+                      icon: const Icon(Icons.person_add_alt),
+                    ),
             ],
           ),
         ),
@@ -472,6 +588,61 @@ class _MembersTabState extends ConsumerState<_MembersTab> {
                   },
                 ),
         ),
+        if (invites.invitations.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Pending invitations',
+                style: theme.textTheme.titleSmall,
+              ),
+            ),
+          ),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 200),
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: invites.invitations.map((invitation) {
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(
+                      Icons.mail_outline,
+                      color: theme.colorScheme.primary,
+                    ),
+                    title: Text(invitation['email']?.toString() ?? ''),
+                    subtitle: Text(
+                      [
+                        _roleLabels[invitation['role']] ?? 'User',
+                        'expires ${_formatTime(invitation['expiresAt'])}',
+                      ].join(' · '),
+                    ),
+                    trailing: IconButton(
+                      tooltip: 'Revoke invitation',
+                      icon: const Icon(Icons.close),
+                      onPressed: () =>
+                          _revokeInvite(invitation['id']?.toString() ?? ''),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+        if (invites.loading && invites.invitations.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(
+              child: SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
         if (_meta != null &&
             _meta!['totalPages'] != null &&
             _meta!['totalPages'] > 1)

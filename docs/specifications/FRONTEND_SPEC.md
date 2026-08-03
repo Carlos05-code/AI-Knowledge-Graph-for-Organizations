@@ -20,7 +20,7 @@ lib/
 │   └── widgets/app_shell.dart   # NavigationRail shell
 └── features/
     ├── auth/                    # login, register, AuthNotifier, AuthState
-    ├── admin/                  # admin_screen (tabs: Overview dashboard, Members RBAC, Audit Logs)
+    ├── admin/                  # admin_screen (tabs: Overview dashboard, Members RBAC, Audit Logs; invite dialog + pending invites) + data/ services
     ├── settings/               # settings_screen (profile edit)
     ├── documents/              # documents_screen (list, upload, detail, process, delete)
     ├── connectors/             # connectors_screen (list/add/config/test/sync/runs)
@@ -63,6 +63,7 @@ auth route → `/`.
 |---|---|---|
 | `apiClientProvider` | Provider | Dio client (base `http://localhost:3000/api/v1`) |
 | `authService/chatService/searchService/graphService/documentsService/usersService` providers | Provider | API wrappers |
+| `invitationsService` provider | Provider | Invitations API wrapper (create/list/revoke/accept) |
 | `appRouterProvider` | Provider | GoRouter (watches auth) |
 | `authProvider` | StateNotifierProvider | `AuthInitial/Loading/Authenticated/Unauthenticated`; `checkAuth/login/register/logout` |
 | `chatProvider` | StateNotifierProvider | messages, conversationId, sending/error; optimistic send |
@@ -108,6 +109,12 @@ refreshed on shell mount; rail Badge on the Alerts destination; screen lists
 `GET /notifications` (paged), tap marks read (`POST :id/read`), swipe deletes
 (`DELETE :id`), app-bar action marks all read (`POST /read-all`).
 
+Invitations flow (Admin ▸ Members): invite dialog (email + role) posts
+`POST /invitations`; pending invites render below the member list with revoke
+(`POST :id/revoke`); account creation for invitees uses the public
+`POST /invitations/accept` (token + profile + password). Inviter notified via
+`INVITATION_ACCEPTED` notification.
+
 ## 6. Design system
 
 See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) for full tokens. Highlights:
@@ -137,7 +144,7 @@ See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) for full tokens. Highlights:
 ## 10. Known gaps (documented, tracked)
 
 - No typed models (`Map<String, dynamic>` everywhere) — codegen planned.
-- `widget_test.dart` runs (20 tests total: 9 widget + 11 provider); broader harness suites planned.
+- `widget_test.dart` + `providers_test.dart` run (25 tests total: 10 widget + 15 provider); broader harness suites planned.
 - Dead dependencies in pubspec swept (retrofit, freezed/graphview/fl_chart, mockito,
   etc. removed) — pubspec now holds only in-use packages; `pubspec.lock` pruned.
 - `ApiClient` base URL hardcoded to localhost — needs build-time config (`--dart-define`).

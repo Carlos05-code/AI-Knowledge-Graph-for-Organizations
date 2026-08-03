@@ -53,17 +53,21 @@ npm run test:cov      # coverage
 
 ## 4. Frontend tests
 
-`test/widget_test.dart` — 9 passing widget tests (all pumped inside a
+`test/widget_test.dart` — 10 passing widget tests (all pumped inside a
 `ProviderScope`): login renders, login validates empty email, login validates short
 password, register renders, admin screen locks non-admin users out (via an
-`authProvider` override), chat bubbles render citation chips + source sheet (via a
-`chatProvider` override), notifications list + mark-read (service override), and
-app-router redirect (unauthenticated → login) / authenticated shell render.
-`test/providers_test.dart` — 11 provider unit tests with overridden fake services
+`authProvider` override), admin members tab lists pending invitations + sends an
+invite via dialog (service overrides), chat bubbles render citation chips + source
+sheet (via a `chatProvider` override), notifications list + mark-read (service
+override), and app-router redirect (unauthenticated → login) / authenticated shell
+render.
+`test/providers_test.dart` — 15 provider unit tests with overridden fake services
 (no network): `SearchNotifier` (hybrid merge of documents/people/graph, keyword mode,
 empty-query short-circuit, error surfacing), `ChatNotifier` (optimistic user
 message + assistant reply with `sources`, `loadConversation`, send-failure error
-message), and `NotificationsNotifier` (refresh unread, decrement floor, clear).
+message), `NotificationsNotifier` (refresh unread, decrement floor, clear), and
+`InvitationsNotifier` (load pending invites, invite + list refresh, invite failure
+surfaces error, revoke removes).
 Suites run via `flutter test`.
 
 Additional planned suites:

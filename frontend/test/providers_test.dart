@@ -5,6 +5,8 @@ import 'package:ai_knowledge_graph/core/api/api_client.dart';
 import 'package:ai_knowledge_graph/core/api/chat_service.dart';
 import 'package:ai_knowledge_graph/core/api/search_service.dart';
 import 'package:ai_knowledge_graph/core/api/api_providers.dart';
+import 'package:ai_knowledge_graph/features/admin/data/invitations_service.dart';
+import 'package:ai_knowledge_graph/features/admin/presentation/invitations_provider.dart';
 import 'package:ai_knowledge_graph/features/chat/presentation/chat_provider.dart';
 import 'package:ai_knowledge_graph/features/search/presentation/search_provider.dart';
 import 'package:ai_knowledge_graph/features/notifications/data/notifications_service.dart';
@@ -198,6 +200,77 @@ void main() {
       expect(container.read(notificationsProvider).unreadCount, 0);
     });
   });
+
+  group('InvitationsNotifier', () {
+    test('load fetches pending invitations', () async {
+      final container = ProviderContainer(
+        overrides: [
+          invitationsServiceProvider
+              .overrideWithValue(FakeInvitationsService()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(invitationsProvider.notifier).load();
+
+      final state = container.read(invitationsProvider);
+      expect(state.loading, false);
+      expect(state.invitations.length, 1);
+      expect(state.invitations.first['email'], 'jane@company.com');
+    });
+
+    test('invite sends invitation and refreshes the list', () async {
+      final container = ProviderContainer(
+        overrides: [
+          invitationsServiceProvider
+              .overrideWithValue(FakeInvitationsService()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final ok = await container
+          .read(invitationsProvider.notifier)
+          .invite('bob@company.com', 'VIEWER');
+
+      expect(ok, true);
+      expect(container.read(invitationsProvider).error, null);
+      expect(container.read(invitationsProvider).invitations.length, 2);
+    });
+
+    test('invite failure surfaces error', () async {
+      final fake = FakeInvitationsService()..failInvite = true;
+      final container = ProviderContainer(
+        overrides: [invitationsServiceProvider.overrideWithValue(fake)],
+      );
+      addTearDown(container.dispose);
+
+      final ok = await container
+          .read(invitationsProvider.notifier)
+          .invite('bob@company.com', 'USER');
+
+      expect(ok, false);
+      expect(container.read(invitationsProvider).error, contains('failed'));
+    });
+
+    test('revoke removes a pending invitation', () async {
+      final container = ProviderContainer(
+        overrides: [
+          invitationsServiceProvider
+              .overrideWithValue(FakeInvitationsService()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final ok =
+          await container.read(invitationsProvider.notifier).revoke('inv-1');
+
+      expect(ok, true);
+      expect(
+        container.read(invitationsProvider).invitations.map((i) => i['id']),
+        isNot(contains('inv-1')),
+      );
+    });
+  });
 }
 
 class FakeSearchService extends SearchService {
@@ -304,4 +377,56 @@ class FakeNotificationsService extends NotificationsService {
 
   @override
   Future<void> delete(String id) async {}
+}
+
+class FakeInvitationsService extends InvitationsService {
+  FakeInvitationsService() : super(ApiClient());
+  bool failInvite = false;
+  final List<Map<String, dynamic>> _invites = [
+    {
+      'id': 'inv-1',
+      'email': 'jane@company.com',
+      'role': 'USER',
+      'status': 'PENDING',
+      'expiresAt':
+          DateTime.now().add(const Duration(days: 5)).toIso8601String(),
+    },
+  ];
+
+  @override
+  Future<Map<String, dynamic>> list({
+    int page = 1,
+    int limit = 20,
+    String? status,
+  }) async {
+    return {
+      'data': List.of(_invites),
+      'meta': {'total': _invites.length, 'page': 1, 'limit': 20},
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> create({
+    required String email,
+    String role = 'USER',
+    int? expiresInDays,
+  }) async {
+    if (failInvite) throw Exception('invite failed');
+    final invitation = {
+      'id': 'inv-new-${_invites.length}',
+      'email': email,
+      'role': role,
+      'status': 'PENDING',
+      'expiresAt':
+          DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+    };
+    _invites.add(invitation);
+    return invitation;
+  }
+
+  @override
+  Future<Map<String, dynamic>> revoke(String id) async {
+    _invites.removeWhere((i) => i['id'] == id);
+    return {'id': id, 'status': 'REVOKED'};
+  }
 }
