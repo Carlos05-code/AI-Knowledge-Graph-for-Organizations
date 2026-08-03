@@ -150,6 +150,7 @@ describe('API Integration (e2e)', () => {
       create: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
     },
     auditLog: {
@@ -392,6 +393,62 @@ describe('API Integration (e2e)', () => {
         .post('/api/v1/auth/login')
         .send({ email: 'unknown@test.com', password: 'password123' })
         .expect(401);
+    });
+
+    it('POST /api/v1/auth/refresh should rotate the refresh token', async () => {
+      mockPrisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'rt-1',
+        token: 'rt-old',
+        userId: 'user-1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
+      mockPrisma.refreshToken.update.mockResolvedValue({
+        id: 'rt-1',
+        revokedAt: new Date(),
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: loginDto.email,
+        firstName: 'John',
+        lastName: 'Doe',
+        role: 'USER',
+        isActive: true,
+        organizationId: 'org-1',
+      });
+      mockPrisma.refreshToken.create.mockResolvedValue({ token: 'rt-new' });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken: 'st-old' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.refreshToken).toBeDefined();
+        });
+    });
+
+    it('POST /api/v1/auth/refresh should reject a revoked token', async () => {
+      mockPrisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'rt-1',
+        token: 'rt-revoked',
+        userId: 'user-1',
+        revokedAt: new Date(),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken: 'rt-revoked' })
+        .expect(401);
+    });
+
+    it('POST /api/v1/auth/logout should revoke a refresh token', async () => {
+      mockPrisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .send({ refreshToken: 'st-old' })
+        .expect(200);
     });
   });
 

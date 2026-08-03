@@ -117,7 +117,6 @@ describe('UsersService', () => {
       });
 
       expect(prismaMock.user.findMany).toHaveBeenCalledWith(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         expect.objectContaining({
           where: expect.objectContaining({
             organizationId: 'org1',

@@ -174,8 +174,8 @@ export class SlackAdapter extends ConnectorAdapter {
   }
 
   private async fetchBytes(file: ConnectorFile): Promise<Buffer> {
-    const url = (file.metadata?.downloadUrl ||
-      file.metadata?.url) as string | undefined;
+    const url = (file.metadata?.downloadUrl || file.metadata?.url) as
+      string | undefined;
     if (!url) throw new Error(`No download URL available for ${file.id}`);
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${this.token}` },
@@ -205,9 +205,7 @@ export class SlackAdapter extends ConnectorAdapter {
     return res.channels || [];
   }
 
-  private async exportChannel(
-    channelId: string,
-  ): Promise<ConnectorDocument> {
+  private async exportChannel(channelId: string): Promise<ConnectorDocument> {
     const res = await this.api<{
       ok: boolean;
       channels?: Array<{ id: string; name: string }>;
@@ -220,8 +218,7 @@ export class SlackAdapter extends ConnectorAdapter {
     let channelName = channelId;
     try {
       const channels = await this.listChannels();
-      channelName =
-        channels.find((c) => c.id === channelId)?.name || channelId;
+      channelName = channels.find((c) => c.id === channelId)?.name || channelId;
     } catch {
       // name lookup is best-effort; fall back to the channel id
     }

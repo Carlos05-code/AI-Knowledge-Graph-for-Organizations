@@ -31,14 +31,18 @@ export class InvitationsService {
       where: { email, organizationId },
     });
     if (existingUser) {
-      throw new ConflictException('A user with this email already belongs to the organization');
+      throw new ConflictException(
+        'A user with this email already belongs to the organization',
+      );
     }
 
     const pending = await this.prisma.invitation.findFirst({
       where: { email, organizationId, status: 'PENDING' },
     });
     if (pending) {
-      throw new ConflictException('A pending invitation already exists for this email');
+      throw new ConflictException(
+        'A pending invitation already exists for this email',
+      );
     }
 
     const expiresInDays = dto.expiresInDays ?? DEFAULT_EXPIRES_IN_DAYS;

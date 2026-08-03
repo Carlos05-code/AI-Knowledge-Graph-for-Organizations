@@ -30,7 +30,8 @@ Swagger at `/api/v1/docs`).
 |---|---|---|---|
 | POST | `/auth/login` | Public | `{ email, password }` → tokens + user |
 | POST | `/auth/register` | Public | `{ email, firstName, lastName, password, organizationName? }` → tokens; auto-creates org; role ADMIN |
-| POST | `/auth/refresh` | Public | `{ refreshToken }` → new tokens |
+| POST | `/auth/refresh` | Public | `{ refreshToken }` → new tokens (rotates the stored token) |
+| POST | `/auth/logout` | Public | `{ refreshToken }` → revokes the token server-side |
 | GET | `/auth/me` | JWT | current profile + organization (legacy alias of `/users/me`) |
 
 ### Users

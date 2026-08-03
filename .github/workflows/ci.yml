@@ -45,6 +45,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm audit --audit-level=high
+
       - run: npx prisma generate
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_knowledge_graph

@@ -9,12 +9,8 @@ import { createHash } from 'crypto';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { ConnectorRegistryService } from '../../infrastructure/connectors/connector-registry.service';
 import { ConnectorConfig } from '../../infrastructure/connectors/connector-adapter.interface';
-import {
-  ConnectorDocument,
-} from '../../infrastructure/connectors/connector-adapter.interface';
-import {
-  ConnectorType,
-} from '../../domain/entities/connector.entity';
+import { ConnectorDocument } from '../../infrastructure/connectors/connector-adapter.interface';
+import { ConnectorType } from '../../domain/entities/connector.entity';
 import { DocumentSource } from '../../domain/entities/document.entity';
 import { CreateConnectorDto } from './dto/create-connector.dto';
 import { UpdateConnectorDto } from './dto/update-connector.dto';
@@ -68,11 +64,7 @@ export class ConnectorsService {
     });
   }
 
-  async update(
-    id: string,
-    organizationId: string,
-    dto: UpdateConnectorDto,
-  ) {
+  async update(id: string, organizationId: string, dto: UpdateConnectorDto) {
     await this.assertOwned(id, organizationId);
     return this.prisma.connector.update({
       where: { id },
@@ -243,7 +235,9 @@ export class ConnectorsService {
     document: ConnectorDocument,
     organizationId: string,
   ) {
-    const checksum = createHash('sha256').update(document.content).digest('hex');
+    const checksum = createHash('sha256')
+      .update(document.content)
+      .digest('hex');
     const doc = await this.prisma.document.create({
       data: {
         title: document.name,
@@ -262,7 +256,7 @@ export class ConnectorsService {
           connectorId: connector.id,
           connectorType: connector.type,
           ...(document.metadata || {}),
-        } as Prisma.InputJsonValue,
+        },
       },
     });
 

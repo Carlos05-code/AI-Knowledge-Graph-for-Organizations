@@ -18,7 +18,11 @@ export class ExpertiseController {
     @Query('topic') topic: string,
     @Query('limit') limit?: string,
   ) {
-    return this.expertiseService.findExperts(topic, user.organizationId, limit ? Number(limit) : undefined);
+    return this.expertiseService.findExperts(
+      topic,
+      user.organizationId,
+      limit ? Number(limit) : undefined,
+    );
   }
 
   @Get('summary')

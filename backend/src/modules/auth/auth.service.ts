@@ -39,7 +39,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.generateTokens(user);
+    return this.createTokenPair(user);
   }
 
   async getProfile(userId: string) {
@@ -101,30 +101,48 @@ export class AuthService {
       },
     });
 
-    return this.generateTokens(user);
+    return this.createTokenPair(user);
   }
 
   async refreshToken(token: string) {
-    try {
-      const payload = this.jwtService.verify(token, {
-        secret: this.config.get('JWT_SECRET'),
-      });
+    const stored = await this.prisma.refreshToken.findUnique({
+      where: { token },
+    });
 
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
-      });
-
-      if (!user || !user.isActive) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      return this.generateTokens(user);
-    } catch {
+    if (!stored) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
+    if (stored.revokedAt) {
+      throw new UnauthorizedException('Refresh token has been revoked');
+    }
+    if (stored.expiresAt < new Date()) {
+      throw new UnauthorizedException('Refresh token has expired');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: stored.userId },
+    });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    await this.prisma.refreshToken.update({
+      where: { id: stored.id },
+      data: { revokedAt: new Date() },
+    });
+
+    return this.createTokenPair(user);
   }
 
-  private generateTokens(user: any) {
+  async logout(token: string) {
+    await this.prisma.refreshToken.updateMany({
+      where: { token, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    return { success: true };
+  }
+
+  private async createTokenPair(user: any) {
     const payload = {
       sub: user.id,
       email: user.email,
@@ -132,13 +150,25 @@ export class AuthService {
       role: user.role,
     };
 
+    const refreshToken = crypto.randomUUID();
+    const refreshExpiry = this.config.get('JWT_REFRESH_EXPIRY', '7d');
+    const expiresAt = new Date(
+      Date.now() + this.parseDurationToMs(refreshExpiry),
+    );
+
+    await this.prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
     return {
       accessToken: this.jwtService.sign(payload, {
         expiresIn: this.config.get('JWT_ACCESS_EXPIRY', '15m'),
       }),
-      refreshToken: this.jwtService.sign(payload, {
-        expiresIn: this.config.get('JWT_REFRESH_EXPIRY', '7d'),
-      }),
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -148,5 +178,23 @@ export class AuthService {
         organizationId: user.organizationId,
       },
     };
+  }
+
+  private parseDurationToMs(value: string): number {
+    const match = /^(\d+)([smhd])$/.exec(value);
+    if (!match) return 7 * 24 * 60 * 60 * 1000;
+    const amount = Number(match[1]);
+    switch (match[2]) {
+      case 's':
+        return amount * 1000;
+      case 'm':
+        return amount * 60 * 1000;
+      case 'h':
+        return amount * 60 * 60 * 1000;
+      case 'd':
+        return amount * 24 * 60 * 60 * 1000;
+      default:
+        return 7 * 24 * 60 * 60 * 1000;
+    }
   }
 }

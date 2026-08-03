@@ -16,21 +16,26 @@ describe('SlackAdapter', () => {
     new SlackAdapter({ token: 'xoxb-test-token', ...overrides });
 
   const apiJson = (body: Record<string, unknown>) =>
-    ({ ok: true, json: async () => body } as Response);
+    ({ ok: true, json: async () => body }) as Response;
 
-const apiBytes = (body: Buffer) =>
+  const apiBytes = (body: Buffer) =>
     ({
       ok: true,
       arrayBuffer: async () =>
         body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
-    } as Response);
+    }) as Response;
 
   it('authenticates and returns identity', async () => {
     fetchSpy.mockResolvedValue(
       apiJson({ ok: true, team_id: 'T1', bot_id: 'B1', app_id: 'APP' }),
     );
     const result = await makeAdapter().authenticate();
-    expect(result).toEqual({ ok: true, teamId: 'T1', botId: 'B1', appId: 'APP' });
+    expect(result).toEqual({
+      ok: true,
+      teamId: 'T1',
+      botId: 'B1',
+      appId: 'APP',
+    });
     expect(fetchSpy.mock.calls[0][0]).toContain('auth.test');
   });
 
@@ -64,7 +69,7 @@ const apiBytes = (body: Buffer) =>
         ],
       }),
     );
-const files = await makeAdapter().listFiles();
+    const files = await makeAdapter().listFiles();
     expect(files).toHaveLength(1);
     expect(files[0].path).toContain('slack://file');
   });
@@ -76,13 +81,29 @@ const files = await makeAdapter().listFiles();
         return apiJson({
           ok: true,
           files: [
-            { id: 'FTXT', name: 'notes.txt', filetype: 'text', mimetype: 'text/plain', size: 31, url_private: 'https://files.slack.com/ftxt' },
-            { id: 'FPNG', name: 'shot.png', filetype: 'png', mimetype: 'image/png', size: 40, url_private: 'https://files.slack.com/fpng' },
+            {
+              id: 'FTXT',
+              name: 'notes.txt',
+              filetype: 'text',
+              mimetype: 'text/plain',
+              size: 31,
+              url_private: 'https://files.slack.com/ftxt',
+            },
+            {
+              id: 'FPNG',
+              name: 'shot.png',
+              filetype: 'png',
+              mimetype: 'image/png',
+              size: 40,
+              url_private: 'https://files.slack.com/fpng',
+            },
           ],
         });
       }
-      if (target.includes('/ftxt')) return apiBytes(Buffer.from('hello from slack file\n'));
-      if (target.includes('/fpng')) return apiBytes(Buffer.from([0, 0, 1, 9, 0]));
+      if (target.includes('/ftxt'))
+        return apiBytes(Buffer.from('hello from slack file\n'));
+      if (target.includes('/fpng'))
+        return apiBytes(Buffer.from([0, 0, 1, 9, 0]));
       throw new Error(`Unexpected fetch URL: ${target}`);
     });
 
@@ -102,10 +123,13 @@ const files = await makeAdapter().listFiles();
       if (target.includes('conversations.history')) {
         return apiJson({
           ok: true,
-          messages: [{ ts: '1710000000.000001', user: 'U1', text: 'Design doc ready' }],
+          messages: [
+            { ts: '1710000000.000001', user: 'U1', text: 'Design doc ready' },
+          ],
         });
       }
-      if (target.includes('files.list')) return apiJson({ ok: true, files: [] });
+      if (target.includes('files.list'))
+        return apiJson({ ok: true, files: [] });
       throw new Error(`Unexpected fetch URL: ${target}`);
     });
 

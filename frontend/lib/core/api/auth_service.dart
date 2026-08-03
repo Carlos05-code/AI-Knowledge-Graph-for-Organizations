@@ -50,6 +50,14 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _client.clearTokens();
+    try {
+      final refreshToken = await _client.refreshToken;
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await _client.post('/auth/logout', data: {'refreshToken': refreshToken});
+      }
+    } catch (_) {
+    } finally {
+      await _client.clearTokens();
+    }
   }
 }

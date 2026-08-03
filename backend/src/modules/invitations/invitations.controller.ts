@@ -33,10 +33,7 @@ export class InvitationsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Invite a user to the organization (admin)' })
-  create(
-    @CurrentUser() user: any,
-    @Body() dto: CreateInvitationDto,
-  ) {
+  create(@CurrentUser() user: any, @Body() dto: CreateInvitationDto) {
     return this.invitationsService.create(user.organizationId, user.id, dto);
   }
 

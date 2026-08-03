@@ -6,8 +6,11 @@
   (`JWT_ACCESS_EXPIRY`), refresh 7 d (`JWT_REFRESH_EXPIRY`).
 - **Login**: email + password verified with `bcrypt.compare` against bcrypt(12) hash.
 - **Register**: auto-creates organization + ADMIN user, returns tokens.
-- **Refresh**: `POST /auth/refresh` validates refresh token, re-checks `isActive`,
-  issues new pair.
+- **Refresh tokens**: opaque random UUIDs stored in `RefreshToken` (per-user,
+  `expiresAt`); `POST /auth/refresh` **rotates** — validates the stored token
+  (revoked/expiry checks), revokes it, issues a new pair.
+- **Logout**: `POST /auth/logout` revokes the presented refresh token server-side
+  (best-effort from the client, which always clears local storage).
 - **`GET /auth/me`**: returns profile; used by frontend `checkAuth()`.
 - **Keycloak**: schema-ready (`keycloakId` unique) and env vars documented, but not
   integrated — local JWT is the active path (ADR-003).
@@ -58,7 +61,7 @@ Viewable by admins (`GET /admin/audit-logs`).
 | Auth on all endpoints | ✅ graph endpoints now JWT-protected; raw Cypher admin-only; only Health + metrics public (probes) |
 | Swagger disabled in prod | ✅ gated by `NODE_ENV=production` |
 | Secrets in code | ✅ none committed (verified at first commit) |
-| Dependency audit | ⚠️ run `npm audit`/`dart pub outdated` in CI (planned) |
+| Dependency audit | ✅ `npm audit --audit-level=high` gate in CI (0 high+; js-yaml pinned via npm `overrides`) |
 
 ## 7. Prompt injection defense
 

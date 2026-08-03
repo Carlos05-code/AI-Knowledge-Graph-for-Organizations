@@ -57,6 +57,7 @@ model User {
   notifications       Notification[]
   expertiseScores     ExpertiseScore[]
   createdInvitations  Invitation[]        @relation("InvitationCreator")
+  refreshTokens       RefreshToken[]
 }
 
 enum UserRole {
@@ -333,6 +334,20 @@ enum NotificationType {
   EXPERT_RECOMMENDATION
   KNOWLEDGE_GAP
   INVITATION_ACCEPTED
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([token])
 }
 
 // =========================================================================

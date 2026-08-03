@@ -5,10 +5,10 @@
 | Level | Tool | Count | Status |
 |---|---|---|---|
 | Unit (backend) | Jest + ts-jest | 42 | ✅ passing |
-| e2e (backend) | Jest + Supertest | 36 | ✅ passing |
-| Widget (frontend) | flutter_test | 2 | ⚠️ need ProviderScope fix |
+| e2e (backend) | Jest + Supertest | 44 | ✅ passing |
+| Widget (frontend) | flutter_test | 25 (10 widget + 15 provider) | ✅ passing |
 | Performance | k6 | — | ⬜ planned |
-| Security | npm audit / OWASP checks | — | ⬜ planned |
+| Security | `npm audit --audit-level=high` | 0 high+ | ✅ CI gate (`.github/workflows/ci.yml`) |
 
 ## 2. Backend unit tests (`src/**/*.spec.ts`)
 
