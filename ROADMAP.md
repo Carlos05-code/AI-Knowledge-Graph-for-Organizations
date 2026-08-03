@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 42 unit + 36 e2e + 6 widget tests, all passing
+- ✅ Tests: 42 unit + 36 e2e + 14 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -31,7 +31,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 12 | Search engine | ✅ | Keyword (Postgres ILIKE) + semantic + graph hybrid |
 | 13 | Hybrid retrieval | ✅ | Reranked fusion across 3 sources |
 | 14 | AI chat | ✅ | REST + WebSocket streaming (OpenAI), RAG context |
-| 15 | Citations | 🔄 | `sources` in chat responses; UI rendering pending |
+| 15 | Citations | ✅ | `sources` in chat + WebSocket responses; citation chips in chat UI |
 | 16 | Meeting intelligence | ✅ | CRUD + summarize endpoint; meetings UI (create/list/detail/summarize/delete) |
 | 17 | Expertise discovery | ✅ | Expertise scores, topic search, org summary |
 | 18 | Policy search | ✅ | CRUD + search + document linking; policies UI (filter/search/create/edit/activate/delete) |
@@ -40,19 +40,19 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 42 unit + 36 e2e + 6 widget tests; load/security suites pending |
+| 24 | Testing | 🔄 | 42 unit + 36 e2e + 14 frontend tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
 
 - Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
 - All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned.
-- Widget test suite covers 5 smoke tests (login/register render + validation, admin gating); provider-level harness suites (chat/search/auth) pending.
+- Widget test suite: 6 widget + 8 provider tests (login/register render + validation, admin gating, chat citations, search/chat providers).
 - Dead dependencies in `frontend/pubspec.yaml` (retrofit, freezed, graphview, fl_chart, ...) — either adopt or prune.
 - Backend `npm run lint` fails on legacy `no-unsafe-*` violations (type-checked config; fix on install) — resolved deps missing previously.
 
 ## Quarter ahead (priority order)
 
-1. Expand Riverpod harness widget tests (auth/chat/search providers, AppShell navigation).
-2. Org invites for user management (email invite + accept flow).
+1. Org invitations for user management (admin invite via email + accept flow).
+2. Dead-dependency cleanup in `frontend/pubspec.yaml` (retrofit/freezed/graphview/fl_chart).
 3. Release hardening: JWT rotation, secrets management, `npm audit` CI gate.

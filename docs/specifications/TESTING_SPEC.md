@@ -57,7 +57,13 @@ npm run test:cov      # coverage
 `ProviderScope`): login renders, login validates empty email, login validates short
 password, register renders, admin screen locks non-admin users out (via an
 `authProvider` override), and chat bubbles render citation chips + source sheet (via a
-`chatProvider` override). Additional planned suites:
+`chatProvider` override). `test/providers_test.dart` — 8 provider unit tests with overridden fake services
+(no network): `SearchNotifier` (hybrid merge of documents/people/graph, keyword mode,
+empty-query short-circuit, error surfacing) and `ChatNotifier` (optimistic user
+message + assistant reply with `sources`, `loadConversation`, send-failure error
+message). Suites run via `flutter test`.
+
+Additional planned suites:
 
 - Auth flow (login/register state machine) with mocked `AuthService`.
 - Chat provider optimistic-send + error path.
