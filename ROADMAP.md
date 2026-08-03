@@ -7,7 +7,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 
 - ✅ Backend API complete (NestJS 11, 16 controllers, ~60 endpoints, WebSocket chat)
 - ✅ Databases wired (PostgreSQL 16 + Prisma, Neo4j, Qdrant, Redis cache w/ in-memory fallback)
-- ✅ Flutter app shell (login/register, chat, hybrid search, graph explorer, profile, admin, documents, connectors)
+- ✅ Flutter app shell (login/register, chat, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
 - ✅ Tests: 42 unit + 36 e2e, all passing
@@ -32,9 +32,9 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 13 | Hybrid retrieval | ✅ | Reranked fusion across 3 sources |
 | 14 | AI chat | ✅ | REST + WebSocket streaming (OpenAI), RAG context |
 | 15 | Citations | 🔄 | `sources` in chat responses; UI rendering pending |
-| 16 | Meeting intelligence | 🔄 | CRUD + summarize endpoint; transcript/AI summary UI pending |
+| 16 | Meeting intelligence | ✅ | CRUD + summarize endpoint; meetings UI (create/list/detail/summarize/delete) |
 | 17 | Expertise discovery | ✅ | Expertise scores, topic search, org summary |
-| 18 | Policy search | 🔄 | CRUD + search; content-policy linking partial |
+| 18 | Policy search | ✅ | CRUD + search + document linking; policies UI (filter/search/create/edit/activate/delete) |
 | 19 | Notifications | ✅ | In-app notifications via domain events |
 | 20 | Admin dashboard | 🔄 | Metrics + audit logs API; dashboard UI pending |
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
@@ -47,14 +47,13 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 
 - Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
 - Android release manifest lacks the `INTERNET` permission (only debug/profile have it).
-- Frontend: 2 of 13 routes are "Coming soon" placeholders (meetings, policies); typed models (freezed) planned.
+- All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned.
 - Frontend `widget_test.dart` needs a `ProviderScope` wrapper to be runnable.
 - Dead dependencies in `frontend/pubspec.yaml` (retrofit, freezed, graphview, fl_chart, ...) — either adopt or prune.
 - Backend `npm run lint` fails on legacy `no-unsafe-*` violations (type-checked config; fix on install) — resolved deps missing previously.
 
 ## Quarter ahead (priority order)
 
-1. Meetings + Policies frontend (transcript/summary/actions; policy linking).
-2. Widget test suite with Riverpod harness; fix `widget_test.dart`.
-3. Org invites for user management (email invite + accept flow).
-4. Release hardening: JWT rotation, Android INTERNET permission, secrets management, `npm audit` CI gate.
+1. Widget test suite with Riverpod harness; fix `widget_test.dart`.
+2. Org invites for user management (email invite + accept flow).
+3. Release hardening: JWT rotation, Android INTERNET permission, secrets management, `npm audit` CI gate.

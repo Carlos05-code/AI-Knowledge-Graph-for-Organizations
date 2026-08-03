@@ -7,6 +7,8 @@ import 'graph_service.dart';
 import 'documents_service.dart';
 import 'users_service.dart';
 import '../../features/connectors/data/connectors_service.dart';
+import '../../features/meetings/data/meetings_service.dart';
+import '../../features/policies/data/policies_service.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient();
@@ -38,4 +40,12 @@ final usersServiceProvider = Provider<UsersService>((ref) {
 
 final connectorsServiceProvider = Provider<ConnectorsService>((ref) {
   return ConnectorsService(ref.watch(apiClientProvider));
+});
+
+final meetingsServiceProvider = Provider<MeetingsService>((ref) {
+  return MeetingsService(ref.watch(apiClientProvider));
+});
+
+final policiesServiceProvider = Provider<PoliciesService>((ref) {
+  return PoliciesService(ref.watch(apiClientProvider));
 });
