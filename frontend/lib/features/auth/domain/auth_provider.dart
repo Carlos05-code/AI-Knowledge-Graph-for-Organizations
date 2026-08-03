@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_providers.dart';
+import '../../../core/api/auth_service.dart';
 import 'auth_state.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final _authService;
+  final AuthService _authService;
 
   AuthNotifier(this._authService) : super(const AuthInitial());
 

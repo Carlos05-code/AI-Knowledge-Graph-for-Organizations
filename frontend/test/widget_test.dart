@@ -12,6 +12,8 @@ import 'package:ai_knowledge_graph/features/notifications/presentation/notificat
 import 'package:ai_knowledge_graph/features/notifications/presentation/notifications_provider.dart';
 import 'package:ai_knowledge_graph/core/api/api_client.dart';
 import 'package:ai_knowledge_graph/core/api/api_providers.dart';
+import 'package:ai_knowledge_graph/core/api/auth_service.dart';
+import 'package:ai_knowledge_graph/core/api/chat_service.dart';
 import 'package:ai_knowledge_graph/core/routing/app_router.dart';
 import 'package:ai_knowledge_graph/features/auth/domain/auth_provider.dart';
 import 'package:ai_knowledge_graph/features/auth/domain/auth_state.dart';
@@ -186,15 +188,17 @@ void main() {
 }
 
 class _FakeAuthNotifier extends AuthNotifier {
-  _FakeAuthNotifier(AuthState initial) : super(_stubService()) {
+  _FakeAuthNotifier(AuthState initial) : super(_StubAuthService()) {
     state = initial;
   }
+}
 
-  static dynamic _stubService() => Object();
+class _StubAuthService extends AuthService {
+  _StubAuthService() : super(ApiClient());
 }
 
 class _FakeChatNotifier extends ChatNotifier {
-  _FakeChatNotifier() : super(Object()) {
+  _FakeChatNotifier() : super(_stub()) {
     state = state.copyWith(
       messages: [
         {'role': 'user', 'content': 'What is the usage policy?'},
@@ -208,6 +212,12 @@ class _FakeChatNotifier extends ChatNotifier {
       ],
     );
   }
+
+  static ChatService _stub() => _StubChatService();
+}
+
+class _StubChatService extends ChatService {
+  _StubChatService() : super(ApiClient());
 }
 
 class FakeNotificationsService extends NotificationsService {

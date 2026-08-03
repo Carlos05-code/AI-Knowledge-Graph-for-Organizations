@@ -40,17 +40,6 @@ class _GraphExplorerScreenState extends ConsumerState<GraphExplorerScreen> {
     }
   }
 
-  Color _colorForType(String? type) {
-    switch (type?.toLowerCase()) {
-      case 'person': return Colors.blue;
-      case 'project': return Colors.green;
-      case 'technology': return Colors.orange;
-      case 'document': return Colors.purple;
-      case 'meeting': return Colors.red;
-      default: return Colors.grey;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

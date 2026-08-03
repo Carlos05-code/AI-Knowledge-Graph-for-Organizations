@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_providers.dart';
+import '../../../core/api/chat_service.dart';
 
 class ChatState {
   final List<Map<String, dynamic>> messages;
@@ -34,7 +35,7 @@ class ChatState {
 }
 
 class ChatNotifier extends StateNotifier<ChatState> {
-  final _chatService;
+  final ChatService _chatService;
 
   ChatNotifier(this._chatService) : super(const ChatState());
 

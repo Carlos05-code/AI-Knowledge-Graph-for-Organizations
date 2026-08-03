@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_providers.dart';
+import '../../../core/api/search_service.dart';
 
 class SearchState {
   final String query;
@@ -34,7 +35,7 @@ class SearchState {
 }
 
 class SearchNotifier extends StateNotifier<SearchState> {
-  final _searchService;
+  final SearchService _searchService;
 
   SearchNotifier(this._searchService) : super(const SearchState());
 
