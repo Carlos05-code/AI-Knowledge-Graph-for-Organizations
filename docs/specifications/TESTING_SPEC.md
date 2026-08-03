@@ -53,10 +53,11 @@ npm run test:cov      # coverage
 
 ## 4. Frontend tests
 
-`test/widget_test.dart` — 5 passing widget tests (all pumped inside a
+`test/widget_test.dart` — 6 passing widget tests (all pumped inside a
 `ProviderScope`): login renders, login validates empty email, login validates short
-password, register renders, and admin screen locks non-admin users out (via an
-`authProvider` override). Additional planned suites:
+password, register renders, admin screen locks non-admin users out (via an
+`authProvider` override), and chat bubbles render citation chips + source sheet (via a
+`chatProvider` override). Additional planned suites:
 
 - Auth flow (login/register state machine) with mocked `AuthService`.
 - Chat provider optimistic-send + error path.

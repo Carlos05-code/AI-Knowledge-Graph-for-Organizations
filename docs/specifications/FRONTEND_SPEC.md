@@ -26,7 +26,7 @@ lib/
     ├── connectors/             # connectors_screen (list/add/config/test/sync/runs)
     ├── meetings/               # meetings_screen (create/list/detail/summarize/delete)
     ├── policies/               # policies_screen (search/filter/create/edit/activate/delete)
-    ├── chat/                   # chat_screen + chat_provider (state next to screen)
+    ├── chat/                   # chat_screen + chat_provider; citations from message `sources`
     ├── search/                 # search_screen + search_provider
     ├── graph/                  # graph_explorer_screen (CustomPaint)
     ├── home/                   # dashboard quick actions
@@ -42,7 +42,7 @@ All shell routes are wired to real screens.
 | `/login` | LoginScreen | public |
 | `/register` | RegisterScreen | public |
 | `/` | HomeScreen | JWT |
-| `/chat` `/chat/:conversationId` | ChatScreen | JWT |
+| `/chat` `/chat/:conversationId` | ChatScreen (streamed, citation chips) | JWT |
 | `/search` | SearchScreen | JWT |
 | `/documents` | DocumentsScreen (list, filter, upload, detail, process/delete) | JWT |
 | `/graph` | GraphExplorerScreen | JWT |

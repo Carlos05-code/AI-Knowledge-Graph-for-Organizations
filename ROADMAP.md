@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 42 unit + 36 e2e + 5 widget tests, all passing
+- ✅ Tests: 42 unit + 36 e2e + 6 widget tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -40,7 +40,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 42 unit + 36 e2e + 5 widget tests; load/security suites pending |
+| 24 | Testing | 🔄 | 42 unit + 36 e2e + 6 widget tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases

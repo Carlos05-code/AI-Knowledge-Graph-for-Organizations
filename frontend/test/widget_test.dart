@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ai_knowledge_graph/features/auth/presentation/login_screen.dart';
 import 'package:ai_knowledge_graph/features/auth/presentation/register_screen.dart';
 import 'package:ai_knowledge_graph/features/admin/admin_screen.dart';
+import 'package:ai_knowledge_graph/features/chat/presentation/chat_provider.dart';
+import 'package:ai_knowledge_graph/features/chat/presentation/chat_screen.dart';
 import 'package:ai_knowledge_graph/features/auth/domain/auth_provider.dart';
 import 'package:ai_knowledge_graph/features/auth/domain/auth_state.dart';
 
@@ -58,13 +60,15 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            authProvider.overrideWith((ref) => _FakeAuthNotifier(
-                  const Authenticated(
-                    userId: 'u1',
-                    email: 'viewer@test.com',
-                    role: 'USER',
-                  ),
-                )),
+            authProvider.overrideWith(
+              (ref) => _FakeAuthNotifier(
+                const Authenticated(
+                  userId: 'u1',
+                  email: 'viewer@test.com',
+                  role: 'USER',
+                ),
+              ),
+            ),
           ],
           child: const MaterialApp(home: AdminScreen()),
         ),
@@ -72,6 +76,27 @@ void main() {
       await tester.pump();
 
       expect(find.text('Administrator access required'), findsOneWidget);
+    });
+  });
+
+  group('ChatScreen', () {
+    testWidgets('renders citation chips with title', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [chatProvider.overrideWith((ref) => _FakeChatNotifier())],
+          child: const MaterialApp(home: ChatScreen()),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Usage Policy rev 12'), findsOneWidget);
+      expect(find.text('Sources'), findsOneWidget);
+
+      await tester.tap(find.text('Usage Policy rev 12'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Citation'), findsOneWidget);
+      expect(find.text('document'), findsOneWidget);
     });
   });
 }
@@ -82,4 +107,21 @@ class _FakeAuthNotifier extends AuthNotifier {
   }
 
   static dynamic _stubService() => Object();
+}
+
+class _FakeChatNotifier extends ChatNotifier {
+  _FakeChatNotifier() : super(Object()) {
+    state = state.copyWith(
+      messages: [
+        {'role': 'user', 'content': 'What is the usage policy?'},
+        {
+          'role': 'assistant',
+          'content': 'The usage policy is defined in the linked document.',
+          'sources': [
+            {'title': 'Usage Policy rev 12', 'id': 'doc-1', 'type': 'document'},
+          ],
+        },
+      ],
+    );
+  }
 }
