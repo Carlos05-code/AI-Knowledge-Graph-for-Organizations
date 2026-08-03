@@ -5,7 +5,7 @@
 | Level | Tool | Count | Status |
 |---|---|---|---|
 | Unit (backend) | Jest + ts-jest | 36 | ✅ passing |
-| e2e (backend) | Jest + Supertest | 31 | ✅ passing |
+| e2e (backend) | Jest + Supertest | 32 | ✅ passing |
 | Widget (frontend) | flutter_test | 2 | ⚠️ need ProviderScope fix |
 | Performance | k6 | — | ⬜ planned |
 | Security | npm audit / OWASP checks | — | ⬜ planned |
@@ -34,7 +34,7 @@ cache-manager-redis-yet, bcrypt) and asserts:
 
 - health (full check + live)
 - auth: register, login, invalid login 401, validation 400s
-- documents: create (ADMIN), list, admin-only delete (403/200)
+- documents: create (ADMIN), list + pagination coercion (string→int query), admin-only delete (403/200)
 - search: hybrid + suggestions; graph: nodes + raw Cypher (401/403/ADMIN only)
 - users: profile (200/401), profile update, members list + role update (RBAC 403/200)
 - chat: messages + conversations; connectors: admin-only POST
@@ -63,7 +63,7 @@ in `ProviderScope` is scheduled (ROADMAP). Additional planned suites:
 ## 5. Coverage goals
 
 - Backend unit: ≥ 80% statements for services/controllers (currently ~50–90% per suite).
-- e2e: every public endpoint exercised at least once (current: 31 specs covering all 17 controllers).
+- e2e: every public endpoint exercised at least once (current: 32 specs covering all 17 controllers).
 - Frontend: critical flows (auth, chat, search) ≥ 70%.
 
 ## 6. Performance & load (planned)

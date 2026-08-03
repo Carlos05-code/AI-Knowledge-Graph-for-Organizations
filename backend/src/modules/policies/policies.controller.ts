@@ -38,16 +38,16 @@ export class PoliciesController {
   @ApiOperation({ summary: 'List policies' })
   findAll(
     @CurrentUser() user: any,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
     @Query('category') category?: string,
-    @Query('active') active?: boolean,
+    @Query('active') active?: string,
   ) {
     return this.policiesService.findAll(user.organizationId, {
-      page,
-      limit,
+      page: Number(page) || 1,
+      limit: Number(limit) || 20,
       category,
-      active,
+      active: active === undefined ? undefined : active === 'true',
     });
   }
 

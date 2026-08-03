@@ -67,3 +67,6 @@ Desktop.ini
 *.pem
 *.cert
 secrets/
+
+# Uploaded artifacts
+backend/uploads/

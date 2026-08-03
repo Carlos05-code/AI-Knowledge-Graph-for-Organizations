@@ -25,14 +25,14 @@ export class AdminController {
   @ApiOperation({ summary: 'Get audit logs' })
   getAuditLogs(
     @CurrentUser() user: any,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
     @Query('entity') entity?: string,
     @Query('action') action?: string,
   ) {
     return this.adminService.getAuditLogs(user.organizationId, {
-      page,
-      limit,
+      page: Number(page) || 1,
+      limit: Number(limit) || 20,
       entity,
       action,
     });

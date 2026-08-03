@@ -35,14 +35,14 @@ export class DocumentsController {
   @ApiOperation({ summary: 'List documents' })
   findAll(
     @CurrentUser() user: any,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
     @Query('status') status?: string,
     @Query('source') source?: string,
   ) {
     return this.documentsService.findAll(user.organizationId, {
-      page,
-      limit,
+      page: Number(page) || 1,
+      limit: Number(limit) || 20,
       status,
       source,
     });

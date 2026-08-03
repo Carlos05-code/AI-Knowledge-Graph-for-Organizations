@@ -18,18 +18,18 @@ export class GapsController {
   @ApiOperation({ summary: 'List detected knowledge gaps' })
   getGaps(
     @CurrentUser() user: any,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
     @Query('severity') severity?: string,
     @Query('category') category?: string,
-    @Query('resolved') resolved?: boolean,
+    @Query('resolved') resolved?: string,
   ) {
     return this.gapsService.getGaps(user.organizationId, {
-      page,
-      limit,
+      page: Number(page) || 1,
+      limit: Number(limit) || 20,
       severity,
       category,
-      resolved,
+      resolved: resolved === undefined ? undefined : resolved === 'true',
     });
   }
 

@@ -33,11 +33,14 @@ export class MeetingsController {
   @Get()
   @ApiOperation({ summary: 'List meetings' })
   findAll(
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
     @CurrentUser() user: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.meetingsService.findAll(user.organizationId, { page, limit });
+    return this.meetingsService.findAll(user.organizationId, {
+      page: Number(page) || 1,
+      limit: Number(limit) || 20,
+    });
   }
 
   @Get(':id')

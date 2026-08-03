@@ -7,7 +7,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 
 - ✅ Backend API complete (NestJS 11, 16 controllers, ~60 endpoints, WebSocket chat)
 - ✅ Databases wired (PostgreSQL 16 + Prisma, Neo4j, Qdrant, Redis cache w/ in-memory fallback)
-- ✅ Flutter app shell (login/register, chat, hybrid search, graph explorer, profile, admin)
+- ✅ Flutter app shell (login/register, chat, hybrid search, graph explorer, profile, admin, documents)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
 - ✅ Tests: 36 unit + 31 e2e, all passing
@@ -23,7 +23,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 4 | Authentication | ✅ | JWT login/register/refresh/me, RBAC roles |
 | 5 | User management | ✅ | Profile edit, org members list + search, role/status management (ADMIN), self-demotion guard; invites pending |
 | 6 | Connector framework | 🔄 | Registry + Google Drive adapter real; Slack/GitHub stubs |
-| 7 | Document ingestion pipeline | 🔄 | Upload → checksum → chunk (512/64) → Qdrant; OCR & versions partial |
+| 7 | Document ingestion pipeline | ✅ | Upload → checksum → chunk (512/64) → Qdrant; docs UI (list/upload/detail/process/delete); OCR & versions partial |
 | 8 | OCR pipeline | ⬜ | Tesseract integration for scanned PDFs/images |
 | 9 | Embedding service | ✅ | OpenAI `text-embedding-3-small` + deterministic fallback |
 | 10 | Vector database integration | ✅ | Qdrant, cosine, collection `knowledge_chunks` |
@@ -47,15 +47,14 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 
 - Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
 - Android release manifest lacks the `INTERNET` permission (only debug/profile have it).
-- Frontend: 4 of 13 routes are "Coming soon" placeholders (documents, connectors, meetings, policies); typed models (freezed) planned.
+- Frontend: 3 of 13 routes are "Coming soon" placeholders (connectors, meetings, policies); typed models (freezed) planned.
 - Frontend `widget_test.dart` needs a `ProviderScope` wrapper to be runnable.
 - Dead dependencies in `frontend/pubspec.yaml` (retrofit, freezed, graphview, fl_chart, ...) — either adopt or prune.
 - Backend `npm run lint` fails on legacy `no-unsafe-*` violations (type-checked config; fix on install) — resolved deps missing previously.
 
 ## Quarter ahead (priority order)
 
-1. Documents feature UI (list/upload/process/delete).
-2. Connector UI + real Slack adapter.
-3. Widget test suite with Riverpod harness; fix `widget_test.dart`.
-4. Org invites for user management (email invite + accept flow).
-5. Release hardening: JWT rotation, Android INTERNET permission, secrets management, `npm audit` CI gate.
+1. Connector UI + real Slack adapter.
+2. Widget test suite with Riverpod harness; fix `widget_test.dart`.
+3. Org invites for user management (email invite + accept flow).
+4. Release hardening: JWT rotation, Android INTERNET permission, secrets management, `npm audit` CI gate.

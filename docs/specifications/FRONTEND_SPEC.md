@@ -20,17 +20,18 @@ lib/
 │   └── widgets/app_shell.dart   # NavigationRail shell
 └── features/
     ├── auth/                    # login, register, AuthNotifier, AuthState
-    ├── admin/                   # admin_screen (members list, role/status management)
-    ├── settings/                # settings_screen (profile edit)
-    ├── chat/                    # chat_screen + chat_provider (state next to screen)
-    ├── search/                  # search_screen + search_provider
-    ├── graph/                   # graph_explorer_screen (CustomPaint)
-    ├── home/                    # dashboard quick actions
-    └── shell/                   # ShellPlaceholder ("Coming soon")
+    ├── admin/                  # admin_screen (members list, role/status management)
+    ├── settings/               # settings_screen (profile edit)
+    ├── documents/              # documents_screen (list, upload, detail, process, delete)
+    ├── chat/                   # chat_screen + chat_provider (state next to screen)
+    ├── search/                 # search_screen + search_provider
+    ├── graph/                  # graph_explorer_screen (CustomPaint)
+    ├── home/                   # dashboard quick actions
+    └── shell/                  # ShellPlaceholder ("Coming soon")
 ```
 
-Remaining placeholder feature dirs (empty): `documents/`, `connectors/`, `meetings/`,
-`policies/` — planned next.
+Remaining placeholder feature dirs (empty): `connectors/`, `meetings/`, `policies/`
+— planned next.
 
 ## 3. Routing
 
@@ -41,7 +42,7 @@ Remaining placeholder feature dirs (empty): `documents/`, `connectors/`, `meetin
 | `/` | HomeScreen | JWT |
 | `/chat` `/chat/:conversationId` | ChatScreen | JWT |
 | `/search` | SearchScreen | JWT |
-| `/documents` | ShellPlaceholder | JWT |
+| `/documents` | DocumentsScreen (list, filter, upload, detail, process/delete) | JWT |
 | `/graph` | GraphExplorerScreen | JWT |
 | `/connectors` `/meetings` `/policies` | ShellPlaceholder | JWT |
 | `/admin` | AdminScreen (members + RBAC; non-admin gets locked view) | JWT |
@@ -102,7 +103,7 @@ See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) for full tokens. Highlights:
 
 ## 10. Known gaps (documented, tracked)
 
-- 4 placeholder routes ("Coming soon": documents, connectors, meetings, policies).
+- 3 placeholder routes ("Coming soon": connectors, meetings, policies).
 - No typed models (`Map<String, dynamic>` everywhere) — freezed planned.
 - `widget_test.dart` tests are not runnable as written (no `ProviderScope`).
 - Android release manifest lacks `INTERNET` permission (debug/profile only).

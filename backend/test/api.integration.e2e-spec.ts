@@ -426,6 +426,25 @@ describe('API Integration (e2e)', () => {
         .expect(200);
     });
 
+    it('GET /api/v1/documents should coerce string query pagination to integers', async () => {
+      mockPrisma.document.findMany.mockResolvedValue([]);
+      mockPrisma.document.count.mockResolvedValue(0);
+
+      await request(app.getHttpServer())
+        .get('/api/v1/documents?page=2&limit=5')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200)
+        .expect((res) => {
+          const meta = res.body.data.meta;
+          expect(meta.page).toBe(2);
+          expect(meta.limit).toBe(5);
+        });
+
+      expect(mockPrisma.document.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 5, take: 5 }),
+      );
+    });
+
     it('DELETE /api/v1/documents/:id should require ADMIN role', async () => {
       await request(app.getHttpServer())
         .delete('/api/v1/documents/doc-1')

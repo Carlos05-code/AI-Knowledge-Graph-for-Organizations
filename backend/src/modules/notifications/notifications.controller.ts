@@ -24,14 +24,14 @@ export class NotificationsController {
   @ApiOperation({ summary: 'List notifications' })
   findAll(
     @CurrentUser() user: any,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
-    @Query('unreadOnly') unreadOnly?: boolean,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('unreadOnly') unreadOnly?: string,
   ) {
     return this.notificationsService.findAll(user.id, {
-      page,
-      limit,
-      unreadOnly,
+      page: Number(page) || 1,
+      limit: Number(limit) || 20,
+      unreadOnly: unreadOnly === undefined ? undefined : unreadOnly === 'true',
     });
   }
 

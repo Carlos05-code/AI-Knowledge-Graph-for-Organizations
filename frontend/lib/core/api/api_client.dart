@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -47,6 +48,18 @@ class ApiClient {
 
   Future<Response<T>> delete<T>(String path) =>
       _dio.delete<T>(path);
+
+  Future<Response<T>> upload<T>(
+    String path, {
+    required String fileName,
+    required Uint8List bytes,
+    required String mimeType,
+  }) {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: fileName, contentType: DioMediaType.parse(mimeType)),
+    });
+    return _dio.post<T>(path, data: formData);
+  }
 }
 
 class AuthInterceptor extends Interceptor {

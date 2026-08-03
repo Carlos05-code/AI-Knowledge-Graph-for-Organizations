@@ -18,7 +18,7 @@ describe('DocumentsService', () => {
       update: jest.fn(),
       count: jest.fn(),
     },
-    chunk: { createMany: jest.fn(), findMany: jest.fn() },
+    chunk: { createMany: jest.fn(), findMany: jest.fn(), deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
   };
 
   const mockNeo4j = { createNode: jest.fn(), deleteNode: jest.fn() };

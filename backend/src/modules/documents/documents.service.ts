@@ -149,6 +149,7 @@ export class DocumentsService {
       where: { id },
       data: { status: 'PROCESSING' },
     });
+    await this.prisma.chunk.deleteMany({ where: { documentId: id } });
 
     try {
       const content = await this.readDocumentContent(doc);

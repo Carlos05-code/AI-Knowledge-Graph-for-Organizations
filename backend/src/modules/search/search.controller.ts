@@ -18,14 +18,14 @@ export class SearchController {
     @Query('q') query: string,
     @Query('mode') mode?: 'keyword' | 'semantic' | 'hybrid',
     @Query('type') type?: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     return this.searchService.hybridSearch(query, user.organizationId, {
       mode,
       type,
-      page,
-      limit,
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
     });
   }
 

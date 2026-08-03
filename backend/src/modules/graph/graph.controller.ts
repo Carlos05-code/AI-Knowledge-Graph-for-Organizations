@@ -25,10 +25,10 @@ export class GraphController {
   @ApiOperation({ summary: 'Get graph nodes' })
   getNodes(
     @Query('type') type?: string,
-    @Query('limit') limit?: number,
-    @Query('skip') skip?: number,
+    @Query('limit') limit?: string,
+    @Query('skip') skip?: string,
   ) {
-    return this.neo4j.queryNodes(type, limit || 50, skip || 0);
+    return this.neo4j.queryNodes(type, Number(limit) || 50, Number(skip) || 0);
   }
 
   @Get('nodes/:id')
@@ -45,8 +45,8 @@ export class GraphController {
 
   @Get('subgraph/:id')
   @ApiOperation({ summary: 'Get subgraph around a node' })
-  getSubgraph(@Param('id') id: string, @Query('depth') depth?: number) {
-    return this.neo4j.getSubgraph(id, depth || 2);
+  getSubgraph(@Param('id') id: string, @Query('depth') depth?: string) {
+    return this.neo4j.getSubgraph(id, Number(depth) || 2);
   }
 
   @Post('query')

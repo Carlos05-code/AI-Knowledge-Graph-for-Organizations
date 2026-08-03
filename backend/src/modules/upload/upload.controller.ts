@@ -5,7 +5,6 @@ import {
   UploadedFile,
   MaxFileSizeValidator,
   ParseFilePipe,
-  FileTypeValidator,
   UseGuards,
   BadRequestException,
 } from '@nestjs/common';
@@ -72,9 +71,6 @@ export class UploadController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 50 * 1024 * 1024 }),
-          new FileTypeValidator({
-            fileType: '.(pdf|docx|pptx|xlsx|md|txt|html|png|jpg|jpeg|tiff)',
-          }),
         ],
       }),
     )
