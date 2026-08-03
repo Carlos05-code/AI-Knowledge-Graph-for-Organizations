@@ -12,6 +12,8 @@ import 'package:ai_knowledge_graph/features/notifications/presentation/notificat
 import 'package:ai_knowledge_graph/features/notifications/presentation/notifications_provider.dart';
 import 'package:ai_knowledge_graph/core/api/api_client.dart';
 import 'package:ai_knowledge_graph/core/api/api_providers.dart';
+import 'package:ai_knowledge_graph/core/routing/app_router.dart';
+import 'package:ai_knowledge_graph/core/widgets/app_shell.dart';
 import 'package:ai_knowledge_graph/features/auth/domain/auth_provider.dart';
 import 'package:ai_knowledge_graph/features/auth/domain/auth_state.dart';
 
@@ -130,6 +132,56 @@ void main() {
         tester.element(find.byType(NotificationsScreen)),
       ).read(notificationsProvider);
       expect(state.unreadCount, 1);
+    });
+  });
+
+  group('AppRouter', () {
+    testWidgets('redirects unauthenticated users to login', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            routerConfig: container.read(appRouterProvider),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sign in to your organization'), findsOneWidget);
+    });
+
+    testWidgets('authenticated user lands on home shell', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            (ref) => _FakeAuthNotifier(
+              const Authenticated(
+                userId: 'u1',
+                email: 'admin@test.com',
+                role: 'ADMIN',
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            routerConfig: container.read(appRouterProvider),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Welcome'), findsOneWidget);
+      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.text('Alerts'), findsWidgets);
     });
   });
 }

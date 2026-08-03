@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat w/ citations, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies, notifications)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 42 unit + 36 e2e + 18 frontend tests, all passing
+- ✅ Tests: 42 unit + 36 e2e + 20 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -40,7 +40,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 42 unit + 36 e2e + 18 frontend tests; load/security suites pending |
+| 24 | Testing | 🔄 | 42 unit + 36 e2e + 20 frontend tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
@@ -49,7 +49,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned.
 - Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
 - All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned. `freezed`/`json_serializable` were pruned with the other dead deps; a small `json_annotation`-only codegen for models could return later.
-- Widget test suite: 7 widget + 11 provider tests (login/register, admin gating, chat citations, notifications UI + provider; search/chat providers).
+- Widget test suite: 9 widget + 11 provider tests (login/register, admin gating, chat citations, notifications UI + provider, router redirect/shell; search/chat providers).
 - Backend `npm run lint` fails on legacy `no-unsafe-*` violations (type-checked config; fix on install) — resolved deps missing previously.
 
 ## Quarter ahead (priority order)
