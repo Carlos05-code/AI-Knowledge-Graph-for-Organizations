@@ -53,9 +53,10 @@ npm run test:cov      # coverage
 
 ## 4. Frontend tests
 
-`test/widget_test.dart` — 2 login-screen widget tests. **Note**: they pump
-`LoginScreen` without a `ProviderScope`, so they fail at runtime; fixing them by wrapping
-in `ProviderScope` is scheduled (ROADMAP). Additional planned suites:
+`test/widget_test.dart` — 5 passing widget tests (all pumped inside a
+`ProviderScope`): login renders, login validates empty email, login validates short
+password, register renders, and admin screen locks non-admin users out (via an
+`authProvider` override). Additional planned suites:
 
 - Auth flow (login/register state machine) with mocked `AuthService`.
 - Chat provider optimistic-send + error path.

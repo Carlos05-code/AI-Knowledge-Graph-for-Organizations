@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 42 unit + 36 e2e, all passing
+- ✅ Tests: 42 unit + 36 e2e + 5 widget tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -36,24 +36,23 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 17 | Expertise discovery | ✅ | Expertise scores, topic search, org summary |
 | 18 | Policy search | ✅ | CRUD + search + document linking; policies UI (filter/search/create/edit/activate/delete) |
 | 19 | Notifications | ✅ | In-app notifications via domain events |
-| 20 | Admin dashboard | 🔄 | Metrics + audit logs API; dashboard UI pending |
+| 20 | Admin dashboard | ✅ | Metrics + audit logs API; dashboard UI (Overview/Members/Audit Logs tabs) |
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 42 unit + 36 e2e; widget/load/security suites pending |
+| 24 | Testing | 🔄 | 42 unit + 36 e2e + 5 widget tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
 
 - Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
-- Android release manifest lacks the `INTERNET` permission (only debug/profile have it).
 - All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned.
-- Frontend `widget_test.dart` needs a `ProviderScope` wrapper to be runnable.
+- Widget test suite covers 5 smoke tests (login/register render + validation, admin gating); provider-level harness suites (chat/search/auth) pending.
 - Dead dependencies in `frontend/pubspec.yaml` (retrofit, freezed, graphview, fl_chart, ...) — either adopt or prune.
 - Backend `npm run lint` fails on legacy `no-unsafe-*` violations (type-checked config; fix on install) — resolved deps missing previously.
 
 ## Quarter ahead (priority order)
 
-1. Widget test suite with Riverpod harness; fix `widget_test.dart`.
+1. Expand Riverpod harness widget tests (auth/chat/search providers, AppShell navigation).
 2. Org invites for user management (email invite + accept flow).
-3. Release hardening: JWT rotation, Android INTERNET permission, secrets management, `npm audit` CI gate.
+3. Release hardening: JWT rotation, secrets management, `npm audit` CI gate.

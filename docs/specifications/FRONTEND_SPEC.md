@@ -20,9 +20,8 @@ lib/
 │   └── widgets/app_shell.dart   # NavigationRail shell
 └── features/
     ├── auth/                    # login, register, AuthNotifier, AuthState
-    ├── admin/                  # admin_screen (members list, role/status management)
+    ├── admin/                  # admin_screen (tabs: Overview dashboard, Members RBAC, Audit Logs)
     ├── settings/               # settings_screen (profile edit)
-    ├── documents/              # documents_screen (list, upload, detail, process, delete)
     ├── documents/              # documents_screen (list, upload, detail, process, delete)
     ├── connectors/             # connectors_screen (list/add/config/test/sync/runs)
     ├── meetings/               # meetings_screen (create/list/detail/summarize/delete)
@@ -79,7 +78,7 @@ Graph explorer intentionally uses local `setState` + `ref.read` (self-contained 
   JSON-decoded.
 - Services: `AuthService`, `ChatService`, `SearchService`, `GraphService`,
   `DocumentsService`, `UsersService`, `ConnectorsService`, `MeetingsService`,
-  `PoliciesService` (hand-written Dio calls; retrofit unused).
+  `PoliciesService`, `AdminService` (hand-written Dio calls; retrofit unused).
 
 Connectors flow: FAB (ADMIN) → create sheet (type/name/JSON credentials/optional channel +
 interval) → `POST /connectors`; tile → detail sheet (`GET /connectors/:id` + `/runs`) with
@@ -95,6 +94,11 @@ Policies flow: search-as-you-type field (`GET /policies/search?q=` — active on
 filtered list (category chips + active switch, paged); FAB (ADMIN) → create sheet;
 detail sheet with content + linked documents; admin actions: edit (inline), toggle
 active, delete.
+
+Admin flow: three tabs — Overview (`GET /admin/dashboard` stat cards + recent
+activity), Members (existing RBAC management), Audit Logs (`GET /admin/audit-logs`
+with entity/action filters + pagination). Access is gated to `ADMIN` (non-admin sees
+a locked view).
 
 ## 6. Design system
 
@@ -125,7 +129,6 @@ See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) for full tokens. Highlights:
 ## 10. Known gaps (documented, tracked)
 
 - No typed models (`Map<String, dynamic>` everywhere) — freezed planned.
-- `widget_test.dart` tests are not runnable as written (no `ProviderScope`).
-- Android release manifest lacks `INTERNET` permission (debug/profile only).
+- `widget_test.dart` runs (5 passing widget tests); broader Riverpod harness suites planned.
 - Dead dependencies in pubspec (retrofit, graphview, fl_chart, ...) — prune or adopt.
 - `ApiClient` base URL hardcoded to localhost — needs build-time config (`--dart-define`).
