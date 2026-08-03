@@ -26,6 +26,7 @@ lib/
     ├── connectors/             # connectors_screen (list/add/config/test/sync/runs)
     ├── meetings/               # meetings_screen (create/list/detail/summarize/delete)
     ├── policies/               # policies_screen (search/filter/create/edit/activate/delete)
+    ├── notifications/          # notifications_screen + provider (unread badge, mark read/delete)
     ├── chat/                   # chat_screen + chat_provider; citations from message `sources`
     ├── search/                 # search_screen + search_provider
     ├── graph/                  # graph_explorer_screen (CustomPaint)
@@ -49,6 +50,7 @@ All shell routes are wired to real screens.
 | `/connectors` | ConnectorsScreen (list, add, config, test, sync, runs) | JWT |
 | `/meetings` | MeetingsScreen (list, create, detail, summarize, delete) | JWT |
 | `/policies` | PoliciesScreen (search, filter, admin CRUD) | JWT |
+| `/notifications` | NotificationsScreen (list, mark read/all, swipe delete) | JWT |
 | `/admin` | AdminScreen (members + RBAC; non-admin gets locked view) | JWT |
 | `/settings` | SettingsScreen (profile edit) | JWT |
 
@@ -78,7 +80,8 @@ Graph explorer intentionally uses local `setState` + `ref.read` (self-contained 
   JSON-decoded.
 - Services: `AuthService`, `ChatService`, `SearchService`, `GraphService`,
   `DocumentsService`, `UsersService`, `ConnectorsService`, `MeetingsService`,
-  `PoliciesService`, `AdminService` (hand-written Dio calls; retrofit unused).
+  `PoliciesService`, `AdminService`, `NotificationsService` (hand-written Dio calls;
+  retrofit unused).
 
 Connectors flow: FAB (ADMIN) → create sheet (type/name/JSON credentials/optional channel +
 interval) → `POST /connectors`; tile → detail sheet (`GET /connectors/:id` + `/runs`) with
@@ -99,6 +102,11 @@ Admin flow: three tabs — Overview (`GET /admin/dashboard` stat cards + recent
 activity), Members (existing RBAC management), Audit Logs (`GET /admin/audit-logs`
 with entity/action filters + pagination). Access is gated to `ADMIN` (non-admin sees
 a locked view).
+
+Notifications flow: unread count provider (`GET /notifications/unread-count`)
+refreshed on shell mount; rail Badge on the Alerts destination; screen lists
+`GET /notifications` (paged), tap marks read (`POST :id/read`), swipe deletes
+(`DELETE :id`), app-bar action marks all read (`POST /read-all`).
 
 ## 6. Design system
 

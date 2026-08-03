@@ -15,6 +15,7 @@ import '../../features/documents/documents_screen.dart';
 import '../../features/connectors/presentation/connectors_screen.dart';
 import '../../features/meetings/presentation/meetings_screen.dart';
 import '../../features/policies/presentation/policies_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -24,21 +25,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: true,
     redirect: (context, state) {
       final isAuthenticated = authState is Authenticated;
-      final isAuthRoute = state.matchedLocation == '/login' || state.matchedLocation == '/register';
+      final isAuthRoute =
+          state.matchedLocation == '/login' ||
+          state.matchedLocation == '/register';
 
       if (!isAuthenticated && !isAuthRoute) return '/login';
       if (isAuthenticated && isAuthRoute) return '/';
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (_, __) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/register',
-        builder: (_, __) => const RegisterScreen(),
-      ),
+      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
       ShellRoute(
         builder: (_, __, child) => AppShell(child: child),
         routes: [
@@ -49,18 +46,42 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: ':conversationId',
-                builder: (_, state) => ChatScreen(conversationId: state.pathParameters['conversationId']),
+                builder: (_, state) => ChatScreen(
+                  conversationId: state.pathParameters['conversationId'],
+                ),
               ),
             ],
           ),
           GoRoute(path: '/search', builder: (_, __) => const SearchScreen()),
-          GoRoute(path: '/documents', builder: (_, __) => const DocumentsScreen()),
-          GoRoute(path: '/graph', builder: (_, __) => const GraphExplorerScreen()),
-          GoRoute(path: '/connectors', builder: (_, __) => const ConnectorsScreen()),
-          GoRoute(path: '/meetings', builder: (_, __) => const MeetingsScreen()),
-          GoRoute(path: '/policies', builder: (_, __) => const PoliciesScreen()),
+          GoRoute(
+            path: '/documents',
+            builder: (_, __) => const DocumentsScreen(),
+          ),
+          GoRoute(
+            path: '/graph',
+            builder: (_, __) => const GraphExplorerScreen(),
+          ),
+          GoRoute(
+            path: '/connectors',
+            builder: (_, __) => const ConnectorsScreen(),
+          ),
+          GoRoute(
+            path: '/meetings',
+            builder: (_, __) => const MeetingsScreen(),
+          ),
+          GoRoute(
+            path: '/policies',
+            builder: (_, __) => const PoliciesScreen(),
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (_, __) => const NotificationsScreen(),
+          ),
           GoRoute(path: '/admin', builder: (_, __) => const AdminScreen()),
-          GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+          GoRoute(
+            path: '/settings',
+            builder: (_, __) => const SettingsScreen(),
+          ),
         ],
       ),
     ],

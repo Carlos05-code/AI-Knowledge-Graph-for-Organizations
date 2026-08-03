@@ -7,12 +7,16 @@ import 'package:ai_knowledge_graph/core/api/search_service.dart';
 import 'package:ai_knowledge_graph/core/api/api_providers.dart';
 import 'package:ai_knowledge_graph/features/chat/presentation/chat_provider.dart';
 import 'package:ai_knowledge_graph/features/search/presentation/search_provider.dart';
+import 'package:ai_knowledge_graph/features/notifications/data/notifications_service.dart';
+import 'package:ai_knowledge_graph/features/notifications/presentation/notifications_provider.dart';
 
 void main() {
   group('SearchNotifier', () {
     test('defaults to hybrid mode', () {
       final container = ProviderContainer(
-        overrides: [searchServiceProvider.overrideWithValue(FakeSearchService())],
+        overrides: [
+          searchServiceProvider.overrideWithValue(FakeSearchService()),
+        ],
       );
       addTearDown(container.dispose);
 
@@ -22,7 +26,9 @@ void main() {
 
     test('hybrid search merges documents, people and graph results', () async {
       final container = ProviderContainer(
-        overrides: [searchServiceProvider.overrideWithValue(FakeSearchService())],
+        overrides: [
+          searchServiceProvider.overrideWithValue(FakeSearchService()),
+        ],
       );
       addTearDown(container.dispose);
 
@@ -32,13 +38,17 @@ void main() {
       final state = container.read(searchProvider);
       expect(state.isLoading, false);
       expect(state.results.length, 3);
-      expect(state.results.map((r) => r['title']),
-          containsAll(['Doc A', 'Person B', 'Entity C']));
+      expect(
+        state.results.map((r) => r['title']),
+        containsAll(['Doc A', 'Person B', 'Entity C']),
+      );
     });
 
     test('keyword mode returns direct results', () async {
       final container = ProviderContainer(
-        overrides: [searchServiceProvider.overrideWithValue(FakeSearchService())],
+        overrides: [
+          searchServiceProvider.overrideWithValue(FakeSearchService()),
+        ],
       );
       addTearDown(container.dispose);
 
@@ -53,7 +63,9 @@ void main() {
 
     test('empty query clears results without loading', () async {
       final container = ProviderContainer(
-        overrides: [searchServiceProvider.overrideWithValue(FakeSearchService())],
+        overrides: [
+          searchServiceProvider.overrideWithValue(FakeSearchService()),
+        ],
       );
       addTearDown(container.dispose);
 
@@ -81,24 +93,28 @@ void main() {
   });
 
   group('ChatNotifier', () {
-    test('new conversation appends user message then assistant reply with sources',
-        () async {
-      final container = ProviderContainer(
-        overrides: [chatServiceProvider.overrideWithValue(FakeChatService())],
-      );
-      addTearDown(container.dispose);
+    test(
+      'new conversation appends user message then assistant reply with sources',
+      () async {
+        final container = ProviderContainer(
+          overrides: [chatServiceProvider.overrideWithValue(FakeChatService())],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(chatProvider.notifier).sendMessage('What is the policy?');
+        await container
+            .read(chatProvider.notifier)
+            .sendMessage('What is the policy?');
 
-      final state = container.read(chatProvider);
-      expect(state.isSending, false);
-      expect(state.conversationId, 'conv-1');
-      expect(state.messages.length, 2);
-      expect(state.messages.first['role'], 'user');
-      expect(state.messages.first['content'], 'What is the policy?');
-      expect(state.messages.last['role'], 'assistant');
-      expect((state.messages.last['sources'] as List).length, 1);
-    });
+        final state = container.read(chatProvider);
+        expect(state.isSending, false);
+        expect(state.conversationId, 'conv-1');
+        expect(state.messages.length, 2);
+        expect(state.messages.first['role'], 'user');
+        expect(state.messages.first['content'], 'What is the policy?');
+        expect(state.messages.last['role'], 'assistant');
+        expect((state.messages.last['sources'] as List).length, 1);
+      },
+    );
 
     test('loadConversation replaces messages', () async {
       final container = ProviderContainer(
@@ -114,19 +130,72 @@ void main() {
       expect(state.messages.length, 2);
     });
 
-    test('send failure appends error message and clears sending flag', () async {
-      final failing = FakeChatService()..failNext = true;
+    test(
+      'send failure appends error message and clears sending flag',
+      () async {
+        final failing = FakeChatService()..failNext = true;
+        final container = ProviderContainer(
+          overrides: [chatServiceProvider.overrideWithValue(failing)],
+        );
+        addTearDown(container.dispose);
+
+        await container.read(chatProvider.notifier).sendMessage('hi');
+
+        final state = container.read(chatProvider);
+        expect(state.isSending, false);
+        expect(state.messages.last['isError'], true);
+        expect(state.error, isNotNull);
+      },
+    );
+  });
+
+  group('NotificationsNotifier', () {
+    test('refreshUnread loads count from service', () async {
       final container = ProviderContainer(
-        overrides: [chatServiceProvider.overrideWithValue(failing)],
+        overrides: [
+          notificationsServiceProvider.overrideWithValue(
+            FakeNotificationsService(),
+          ),
+        ],
       );
       addTearDown(container.dispose);
 
-      await container.read(chatProvider.notifier).sendMessage('hi');
+      await container.read(notificationsProvider.notifier).refreshUnread();
+      expect(container.read(notificationsProvider).unreadCount, 3);
+      expect(container.read(notificationsProvider).loading, false);
+    });
 
-      final state = container.read(chatProvider);
-      expect(state.isSending, false);
-      expect(state.messages.last['isError'], true);
-      expect(state.error, isNotNull);
+    test('decrement never goes below zero', () async {
+      final container = ProviderContainer(
+        overrides: [
+          notificationsServiceProvider.overrideWithValue(
+            FakeNotificationsService(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(notificationsProvider.notifier).refreshUnread();
+      container.read(notificationsProvider.notifier).decrement();
+      container.read(notificationsProvider.notifier).decrement(10);
+
+      expect(container.read(notificationsProvider).unreadCount, 0);
+    });
+
+    test('clear resets count', () async {
+      final container = ProviderContainer(
+        overrides: [
+          notificationsServiceProvider.overrideWithValue(
+            FakeNotificationsService(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(notificationsProvider.notifier).refreshUnread();
+      container.read(notificationsProvider.notifier).clear();
+
+      expect(container.read(notificationsProvider).unreadCount, 0);
     });
   });
 }
@@ -136,8 +205,11 @@ class FakeSearchService extends SearchService {
   bool failNext = false;
 
   @override
-  Future<List<Map<String, dynamic>>> search(String query,
-      {String mode = 'hybrid', int limit = 20}) async {
+  Future<List<Map<String, dynamic>>> search(
+    String query, {
+    String mode = 'hybrid',
+    int limit = 20,
+  }) async {
     if (failNext) throw Exception('search failed');
     return [
       {'title': 'Doc A', 'type': 'document'},
@@ -145,8 +217,10 @@ class FakeSearchService extends SearchService {
   }
 
   @override
-  Future<Map<String, dynamic>> hybridSearch(String query,
-      {int limit = 20}) async {
+  Future<Map<String, dynamic>> hybridSearch(
+    String query, {
+    int limit = 20,
+  }) async {
     if (failNext) throw Exception('search failed');
     return {
       'documents': [
@@ -181,7 +255,9 @@ class FakeChatService extends ChatService {
 
   @override
   Future<Map<String, dynamic>> sendMessage(
-      String conversationId, String content) async {
+    String conversationId,
+    String content,
+  ) async {
     if (failNext) throw Exception('send failed');
     return {
       'message': {
@@ -194,4 +270,38 @@ class FakeChatService extends ChatService {
       'conversationId': conversationId,
     };
   }
+}
+
+class FakeNotificationsService extends NotificationsService {
+  FakeNotificationsService() : super(ApiClient());
+
+  @override
+  Future<Map<String, dynamic>> list({
+    int page = 1,
+    int limit = 20,
+    bool? unreadOnly,
+  }) async {
+    return {
+      'data': [],
+      'meta': {
+        'total': 0,
+        'page': 1,
+        'limit': 20,
+        'totalPages': 0,
+        'hasNext': false,
+      },
+    };
+  }
+
+  @override
+  Future<int> getUnreadCount() async => 3;
+
+  @override
+  Future<void> markAsRead(String id) async {}
+
+  @override
+  Future<void> markAllAsRead() async {}
+
+  @override
+  Future<void> delete(String id) async {}
 }
