@@ -16,6 +16,7 @@ import { PoliciesModule } from './modules/policies/policies.module';
 import { ExpertiseModule } from './modules/expertise/expertise.module';
 import { GapsModule } from './modules/gaps/gaps.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
+import { InvitationsModule } from './modules/invitations/invitations.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { CacheModule } from './infrastructure/cache/cache.module';
 import { QueueModule } from './infrastructure/queue/queue.module';
@@ -78,6 +79,7 @@ import { ConfigService } from '@nestjs/config';
     ExpertiseModule,
     GapsModule,
     RecommendationsModule,
+    InvitationsModule,
   ],
   controllers: [HealthController],
   providers: [

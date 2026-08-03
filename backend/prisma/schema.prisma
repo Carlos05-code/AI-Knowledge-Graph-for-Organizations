@@ -28,6 +28,7 @@ model Organization {
   documents  Document[]
   policies   Policy[]
   auditLogs  AuditLog[]
+  invitations Invitation[]
 }
 
 model User {
@@ -55,6 +56,7 @@ model User {
   meetingParticipants MeetingParticipant[]
   notifications       Notification[]
   expertiseScores     ExpertiseScore[]
+  createdInvitations  Invitation[]        @relation("InvitationCreator")
 }
 
 enum UserRole {
@@ -330,6 +332,38 @@ enum NotificationType {
   MEETING_SUMMARY
   EXPERT_RECOMMENDATION
   KNOWLEDGE_GAP
+  INVITATION_ACCEPTED
+}
+
+// =========================================================================
+// Invitations
+// =========================================================================
+
+model Invitation {
+  id             String           @id @default(uuid())
+  email          String
+  organizationId String
+  role           UserRole         @default(USER)
+  token          String           @unique
+  invitedById    String
+  status         InvitationStatus @default(PENDING)
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  invitedBy    User         @relation("InvitationCreator", fields: [invitedById], references: [id])
+
+  @@index([token])
+  @@index([organizationId, status])
+  @@index([email, organizationId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
 }
 
 // =========================================================================

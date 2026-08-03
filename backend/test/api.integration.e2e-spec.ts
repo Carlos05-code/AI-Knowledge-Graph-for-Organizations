@@ -51,6 +51,7 @@ describe('API Integration (e2e)', () => {
       create: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
       count: jest.fn(),
     },
@@ -124,6 +125,14 @@ describe('API Integration (e2e)', () => {
       update: jest.fn(),
       delete: jest.fn(),
       updateMany: jest.fn(),
+      count: jest.fn(),
+    },
+    invitation: {
+      create: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
       count: jest.fn(),
     },
     expertiseScore: {
@@ -784,6 +793,142 @@ describe('API Integration (e2e)', () => {
         .get('/api/v1/notifications')
         .set('Authorization', `Bearer ${validToken}`)
         .expect(200);
+    });
+  });
+
+  // ─── Invitations ────────────────────────────────────────────────
+
+  describe('Invitations', () => {
+    it('POST /api/v1/invitations should require ADMIN role', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/invitations')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ email: 'jane@test.com' })
+        .expect(403);
+    });
+
+    it('POST /api/v1/invitations should create an invitation (admin)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockPrisma.invitation.findFirst.mockResolvedValue(null);
+      mockPrisma.invitation.create.mockResolvedValue({
+        id: 'inv-1',
+        email: 'jane@test.com',
+        role: 'USER',
+        status: 'PENDING',
+        token: 'token-1',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        invitedById: 'admin-1',
+        organizationId: 'org-1',
+      });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/invitations')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ email: 'jane@test.com', role: 'USER' })
+        .expect(201);
+    });
+
+    it('GET /api/v1/invitations should list invitations (admin)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+      mockPrisma.invitation.findMany.mockResolvedValue([
+        {
+          id: 'inv-1',
+          email: 'jane@test.com',
+          role: 'USER',
+          status: 'PENDING',
+          createdAt: new Date(),
+          invitedBy: { id: 'admin-1', firstName: 'Admin', lastName: 'User' },
+        },
+      ]);
+      mockPrisma.invitation.count.mockResolvedValue(1);
+
+      await request(app.getHttpServer())
+        .get('/api/v1/invitations')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+    });
+
+    it('POST /api/v1/invitations/:id/revoke should revoke a pending invitation', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+      mockPrisma.invitation.findFirst.mockResolvedValue({
+        id: 'inv-1',
+        status: 'PENDING',
+      });
+      mockPrisma.invitation.update.mockResolvedValue({
+        id: 'inv-1',
+        status: 'REVOKED',
+      });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/invitations/inv-1/revoke')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(201);
+    });
+
+    it('POST /api/v1/invitations/accept should create the user and mark accepted', async () => {
+      mockPrisma.invitation.findUnique.mockResolvedValue({
+        id: 'inv-1',
+        email: 'jane@test.com',
+        organizationId: 'org-1',
+        role: 'USER',
+        status: 'PENDING',
+        invitedById: 'admin-1',
+        token: 'token-1',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({
+        id: 'user-jane',
+        email: 'jane@test.com',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        role: 'USER',
+        organizationId: 'org-1',
+      });
+      mockPrisma.invitation.update.mockResolvedValue({
+        id: 'inv-1',
+        status: 'ACCEPTED',
+      });
+      mockPrisma.notification.create.mockResolvedValue({});
+
+      await request(app.getHttpServer())
+        .post('/api/v1/invitations/accept')
+        .send({
+          token: 'token-1',
+          email: 'jane@test.com',
+          firstName: 'Jane',
+          lastName: 'Doe',
+          password: 'password123',
+        })
+        .expect(201);
     });
   });
 
