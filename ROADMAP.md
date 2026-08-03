@@ -47,12 +47,13 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 
 - Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
 - All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned.
+- Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
+- All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned. `freezed`/`json_serializable` were pruned with the other dead deps; a small `json_annotation`-only codegen for models could return later.
 - Widget test suite: 7 widget + 11 provider tests (login/register, admin gating, chat citations, notifications UI + provider; search/chat providers).
-- Dead dependencies in `frontend/pubspec.yaml` (retrofit, freezed, graphview, fl_chart, ...) — either adopt or prune.
 - Backend `npm run lint` fails on legacy `no-unsafe-*` violations (type-checked config; fix on install) — resolved deps missing previously.
 
 ## Quarter ahead (priority order)
 
 1. Org invitations for user management (admin invite via email + accept flow).
-2. Dead-dependency cleanup in `frontend/pubspec.yaml` (retrofit/freezed/graphview/fl_chart).
-3. Release hardening: JWT rotation, secrets management, `npm audit` CI gate.
+2. Release hardening: JWT rotation, secrets management, `npm audit` CI gate.
+3. OCR pipeline (milestone 8): Tesseract integration for scanned PDFs/images.

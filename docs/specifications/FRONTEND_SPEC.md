@@ -136,7 +136,8 @@ See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) for full tokens. Highlights:
 
 ## 10. Known gaps (documented, tracked)
 
-- No typed models (`Map<String, dynamic>` everywhere) — freezed planned.
-- `widget_test.dart` runs (5 passing widget tests); broader Riverpod harness suites planned.
-- Dead dependencies in pubspec (retrofit, graphview, fl_chart, ...) — prune or adopt.
+- No typed models (`Map<String, dynamic>` everywhere) — codegen planned.
+- `widget_test.dart` runs (18 tests total: 7 widget + 11 provider); broader harness suites planned.
+- Dead dependencies in pubspec swept (retrofit, freezed/graphview/fl_chart, mockito,
+  etc. removed) — pubspec now holds only in-use packages; `pubspec.lock` pruned.
 - `ApiClient` base URL hardcoded to localhost — needs build-time config (`--dart-define`).
