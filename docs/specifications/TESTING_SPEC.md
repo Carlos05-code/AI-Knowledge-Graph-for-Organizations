@@ -4,7 +4,7 @@
 
 | Level | Tool | Count | Status |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | 42 | ✅ passing |
+| Unit (backend) | Jest + ts-jest | 47 | ✅ passing |
 | e2e (backend) | Jest + Supertest | 44 | ✅ passing |
 | Widget (frontend) | flutter_test | 25 (10 widget + 15 provider) | ✅ passing |
 | Performance | k6 | — | ⬜ planned |
@@ -22,6 +22,7 @@
 | `recommendations.service.spec.ts` | shape, similar-role experts, Qdrant-based recs, personalized feed |
 | `users.service.spec.ts` | profile get/update, member pagination + search, role/status updates, self-demotion guard |
 | `slack.adapter.spec.ts` | auth.test ok/invalid/missing token, listFiles mapping, syncAll text-download + binary-skip, channel export (all via mocked `fetch`) |
+| `encryption.service.spec.ts` | AES-256-GCM round-trip, per-call random IV, wrong-key failure, malformed payload, legacy `tryDecrypt` fallback |
 | `prisma.service.spec.ts` | service construction |
 
 Patterns: mocked Prisma delegates, `Object.defineProperty` for OpenAI/Qdrant clients,

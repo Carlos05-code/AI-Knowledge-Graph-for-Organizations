@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat w/ citations, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies, notifications)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 42 unit + 44 e2e + 25 frontend tests, all passing
+- ✅ Tests: 47 unit + 44 e2e + 25 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -39,8 +39,8 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 20 | Admin dashboard | ✅ | Metrics + audit logs API; dashboard UI (Overview/Members/Audit Logs tabs) |
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
-| 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate, DB-backed refresh token rotation + logout revocation, `npm audit` CI gate (0 high) — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 42 unit + 44 e2e + 25 frontend tests; load/security suites pending |
+| 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate, DB-backed refresh token rotation + logout revocation, `npm audit` CI gate (0 high), connector credentials encrypted at rest (AES-256-GCM) — see SECURITY_SPEC remaining items |
+| 24 | Testing | 🔄 | 47 unit + 44 e2e + 25 frontend tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
@@ -54,6 +54,6 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 
 ## Quarter ahead (priority order)
 
-1. Secrets management: envelope encryption for connector credentials (`ENCRYPTION_KEY`), pin `CORS_ORIGINS` in production.
-2. OCR pipeline (milestone 8): Tesseract integration for scanned PDFs/images.
-3. Invitation email delivery (accept-link email via infra mailer; token endpoint already ships).
+1. OCR pipeline (milestone 8): Tesseract integration for scanned PDFs/images.
+2. Invitation email delivery (accept-link email via infra mailer; token endpoint already ships).
+3. Secrets rotation: key-rotation procedure for `ENCRYPTION_KEY` (versioned ciphertext), `JWT_SECRET` rotation endpoint.

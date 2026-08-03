@@ -85,7 +85,7 @@ lacks the *graph* view of how information relates.
 | Risk | Mitigation |
 |---|---|
 | LLM hallucination | RAG grounding, confidence field, citations, `AI_CONFIDENCE_LOW` notifications |
-| Secrets in connectors | credentials stored encrypted-ready (field present), env-driven, docs security review |
+| Secrets in connectors | credentials encrypted at rest (AES-256-GCM, `ENCRYPTION_KEY`), env-driven, docs security review |
 | Scale of vector index | Qdrant 20 k threshold indexing, pagination everywhere |
 | Single-region Postgres | Backups + DR in DEVOPS_SPEC; K8s manifests ready |
 

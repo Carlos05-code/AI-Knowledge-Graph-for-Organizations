@@ -34,9 +34,11 @@ Connector OAuth (Google Drive) is implemented at the *adapter* level
 ## 4. Encryption & secrets
 
 - Passwords: bcrypt cost 12.
-- Connector credentials: stored in `Connector.credentials` (VarChar 4000) —
-  **plaintext today**; encrypted field `isEncrypted` exists on Document; production
-  plan: envelope encryption with `ENCRYPTION_KEY` (see ROADMAP).
+- Connector credentials: **encrypted at rest** with AES-256-GCM (`EncryptionService`,
+  `ENCRYPTION_KEY` env — SHA-256-derived key, random 96-bit IV, auth tag in
+  `iv.tag.ciphertext` payload). Encrypted on create/update, decrypted only inside
+  the service layer (`configOf` for adapter connections, `expose` for API
+  responses); legacy plaintext rows decrypt via `tryDecrypt` fallback.
 - Secrets: env-driven, never committed (`.env` in `.gitignore`); `.env.example`
   documents keys without values.
 

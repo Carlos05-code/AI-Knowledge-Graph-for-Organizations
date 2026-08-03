@@ -12,6 +12,7 @@ import { ConnectorConfig } from '../../infrastructure/connectors/connector-adapt
 import { ConnectorDocument } from '../../infrastructure/connectors/connector-adapter.interface';
 import { ConnectorType } from '../../domain/entities/connector.entity';
 import { DocumentSource } from '../../domain/entities/document.entity';
+import { EncryptionService } from '../../infrastructure/security/encryption.service';
 import { CreateConnectorDto } from './dto/create-connector.dto';
 import { UpdateConnectorDto } from './dto/update-connector.dto';
 
@@ -25,6 +26,7 @@ export class ConnectorsService {
   constructor(
     private prisma: PrismaService,
     private registry: ConnectorRegistryService,
+    private encryption: EncryptionService,
   ) {}
 
   async create(organizationId: string, dto: CreateConnectorDto) {
@@ -33,7 +35,7 @@ export class ConnectorsService {
         name: dto.name,
         type: dto.type,
         organizationId,
-        credentials: dto.credentials,
+        credentials: this.encryption.encrypt(dto.credentials),
         config: (dto.config || {}) as Prisma.InputJsonValue,
         syncInterval: dto.syncInterval,
       },
@@ -41,7 +43,7 @@ export class ConnectorsService {
   }
 
   async findAll(organizationId: string) {
-    return this.prisma.connector.findMany({
+    const connectors = await this.prisma.connector.findMany({
       where: { organizationId, deletedAt: null },
       include: {
         runs: {
@@ -50,10 +52,11 @@ export class ConnectorsService {
         },
       },
     });
+    return connectors.map((connector) => this.expose(connector));
   }
 
   async findById(id: string, organizationId: string) {
-    return this.prisma.connector.findFirst({
+    const connector = await this.prisma.connector.findFirst({
       where: { id, organizationId, deletedAt: null },
       include: {
         runs: {
@@ -62,6 +65,7 @@ export class ConnectorsService {
         },
       },
     });
+    return connector ? this.expose(connector) : null;
   }
 
   async update(id: string, organizationId: string, dto: UpdateConnectorDto) {
@@ -70,6 +74,9 @@ export class ConnectorsService {
       where: { id },
       data: {
         ...dto,
+        credentials: dto.credentials
+          ? this.encryption.encrypt(dto.credentials)
+          : undefined,
         config: dto.config as Prisma.InputJsonValue | undefined,
       },
     });
@@ -189,18 +196,26 @@ export class ConnectorsService {
     credentials: string;
     config: Prisma.JsonValue;
   }): ConnectorConfig {
+    const raw = this.encryption.tryDecrypt(connector.credentials);
     let parsed: ConnectorConfig;
     try {
-      parsed = JSON.parse(connector.credentials) as ConnectorConfig;
+      parsed = JSON.parse(raw) as ConnectorConfig;
     } catch {
       // fall back to raw token-style credentials when not JSON
-      parsed = { accessToken: connector.credentials };
+      parsed = { accessToken: raw };
     }
     const config =
       connector.config && typeof connector.config === 'object'
         ? (connector.config as Record<string, unknown>)
         : {};
     return { ...config, ...parsed };
+  }
+
+  private expose(connector: {
+    credentials: string;
+    [key: string]: unknown;
+  }) {
+    return { ...connector, credentials: this.encryption.tryDecrypt(connector.credentials) };
   }
 
   private sourceForType(type: string): DocumentSource {

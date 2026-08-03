@@ -24,6 +24,7 @@ import { StorageModule } from './infrastructure/storage/storage.module';
 import { EventsModule } from './infrastructure/events/events.module';
 import { LoggerModule } from './infrastructure/logger/logger.module';
 import { MetricsModule } from './infrastructure/metrics/metrics.module';
+import { SecurityModule } from './infrastructure/security/security.module';
 import { Neo4jModule } from './infrastructure/graph/graph.module';
 import { VectorModule } from './infrastructure/vector/vector.module';
 import { AIModule } from './infrastructure/ai/ai.module';
@@ -61,6 +62,7 @@ import { ConfigService } from '@nestjs/config';
     LoggerModule,
     EventsModule,
     MetricsModule,
+    SecurityModule,
     VectorModule,
     AIModule,
     ConnectorRegistryModule,
