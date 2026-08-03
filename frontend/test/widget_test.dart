@@ -13,7 +13,6 @@ import 'package:ai_knowledge_graph/features/notifications/presentation/notificat
 import 'package:ai_knowledge_graph/core/api/api_client.dart';
 import 'package:ai_knowledge_graph/core/api/api_providers.dart';
 import 'package:ai_knowledge_graph/core/routing/app_router.dart';
-import 'package:ai_knowledge_graph/core/widgets/app_shell.dart';
 import 'package:ai_knowledge_graph/features/auth/domain/auth_provider.dart';
 import 'package:ai_knowledge_graph/features/auth/domain/auth_state.dart';
 
