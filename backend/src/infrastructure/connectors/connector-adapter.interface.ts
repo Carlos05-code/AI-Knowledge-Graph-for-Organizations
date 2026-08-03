@@ -8,10 +8,23 @@ export interface ConnectorConfig {
   [key: string]: unknown;
 }
 
+export interface ConnectorDocument {
+  id: string;
+  name: string;
+  filePath: string;
+  mimeType: string;
+  fileType: string;
+  size: number;
+  content: string;
+  sourceUrl?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface SyncResult {
   documentsSynced: number;
   errors: Array<{ fileId: string; error: string }>;
   metadata: Record<string, unknown>;
+  documents?: ConnectorDocument[];
 }
 
 export interface SyncProgress {
@@ -44,7 +57,7 @@ export abstract class ConnectorAdapter {
     this.type = type;
   }
 
-  abstract authenticate(): Promise<void>;
+  abstract authenticate(): Promise<unknown>;
   abstract refreshAccessToken(): Promise<void>;
   abstract listFiles(folderId?: string): Promise<ConnectorFile[]>;
   abstract downloadFile(fileId: string): Promise<Buffer>;

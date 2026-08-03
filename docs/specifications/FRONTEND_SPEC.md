@@ -23,6 +23,7 @@ lib/
     ├── admin/                  # admin_screen (members list, role/status management)
     ├── settings/               # settings_screen (profile edit)
     ├── documents/              # documents_screen (list, upload, detail, process, delete)
+    ├── connectors/             # connectors_screen (list/add/config/test/sync/runs)
     ├── chat/                   # chat_screen + chat_provider (state next to screen)
     ├── search/                 # search_screen + search_provider
     ├── graph/                  # graph_explorer_screen (CustomPaint)
@@ -30,7 +31,7 @@ lib/
     └── shell/                  # ShellPlaceholder ("Coming soon")
 ```
 
-Remaining placeholder feature dirs (empty): `connectors/`, `meetings/`, `policies/`
+Remaining placeholder feature dirs (empty): `meetings/`, `policies/`
 — planned next.
 
 ## 3. Routing
@@ -44,7 +45,8 @@ Remaining placeholder feature dirs (empty): `connectors/`, `meetings/`, `policie
 | `/search` | SearchScreen | JWT |
 | `/documents` | DocumentsScreen (list, filter, upload, detail, process/delete) | JWT |
 | `/graph` | GraphExplorerScreen | JWT |
-| `/connectors` `/meetings` `/policies` | ShellPlaceholder | JWT |
+| `/connectors` | ConnectorsScreen (list, add, config, test, sync, runs) | JWT |
+| `/meetings` `/policies` | ShellPlaceholder | JWT |
 | `/admin` | AdminScreen (members + RBAC; non-admin gets locked view) | JWT |
 | `/settings` | SettingsScreen (profile edit) | JWT |
 
@@ -73,7 +75,12 @@ Graph explorer intentionally uses local `setState` + `ref.read` (self-contained 
 - Response unwrapping: tolerates `{ data: ... }` envelope and raw bodies; string bodies
   JSON-decoded.
 - Services: `AuthService`, `ChatService`, `SearchService`, `GraphService`,
-  `DocumentsService`, `UsersService` (hand-written Dio calls; retrofit unused).
+  `DocumentsService`, `UsersService`, `ConnectorsService` (hand-written Dio calls; retrofit unused).
+
+Connectors flow: FAB (ADMIN) → create sheet (type/name/JSON credentials/optional channel +
+interval) → `POST /connectors`; tile → detail sheet (`GET /connectors/:id` + `/runs`) with
+Test (`POST :id/test`), Sync now (`POST :id/sync`) and soft-delete; tile switch toggles
+`isEnabled` (PUT).
 
 ## 6. Design system
 
@@ -103,7 +110,7 @@ See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) for full tokens. Highlights:
 
 ## 10. Known gaps (documented, tracked)
 
-- 3 placeholder routes ("Coming soon": connectors, meetings, policies).
+- 2 placeholder routes ("Coming soon": meetings, policies).
 - No typed models (`Map<String, dynamic>` everywhere) — freezed planned.
 - `widget_test.dart` tests are not runnable as written (no `ProviderScope`).
 - Android release manifest lacks `INTERNET` permission (debug/profile only).

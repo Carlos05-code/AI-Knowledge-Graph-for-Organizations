@@ -4,8 +4,8 @@
 
 | Level | Tool | Count | Status |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | 36 | ✅ passing |
-| e2e (backend) | Jest + Supertest | 32 | ✅ passing |
+| Unit (backend) | Jest + ts-jest | 42 | ✅ passing |
+| e2e (backend) | Jest + Supertest | 36 | ✅ passing |
 | Widget (frontend) | flutter_test | 2 | ⚠️ need ProviderScope fix |
 | Performance | k6 | — | ⬜ planned |
 | Security | npm audit / OWASP checks | — | ⬜ planned |
@@ -21,6 +21,7 @@
 | `gaps.service.spec.ts` | pagination, resolve, 5 detectors, stale docs, graceful failure |
 | `recommendations.service.spec.ts` | shape, similar-role experts, Qdrant-based recs, personalized feed |
 | `users.service.spec.ts` | profile get/update, member pagination + search, role/status updates, self-demotion guard |
+| `slack.adapter.spec.ts` | auth.test ok/invalid/missing token, listFiles mapping, syncAll text-download + binary-skip, channel export (all via mocked `fetch`) |
 | `prisma.service.spec.ts` | service construction |
 
 Patterns: mocked Prisma delegates, `Object.defineProperty` for OpenAI/Qdrant clients,
@@ -37,7 +38,8 @@ cache-manager-redis-yet, bcrypt) and asserts:
 - documents: create (ADMIN), list + pagination coercion (string→int query), admin-only delete (403/200)
 - search: hybrid + suggestions; graph: nodes + raw Cypher (401/403/ADMIN only)
 - users: profile (200/401), profile update, members list + role update (RBAC 403/200)
-- chat: messages + conversations; connectors: admin-only POST
+- chat: messages + conversations; connectors: admin-only create, invalid type 400,
+  org-scoped list, test-connection RBAC, Slack sync (mocked `fetch` → documents + run)
 - notifications, expertise, gaps, recommendations, upload auth, admin dashboard RBAC
 
 Run:
@@ -63,7 +65,7 @@ in `ProviderScope` is scheduled (ROADMAP). Additional planned suites:
 ## 5. Coverage goals
 
 - Backend unit: ≥ 80% statements for services/controllers (currently ~50–90% per suite).
-- e2e: every public endpoint exercised at least once (current: 32 specs covering all 17 controllers).
+- e2e: every public endpoint exercised at least once (current: 36 specs covering all 17 controllers).
 - Frontend: critical flows (auth, chat, search) ≥ 70%.
 
 ## 6. Performance & load (planned)

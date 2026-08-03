@@ -14,6 +14,7 @@ import '../../features/shell/shell_placeholder.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/admin/admin_screen.dart';
 import '../../features/documents/documents_screen.dart';
+import '../../features/connectors/presentation/connectors_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -55,7 +56,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/search', builder: (_, __) => const SearchScreen()),
           GoRoute(path: '/documents', builder: (_, __) => const DocumentsScreen()),
           GoRoute(path: '/graph', builder: (_, __) => const GraphExplorerScreen()),
-          GoRoute(path: '/connectors', builder: (_, __) => const ShellPlaceholder(title: 'Connectors', icon: Icons.link_outlined)),
+          GoRoute(path: '/connectors', builder: (_, __) => const ConnectorsScreen()),
           GoRoute(path: '/meetings', builder: (_, __) => const ShellPlaceholder(title: 'Meetings', icon: Icons.meeting_room_outlined)),
           GoRoute(path: '/policies', builder: (_, __) => const ShellPlaceholder(title: 'Policies', icon: Icons.policy_outlined)),
           GoRoute(path: '/admin', builder: (_, __) => const AdminScreen()),

@@ -15,7 +15,8 @@ import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '../../presentation/guards/roles.guard';
 import { Roles } from '../../shared/decorators/roles.decorator';
 import { UserRole } from '../../domain/entities/user.entity';
-import { ConnectorType } from '../../domain/entities/connector.entity';
+import { CreateConnectorDto } from './dto/create-connector.dto';
+import { UpdateConnectorDto } from './dto/update-connector.dto';
 
 @ApiTags('Connectors')
 @ApiBearerAuth()
@@ -28,58 +29,74 @@ export class ConnectorsController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new connector' })
   create(
-    @Body()
-    dto: {
-      name: string;
-      type: ConnectorType;
-      credentials: string;
-      config?: Record<string, unknown>;
-      syncInterval?: number;
-    },
-    @CurrentUser() user: any,
+    @Body() dto: CreateConnectorDto,
+    @CurrentUser() user: { organizationId: string },
   ) {
-    return this.connectorsService.create({
-      ...dto,
-      organizationId: user.organizationId,
-    });
+    return this.connectorsService.create(user.organizationId, dto);
   }
 
   @Get()
   @ApiOperation({ summary: 'List connectors' })
-  findAll(@CurrentUser() user: any) {
+  findAll(@CurrentUser() user: { organizationId: string }) {
     return this.connectorsService.findAll(user.organizationId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get connector details' })
-  findById(@Param('id') id: string, @CurrentUser() user: any) {
+  findById(
+    @Param('id') id: string,
+    @CurrentUser() user: { organizationId: string },
+  ) {
     return this.connectorsService.findById(id, user.organizationId);
   }
 
   @Put(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update connector' })
-  update(@Param('id') id: string, @Body() dto: any, @CurrentUser() user: any) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateConnectorDto,
+    @CurrentUser() user: { organizationId: string },
+  ) {
     return this.connectorsService.update(id, user.organizationId, dto);
   }
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Delete connector' })
-  delete(@Param('id') id: string, @CurrentUser() user: any) {
+  @ApiOperation({ summary: 'Delete connector (soft)' })
+  delete(
+    @Param('id') id: string,
+    @CurrentUser() user: { organizationId: string },
+  ) {
     return this.connectorsService.delete(id, user.organizationId);
+  }
+
+  @Post(':id/test')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Test connector credentials' })
+  test(
+    @Param('id') id: string,
+    @CurrentUser() user: { organizationId: string },
+  ) {
+    return this.connectorsService.testConnection(id, user.organizationId);
   }
 
   @Post(':id/sync')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Trigger connector sync' })
-  sync(@Param('id') id: string, @CurrentUser() user: any) {
+  sync(
+    @Param('id') id: string,
+    @CurrentUser() user: { organizationId: string },
+  ) {
     return this.connectorsService.sync(id, user.organizationId);
   }
 
   @Get(':id/runs')
   @ApiOperation({ summary: 'Get sync run history' })
-  getRuns(@Param('id') id: string, @CurrentUser() user: any) {
+  getRuns(
+    @Param('id') id: string,
+    @CurrentUser() user: { organizationId: string },
+  ) {
     return this.connectorsService.getRunHistory(id, user.organizationId);
   }
 }

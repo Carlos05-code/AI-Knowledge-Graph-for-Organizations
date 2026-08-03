@@ -6,6 +6,7 @@ import 'search_service.dart';
 import 'graph_service.dart';
 import 'documents_service.dart';
 import 'users_service.dart';
+import '../../features/connectors/data/connectors_service.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient();
@@ -33,4 +34,8 @@ final documentsServiceProvider = Provider<DocumentsService>((ref) {
 
 final usersServiceProvider = Provider<UsersService>((ref) {
   return UsersService(ref.watch(apiClientProvider));
+});
+
+final connectorsServiceProvider = Provider<ConnectorsService>((ref) {
+  return ConnectorsService(ref.watch(apiClientProvider));
 });

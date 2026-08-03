@@ -122,13 +122,18 @@ Swagger at `/api/v1/docs`).
 ### Connectors
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/connectors` | JWT, ADMIN | `{ name, type, credentials, config?, syncInterval? }` |
-| GET | `/connectors` | JWT | |
-| GET | `/connectors/:id` | JWT | |
-| PUT | `/connectors/:id` | JWT, ADMIN | |
+| POST | `/connectors` | JWT, ADMIN | `{ name, type, credentials, config?, syncInterval? }`; `type` enum validated |
+| GET | `/connectors` | JWT | org-scoped list + latest run |
+| GET | `/connectors/:id` | JWT | detail + last 10 runs |
+| PUT | `/connectors/:id` | JWT, ADMIN | name/credentials/config/isEnabled/syncInterval |
 | DELETE | `/connectors/:id` | JWT, ADMIN | soft delete |
-| POST | `/connectors/:id/sync` | JWT, ADMIN | triggers sync + run |
+| POST | `/connectors/:id/test` | JWT, ADMIN | runs adapter `authenticate` (e.g. Slack `auth.test`) |
+| POST | `/connectors/:id/sync` | JWT, ADMIN | adapter sync → documents + chunks persisted; run tracked |
 | GET | `/connectors/:id/runs` | JWT | last 20 runs |
+
+Adapters registry: `GOOGLE_DRIVE`, `SLACK`, `GITHUB`. Slack sync exports configured
+channels (`conversations.history`) and recent files (`files.list` → download), skipping
+binary payloads and recording per-item errors on the run.
 
 ### Policies
 | Method | Path | Auth | Notes |
