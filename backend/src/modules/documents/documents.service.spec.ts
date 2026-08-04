@@ -5,6 +5,7 @@ import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
 import { EmbeddingService } from '../../infrastructure/ai/embedding.service';
 import { SearchService } from '../search/search.service';
 import { EventBusService } from '../../infrastructure/events/event-bus.service';
+import { OcrService } from '../../infrastructure/ocr/ocr.service';
 
 describe('DocumentsService', () => {
   let service: DocumentsService;
@@ -34,8 +35,13 @@ describe('DocumentsService', () => {
     deleteDocumentChunks: jest.fn(),
   };
   const mockEventBus = { publish: jest.fn() };
+  const mockOcr = {
+    isOcrCandidate: jest.fn(),
+    extractText: jest.fn(),
+  };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DocumentsService,
@@ -44,6 +50,7 @@ describe('DocumentsService', () => {
         { provide: EmbeddingService, useValue: mockEmbedding },
         { provide: SearchService, useValue: mockSearch },
         { provide: EventBusService, useValue: mockEventBus },
+        { provide: OcrService, useValue: mockOcr },
       ],
     }).compile();
 
@@ -82,6 +89,7 @@ describe('DocumentsService', () => {
   });
 
   it('should process a document', async () => {
+    mockOcr.isOcrCandidate.mockReturnValue(false);
     mockPrisma.document.findUnique.mockResolvedValue({
       id: '1',
       title: 'Test',
@@ -94,5 +102,44 @@ describe('DocumentsService', () => {
 
     await service.processDocument('1');
     expect(mockPrisma.document.update).toHaveBeenCalled();
+  });
+
+  it('should OCR scanned content during processing', async () => {
+    const fs = require('fs');
+    const os = require('os');
+    const path = require('path');
+    const scanPath = path.join(os.tmpdir(), `ocr-test-${Date.now()}.png`);
+    fs.writeFileSync(scanPath, 'fake-bytes');
+
+    mockOcr.isOcrCandidate.mockImplementation(
+      (mime: string | null) => mime === 'image/png',
+    );
+    mockOcr.extractText.mockResolvedValue({
+      text: 'scanned invoice text',
+      engine: 'tesseract',
+    });
+    mockPrisma.document.findUnique.mockResolvedValue({
+      id: '2',
+      title: 'Scan',
+      filePath: scanPath,
+      mimeType: 'image/png',
+      metadata: {},
+      organizationId: 'org-1',
+    });
+    mockPrisma.document.update.mockResolvedValue({});
+    mockPrisma.chunk.createMany.mockResolvedValue({ count: 0 });
+    mockSearch.indexDocumentChunks.mockResolvedValue(undefined);
+    mockNeo4j.createNode.mockResolvedValue(undefined);
+
+    await service.processDocument('2');
+
+    expect(mockOcr.extractText).toHaveBeenCalledWith(scanPath);
+    const updateCall = mockPrisma.document.update.mock.calls.find(
+      (c: any[]) => c[0] && c[0].data && c[0].data.metadata,
+    );
+    expect(updateCall[0].data.metadata.ocrExtracted).toBe(true);
+    expect(updateCall[0].data.metadata.ocrEngine).toBe('tesseract');
+    expect(updateCall[0].data.wordCount).toBeGreaterThan(0);
+    fs.unlinkSync(scanPath);
   });
 });

@@ -4,7 +4,7 @@
 
 | Level | Tool | Count | Status |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | 47 | ✅ passing |
+| Unit (backend) | Jest + ts-jest | 53 | ✅ passing |
 | e2e (backend) | Jest + Supertest | 44 | ✅ passing |
 | Widget (frontend) | flutter_test | 25 (10 widget + 15 provider) | ✅ passing |
 | Performance | k6 | — | ⬜ planned |

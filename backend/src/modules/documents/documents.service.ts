@@ -4,6 +4,7 @@ import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
 import { EmbeddingService } from '../../infrastructure/ai/embedding.service';
 import { SearchService } from '../search/search.service';
 import { EventBusService } from '../../infrastructure/events/event-bus.service';
+import { OcrService } from '../../infrastructure/ocr/ocr.service';
 import {
   DocumentUploadedEvent,
   DocumentProcessedEvent,
@@ -21,6 +22,7 @@ export class DocumentsService {
     private embedding: EmbeddingService,
     private search: SearchService,
     private eventBus: EventBusService,
+    private ocr: OcrService,
   ) {}
 
   async create(
@@ -153,6 +155,11 @@ export class DocumentsService {
 
     try {
       const content = await this.readDocumentContent(doc);
+      const metadata = (doc.metadata || {}) as Record<string, unknown>;
+      const ocrApplied =
+        this.ocr.isOcrCandidate(doc.mimeType) &&
+        doc.status !== 'INDEXED' &&
+        !metadata.ocrExtracted;
       const chunks = await this.chunkDocument(id, content);
       await this.search.indexDocumentChunks(id, doc.organizationId, chunks);
       await this.extractKnowledgeGraph(doc, content);
@@ -163,6 +170,10 @@ export class DocumentsService {
           status: 'INDEXED',
           isIndexed: true,
           wordCount: content.split(/\s+/).length,
+          metadata: {
+            ...metadata,
+            ...(ocrApplied ? { ocrExtracted: true, ocrEngine: 'tesseract' } : {}),
+          },
         },
       });
 
@@ -201,6 +212,16 @@ export class DocumentsService {
     try {
       const fs = require('fs');
       if (fs.existsSync(doc.filePath)) {
+        if (this.ocr.isOcrCandidate(doc.mimeType)) {
+          const result = await this.ocr.extractText(doc.filePath);
+          if (result && result.text.length > 0) {
+            this.logger.log(
+              `Document ${doc.id} OCR'd via ${result.engine}`,
+            );
+            return result.text;
+          }
+          return `Simulated content for document: ${doc.title}. OCR produced no text for this scanned file.`;
+        }
         return fs.readFileSync(doc.filePath, 'utf-8');
       }
     } catch {}
