@@ -2,11 +2,13 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EmailService } from '../../infrastructure/mail/email.service';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { UserRole } from '../../domain/entities/user.entity';
@@ -15,9 +17,12 @@ const DEFAULT_EXPIRES_IN_DAYS = 7;
 
 @Injectable()
 export class InvitationsService {
+  private readonly logger = new Logger(InvitationsService.name);
+
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private emailService: EmailService,
   ) {}
 
   async create(
@@ -49,7 +54,7 @@ export class InvitationsService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 
-    return this.prisma.invitation.create({
+    const invitation = await this.prisma.invitation.create({
       data: {
         email,
         organizationId,
@@ -59,6 +64,40 @@ export class InvitationsService {
         expiresAt,
       },
     });
+
+    try {
+      const [organization, inviter] = await Promise.all([
+        this.prisma.organization.findUnique({
+          where: { id: organizationId },
+          select: { name: true },
+        }),
+        this.prisma.user.findUnique({
+          where: { id: invitedById },
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        }),
+      ]);
+      const inviterName =
+        inviter && (inviter.firstName || inviter.lastName)
+          ? `${inviter.firstName || ''} ${inviter.lastName || ''}`.trim()
+          : inviter?.email || 'An administrator';
+      await this.emailService.sendInvitationMail({
+        to: email,
+        organizationName: organization?.name || 'your organization',
+        inviterName,
+        token: invitation.token,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Invitation email could not be queued`,
+        error instanceof Error ? error.message : error,
+      );
+    }
+
+    return invitation;
   }
 
   async findAll(

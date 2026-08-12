@@ -26,6 +26,7 @@ import { LoggerModule } from './infrastructure/logger/logger.module';
 import { MetricsModule } from './infrastructure/metrics/metrics.module';
 import { SecurityModule } from './infrastructure/security/security.module';
 import { OcrModule } from './infrastructure/ocr/ocr.module';
+import { MailModule } from './infrastructure/mail/mail.module';
 import { Neo4jModule } from './infrastructure/graph/graph.module';
 import { VectorModule } from './infrastructure/vector/vector.module';
 import { AIModule } from './infrastructure/ai/ai.module';
@@ -65,6 +66,7 @@ import { ConfigService } from '@nestjs/config';
     MetricsModule,
     SecurityModule,
     OcrModule,
+    MailModule,
     VectorModule,
     AIModule,
     ConnectorRegistryModule,

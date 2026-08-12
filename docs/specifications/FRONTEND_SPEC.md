@@ -112,8 +112,10 @@ refreshed on shell mount; rail Badge on the Alerts destination; screen lists
 Invitations flow (Admin ▸ Members): invite dialog (email + role) posts
 `POST /invitations`; pending invites render below the member list with revoke
 (`POST :id/revoke`); account creation for invitees uses the public
-`POST /invitations/accept` (token + profile + password). Inviter notified via
-`INVITATION_ACCEPTED` notification.
+`POST /invitations/accept` (token + profile + password) via the `/accept`
+route (`AcceptInvitationScreen` reads `token`/`email` query params; success
+shows sign-in CTA). Inviter notified via `INVITATION_ACCEPTED` notification;
+invite email (SMTP, log-only fallback) carries the accept link.
 
 ## 6. Design system
 

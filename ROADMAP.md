@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat w/ citations, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies, notifications)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 53 unit + 44 e2e + 25 frontend tests, all passing
+- ✅ Tests: 57 unit + 44 e2e + 28 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -21,7 +21,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 2 | Flutter application shell | ✅ | Auth, shell, routing, theme |
 | 3 | Backend foundation | ✅ | NestJS modules, global pipe/filters/interceptors |
 | 4 | Authentication | ✅ | JWT login/register/refresh/me, RBAC roles |
-| 5 | User management | ✅ | Profile edit, org members list + search, role/status management (ADMIN), self-demotion guard; org invitations (invite/accept/revoke) |
+| 5 | User management | ✅ | Profile edit, org members list + search, role/status management (ADMIN), self-demotion guard; org invitations (invite/accept/revoke + accept-link email) |
 | 6 | Connector framework | ✅ | Registry + adapters (Slack real: auth.test, files.list/download, channel export; GitHub adapter stubs); CRUD/test/sync UI + run history |
 | 7 | Document ingestion pipeline | ✅ | Upload → checksum → chunk (512/64) → Qdrant; docs UI (list/upload/detail/process/delete); OCR & versions partial |
 | 8 | OCR pipeline | ✅ | Tesseract (`tesseract.js`) for scanned PDFs/images: `OcrService` w/ `isOcrCandidate` + graceful fallback, wired into document processing (OCR'd text → chunked/indexed, `metadata.ocrExtracted`) |
@@ -40,7 +40,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate, DB-backed refresh token rotation + logout revocation, `npm audit` CI gate (0 high), connector credentials encrypted at rest (AES-256-GCM) — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 53 unit + 44 e2e + 25 frontend tests; load/security suites pending |
+| 24 | Testing | 🔄 | 57 unit + 44 e2e + 28 frontend tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
@@ -54,6 +54,6 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 
 ## Quarter ahead (priority order)
 
-1. Invitation email delivery (accept-link email via infra mailer; token endpoint already ships).
-2. Secrets rotation: key-rotation procedure for `ENCRYPTION_KEY` (versioned ciphertext), `JWT_SECRET` rotation endpoint.
-3. OCR perf/hardening: PDF page iteration, language packs + confidence threshold, per-document re-page OCR.
+1. Secrets rotation: key-rotation procedure for `ENCRYPTION_KEY` (versioned ciphertext), `JWT_SECRET` rotation endpoint.
+2. OCR perf/hardening: PDF page iteration, language packs + confidence threshold, per-document re-page OCR.
+3. Invitation email follow-ups: SMTP TLS/retry config, resend endpoint, outbound email log.

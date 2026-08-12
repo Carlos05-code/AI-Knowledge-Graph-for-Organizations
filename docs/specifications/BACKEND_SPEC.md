@@ -82,6 +82,9 @@ All via `ConfigService` + `.env` (see `.env.example`): `DATABASE_URL` (required)
 `RABBITMQ_URL`, `MINIO_HOST/ACCESS_KEY/SECRET_KEY/BUCKET`,
 `OPENAI_API_KEY/MODEL`, `EMBEDDING_MODEL/DIMENSION`, `APP_PREFIX`, `APP_PORT`,
 `CORS_ORIGINS`, `LOG_LEVEL`, `LOG_FORMAT`.
+Mail (optional, log-only fallback when unset): `MAIL_ENABLED`,
+`SMTP_HOST/PORT/SECURE/USER/PASS`, `MAIL_FROM`, `FRONTEND_URL`.
+OCR (optional): `OCR_ENABLED`, `OCR_LANGUAGE`.
 
 ## 11. Resilience rules
 

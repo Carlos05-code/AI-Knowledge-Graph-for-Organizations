@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ai_knowledge_graph/features/auth/presentation/login_screen.dart';
 import 'package:ai_knowledge_graph/features/auth/presentation/register_screen.dart';
+import 'package:ai_knowledge_graph/features/auth/presentation/accept_invitation_screen.dart';
 import 'package:ai_knowledge_graph/features/admin/admin_screen.dart';
 import 'package:ai_knowledge_graph/features/admin/data/invitations_service.dart';
 import 'package:ai_knowledge_graph/features/chat/presentation/chat_provider.dart';
@@ -134,6 +135,108 @@ void main() {
 
       expect(find.text('Invitation sent to bob@company.com'), findsOneWidget);
       expect(find.text('bob@company.com'), findsOneWidget);
+    });
+  });
+
+  group('AcceptInvitationScreen', () {
+    testWidgets('renders and accepts an invitation', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            invitationsServiceProvider
+                .overrideWithValue(FakeInvitationsService()),
+          ],
+          child: const MaterialApp(
+            home: AcceptInvitationScreen(token: 'good-token', email: 'jane@company.com'),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Accept your invitation'), findsOneWidget);
+      expect(find.text('Accept Invitation'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField).at(0), 'Jane');
+      await tester.enterText(find.byType(TextField).at(1), 'Doe');
+      await tester.enterText(
+        find.byType(TextField).at(2),
+        'jane@company.com',
+      );
+      await tester.enterText(find.byType(TextField).at(3), 'password123');
+      await tester.enterText(
+        find.byType(TextField).at(4),
+        'password123',
+      );
+      await tester.tap(find.text('Accept Invitation'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Invitation accepted'), findsOneWidget);
+      expect(find.text('Sign In'), findsOneWidget);
+    });
+
+    testWidgets('shows error when acceptance fails', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            invitationsServiceProvider
+                .overrideWithValue(FakeInvitationsService()),
+          ],
+          child: const MaterialApp(
+            home: AcceptInvitationScreen(token: 'bad-token', email: 'jane@company.com'),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.enterText(find.byType(TextField).at(0), 'Jane');
+      await tester.enterText(find.byType(TextField).at(1), 'Doe');
+      await tester.enterText(
+        find.byType(TextField).at(2),
+        'jane@company.com',
+      );
+      await tester.enterText(find.byType(TextField).at(3), 'password123');
+      await tester.enterText(
+        find.byType(TextField).at(4),
+        'password123',
+      );
+      await tester.tap(find.text('Accept Invitation'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Invitation not found'), findsOneWidget);
+    });
+
+    testWidgets('validates mismatched passwords', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            invitationsServiceProvider
+                .overrideWithValue(FakeInvitationsService()),
+          ],
+          child: const MaterialApp(
+            home: AcceptInvitationScreen(token: 'good-token'),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.enterText(find.byType(TextField).at(0), 'Jane');
+      await tester.enterText(find.byType(TextField).at(1), 'Doe');
+      await tester.enterText(
+        find.byType(TextField).at(2),
+        'jane@company.com',
+      );
+      await tester.enterText(
+        find.byType(TextField).at(3),
+        'password123',
+      );
+      await tester.enterText(
+        find.byType(TextField).at(4),
+        'different',
+      );
+      await tester.tap(find.text('Accept Invitation'));
+      await tester.pump();
+
+      expect(find.text('Passwords do not match'), findsOneWidget);
     });
   });
 
@@ -352,6 +455,25 @@ class FakeInvitationsService extends InvitationsService {
   Future<Map<String, dynamic>> revoke(String id) async {
     _invites.removeWhere((i) => i['id'] == id);
     return {'id': id, 'status': 'REVOKED'};
+  }
+
+  @override
+  Future<Map<String, dynamic>> accept({
+    required String token,
+    required String email,
+    required String firstName,
+    required String lastName,
+    required String password,
+  }) async {
+    if (token == 'bad-token') {
+      throw Exception('Invitation not found');
+    }
+    return {
+      'id': 'user-accepted',
+      'email': email,
+      'firstName': firstName,
+      'lastName': lastName,
+    };
   }
 }
 

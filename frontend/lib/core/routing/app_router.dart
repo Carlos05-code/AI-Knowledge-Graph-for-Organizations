@@ -5,6 +5,7 @@ import '../../features/auth/domain/auth_provider.dart';
 import '../../features/auth/domain/auth_state.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/auth/presentation/accept_invitation_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/search/presentation/search_screen.dart';
@@ -27,15 +28,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isAuthenticated = authState is Authenticated;
       final isAuthRoute =
           state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register';
+          state.matchedLocation == '/register' ||
+          state.matchedLocation.startsWith('/accept');
 
       if (!isAuthenticated && !isAuthRoute) return '/login';
-      if (isAuthenticated && isAuthRoute) return '/';
+      if (isAuthenticated && isAuthRoute) {
+        if (state.matchedLocation.startsWith('/accept')) return null;
+        return '/';
+      }
       return null;
     },
     routes: [
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
+      GoRoute(
+        path: '/accept',
+        builder: (_, state) => AcceptInvitationScreen(
+          token: state.uri.queryParameters['token'] ?? '',
+          email: state.uri.queryParameters['email'],
+        ),
+      ),
       ShellRoute(
         builder: (_, __, child) => AppShell(child: child),
         routes: [
