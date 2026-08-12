@@ -58,6 +58,7 @@ model User {
   expertiseScores     ExpertiseScore[]
   createdInvitations  Invitation[]        @relation("InvitationCreator")
   refreshTokens       RefreshToken[]
+  createdAppSecrets   AppSecret[]         @relation("AppSecretCreator")
 }
 
 enum UserRole {
@@ -348,6 +349,26 @@ model RefreshToken {
 
   @@index([userId])
   @@index([token])
+}
+
+// =========================================================================
+// Application secrets (rotated JWT signing secrets, versioned)
+// =========================================================================
+
+model AppSecret {
+  id          String   @id @default(uuid())
+  name        String
+  version     Int
+  value       String
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User? @relation("AppSecretCreator", fields: [createdById], references: [id])
+
+  @@unique([name, version])
+  @@index([name, isActive])
 }
 
 // =========================================================================

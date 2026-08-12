@@ -153,6 +153,11 @@ describe('API Integration (e2e)', () => {
       updateMany: jest.fn(),
       delete: jest.fn(),
     },
+    appSecret: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      updateMany: jest.fn(),
+    },
     auditLog: {
       create: jest.fn(),
       findMany: jest.fn(),
@@ -1090,6 +1095,45 @@ describe('API Integration (e2e)', () => {
         .get('/api/v1/admin/dashboard')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
+    });
+
+    it('POST /api/v1/admin/secrets/rotate-jwt should require ADMIN role', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/admin/secrets/rotate-jwt')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(403);
+    });
+
+    it('POST /api/v1/admin/secrets/rotate-jwt rotates the JWT secret', async () => {
+      mockPrisma.appSecret.findMany.mockResolvedValue([{ version: 1 }]);
+      mockPrisma.appSecret.create.mockResolvedValue({ id: 'sec-2' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/admin/secrets/rotate-jwt')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(201);
+
+      const data = response.body.data;
+      expect(data).toMatchObject({
+        version: 2,
+        rotatedAt: expect.any(String),
+      });
+      expect(data.secret).toMatch(/^[0-9a-f]{64}$/);
+      expect(mockPrisma.appSecret.create).toHaveBeenCalled();
+      const stored =
+        mockPrisma.appSecret.create.mock.calls[0][0].data.value;
+      expect(stored).not.toContain(data.secret);
+      expect(stored.startsWith('akg:v')).toBe(true);
     });
   });
 

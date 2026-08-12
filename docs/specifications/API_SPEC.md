@@ -152,6 +152,7 @@ binary payloads and recording per-item errors on the run.
 | GET | `/admin/dashboard` | JWT, ADMIN | stats |
 | GET | `/admin/audit-logs` | JWT, ADMIN | `page limit entity? action?` |
 | GET | `/admin/health` | JWT, ADMIN | |
+| POST | `/admin/secrets/rotate-jwt` | JWT, ADMIN | rotates JWT signing secret; returns `{ secret, version, rotatedAt }` (plaintext shown once, stored encrypted) |
 
 ### Health & Metrics
 | Method | Path | Auth | Notes |

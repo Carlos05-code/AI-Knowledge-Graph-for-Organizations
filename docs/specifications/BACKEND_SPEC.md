@@ -85,6 +85,10 @@ All via `ConfigService` + `.env` (see `.env.example`): `DATABASE_URL` (required)
 Mail (optional, log-only fallback when unset): `MAIL_ENABLED`,
 `SMTP_HOST/PORT/SECURE/USER/PASS`, `MAIL_FROM`, `FRONTEND_URL`.
 OCR (optional): `OCR_ENABLED`, `OCR_LANGUAGE`.
+Encryption (single current key): `ENCRYPTION_KEY`; rotation: `ENCRYPTION_KEYS`
+(comma-separated previous keys, oldest first — only used for decryption).
+Rotated JWT secrets live in the `AppSecret` table (encrypted, versioned) rather
+than env; the env `JWT_SECRET` remains the boot secret accepted for verification.
 
 ## 11. Resilience rules
 

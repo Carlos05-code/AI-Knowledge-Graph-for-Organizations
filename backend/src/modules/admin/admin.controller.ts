@@ -1,6 +1,7 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
+import { SecretsService } from '../../infrastructure/security/secrets.service';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '../../presentation/guards/roles.guard';
@@ -13,7 +14,10 @@ import { UserRole } from '../../domain/entities/user.entity';
 @Roles(UserRole.ADMIN)
 @Controller('admin')
 export class AdminController {
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private secretsService: SecretsService,
+  ) {}
 
   @Get('dashboard')
   @ApiOperation({ summary: 'Get organization dashboard stats' })
@@ -42,5 +46,13 @@ export class AdminController {
   @ApiOperation({ summary: 'Get system health' })
   getHealth() {
     return this.adminService.getSystemHealth();
+  }
+
+  @Post('secrets/rotate-jwt')
+  @ApiOperation({
+    summary: 'Rotate the JWT signing secret (dual-key grace rotation)',
+  })
+  async rotateJwtSecret(@CurrentUser() user: any) {
+    return this.secretsService.rotateJwtSecret({ userId: user.id });
   }
 }

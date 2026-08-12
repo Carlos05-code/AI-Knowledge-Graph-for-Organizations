@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { SecretsService } from '../../infrastructure/security/secrets.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -19,6 +20,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private config: ConfigService,
+    private secrets: SecretsService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -167,6 +169,7 @@ export class AuthService {
     return {
       accessToken: this.jwtService.sign(payload, {
         expiresIn: this.config.get('JWT_ACCESS_EXPIRY', '15m'),
+        secret: await this.secrets.getSigningSecret(),
       }),
       refreshToken,
       user: {

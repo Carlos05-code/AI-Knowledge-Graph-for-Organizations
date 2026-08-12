@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat w/ citations, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies, notifications)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 57 unit + 44 e2e + 28 frontend tests, all passing
+- ✅ Tests: 67 unit + 46 e2e + 28 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -39,8 +39,8 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 20 | Admin dashboard | ✅ | Metrics + audit logs API; dashboard UI (Overview/Members/Audit Logs tabs) |
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
-| 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate, DB-backed refresh token rotation + logout revocation, `npm audit` CI gate (0 high), connector credentials encrypted at rest (AES-256-GCM) — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 57 unit + 44 e2e + 28 frontend tests; load/security suites pending |
+| 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate, DB-backed refresh token rotation + logout revocation, `npm audit` CI gate (0 high), connector credentials encrypted at rest (AES-256-GCM), versioned ciphertext (`akg:v{N}:`, `ENCRYPTION_KEYS` chain), DB-backed JWT secret rotation endpoint (`POST /admin/secrets/rotate-jwt`, dual-key grace) — see SECURITY_SPEC remaining items |
+| 24 | Testing | 🔄 | 67 unit + 46 e2e + 28 frontend tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
@@ -54,6 +54,6 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 
 ## Quarter ahead (priority order)
 
-1. Secrets rotation: key-rotation procedure for `ENCRYPTION_KEY` (versioned ciphertext), `JWT_SECRET` rotation endpoint.
+1. ✅ Secrets rotation — done: versioned ciphertext (`akg:v{N}:` + `ENCRYPTION_KEYS`), `AppSecret` table (encrypted at rest), `POST /admin/secrets/rotate-jwt` with dual-key grace (env + DB secrets verified/signed), 67 unit + 46 e2e green.
 2. OCR perf/hardening: PDF page iteration, language packs + confidence threshold, per-document re-page OCR.
 3. Invitation email follow-ups: SMTP TLS/retry config, resend endpoint, outbound email log.

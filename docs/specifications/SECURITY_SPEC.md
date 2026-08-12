@@ -36,9 +36,30 @@ Connector OAuth (Google Drive) is implemented at the *adapter* level
 - Passwords: bcrypt cost 12.
 - Connector credentials: **encrypted at rest** with AES-256-GCM (`EncryptionService`,
   `ENCRYPTION_KEY` env — SHA-256-derived key, random 96-bit IV, auth tag in
-  `iv.tag.ciphertext` payload). Encrypted on create/update, decrypted only inside
+  `akg:v{version}.iv.tag.ciphertext` payload). Encrypted on create/update, decrypted only inside
   the service layer (`configOf` for adapter connections, `expose` for API
   responses); legacy plaintext rows decrypt via `tryDecrypt` fallback.
+- **Key rotation (versioned ciphertext):**
+  - Payloads carry a `akg:v{N}:` prefix; version 1 = original key. Ciphertext written
+    before versioning (plain `iv.tag.ciphertext`) still decrypts by trying every known
+    key (newest first).
+  - `ENCRYPTION_KEY` = current key (used for all new encryption).
+  - `ENCRYPTION_KEYS` = comma-separated previous keys (oldest first) used only for
+    decryption of older versions.
+  - Procedure: set `ENCRYPTION_KEYS` to the current key, put the new key in
+    `ENCRYPTION_KEY`, restart all instances; old rows decrypt via their version,
+    new writes use the new key. Deploy versioned code before rotating (old code
+    rejects `akg:v` payloads as malformed).
+- **JWT secret rotation (`POST /api/v1/admin/secrets/rotate-jwt`, ADMIN only):**
+  - Generates a 32-byte random secret, stores it encrypted at rest in the `AppSecret`
+    table (name `JWT_SECRET`, monotonically increasing `version`, `isActive`,
+    `createdById`), returns the plaintext exactly once so ops can persist it to
+    `JWT_SECRET`/env for future restarts.
+  - Dual-key grace rotation: `JwtStrategy` and `AuthService` accept/verify every
+    active secret (env boot secret + active `AppSecret` rows), so tokens issued
+    before rotation keep validating until they expire or ops deactivates the old
+    rows (`isActive = false`). DB unavailability degrades to env-secret-only
+    verification rather than failing closed.
 - Secrets: env-driven, never committed (`.env` in `.gitignore`); `.env.example`
   documents keys without values.
 

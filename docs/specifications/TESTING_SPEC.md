@@ -4,8 +4,8 @@
 
 | Level | Tool | Count | Status |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | 57 | ✅ passing |
-| e2e (backend) | Jest + Supertest | 44 | ✅ passing |
+| Unit (backend) | Jest + ts-jest | 67 | ✅ passing |
+| e2e (backend) | Jest + Supertest | 46 | ✅ passing |
 | Widget (frontend) | flutter_test | 28 (13 widget + 15 provider) | ✅ passing |
 | Performance | k6 | — | ⬜ planned |
 | Security | `npm audit --audit-level=high` | 0 high+ | ✅ CI gate (`.github/workflows/ci.yml`) |
@@ -22,7 +22,8 @@
 | `recommendations.service.spec.ts` | shape, similar-role experts, Qdrant-based recs, personalized feed |
 | `users.service.spec.ts` | profile get/update, member pagination + search, role/status updates, self-demotion guard |
 | `slack.adapter.spec.ts` | auth.test ok/invalid/missing token, listFiles mapping, syncAll text-download + binary-skip, channel export (all via mocked `fetch`) |
-| `encryption.service.spec.ts` | AES-256-GCM round-trip, per-call random IV, wrong-key failure, malformed payload, legacy `tryDecrypt` fallback |
+| `encryption.service.spec.ts` | AES-256-GCM round-trip, per-call random IV, wrong-key failure, malformed payload, legacy `tryDecrypt` fallback, versioned `akg:v{N}:` payloads (active version tag, mid-chain + rotated decryption, unknown-future-version rejection, unversioned legacy decrypt) |
+| `secrets.service.spec.ts` | env-only secrets, rotated secrets newest-first, signing-secret selection, encrypted-at-rest storage + version increment, DB-unavailable fallback |
 | `prisma.service.spec.ts` | service construction |
 
 Patterns: mocked Prisma delegates, `Object.defineProperty` for OpenAI/Qdrant clients,
@@ -42,6 +43,8 @@ cache-manager-redis-yet, bcrypt) and asserts:
 - chat: messages + conversations; connectors: admin-only create, invalid type 400,
   org-scoped list, test-connection RBAC, Slack sync (mocked `fetch` → documents + run)
 - notifications, expertise, gaps, recommendations, upload auth, admin dashboard RBAC
+- admin secrets: rotate-jwt RBAC (403 for non-admin) + successful rotation (201,
+  encrypted-at-rest `akg:v` value, hex secret returned once)
 
 Run:
 
