@@ -12,10 +12,11 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MeetingsService } from './meetings.service';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
+import { RolesGuard } from '../../presentation/guards/roles.guard';
 
 @ApiTags('Meetings')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('meetings')
 export class MeetingsController {
   constructor(private meetingsService: MeetingsService) {}

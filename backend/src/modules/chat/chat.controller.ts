@@ -4,10 +4,11 @@ import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
+import { RolesGuard } from '../../presentation/guards/roles.guard';
 
 @ApiTags('Chat')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('chat')
 export class ChatController {
   constructor(private chatService: ChatService) {}

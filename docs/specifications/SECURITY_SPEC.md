@@ -21,7 +21,18 @@
 |---|---|
 | `ADMIN` | documents delete/process, gaps detect/resolve, connectors CRUD+sync, policies CRUD, admin dashboard/audit/health |
 | `USER` | documents create/list, search, chat, meetings, notifications |
-| `VIEWER` | read-only (enum defined; enforcement pending) |
+| `VIEWER` | strictly read-only — GET/HEAD/OPTIONS only |
+
+`VIEWER` is enforced inside `RolesGuard`: any non-read HTTP method is denied
+(`403 VIEWER role is read-only`) regardless of `@Roles()`, so VIEWER cannot
+create/upload/chat/meet/write notifications or edit profiles, but reads freely
+(documents, search, chat history, meetings, notifications, graph, expertise,
+recommendations). `@Roles()`-restricted endpoints (admin) additionally exclude
+VIEWER from their read endpoints. Role is taken from the DB (`JwtStrategy`
+revalidates per request) — a forged token claim is not trusted.
+
+Known gap: the WebSocket chat gateway (`/chat`) authenticates via token but does
+not enforce roles — VIEWER could send WS messages. Tracked in ROADMAP.
 
 Enforced via `RolesGuard` + `@Roles()` on endpoints; `JwtStrategy` revalidates user +
 `isActive` per request.

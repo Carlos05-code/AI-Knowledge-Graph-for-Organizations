@@ -10,6 +10,11 @@ Swagger at `/api/v1/docs`).
 - **Auth**: `Authorization: Bearer <JWT>`; `@Public()` routes skip it. Refresh via
   `POST /auth/refresh`.
 - **RBAC**: `RolesGuard` enforces `ADMIN`/`USER`/`VIEWER` (`@Roles()`).
+  `VIEWER` is strictly read-only: all non-GET/HEAD/OPTIONS requests return 403
+  (`VIEWER role is read-only`), and `@Roles(ADMIN|USER)` endpoints additionally
+  exclude VIEWER from their GETs. Table "Auth" column lists the narrowest
+  requirement; VIEWER is implicitly allowed on any JWT endpoint whose method is a
+  read unless an `ADMIN`-only `@Roles()` is present.
 - **Response envelope** (all endpoints, via `TransformInterceptor`):
   - Success: `{ "success": true, "data": <payload>, "timestamp": "<ISO>" }`
   - Error: `{ "success": false, "message": "<string>", "errors"?: [...], "timestamp": "<ISO>" }`

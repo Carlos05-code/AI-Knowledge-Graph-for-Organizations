@@ -4,8 +4,8 @@
 
 | Level | Tool | Count | Status |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | 76 | ✅ passing |
-| e2e (backend) | Jest + Supertest | 49 | ✅ passing |
+| Unit (backend) | Jest + ts-jest | 82 | ✅ passing |
+| e2e (backend) | Jest + Supertest | 62 | ✅ passing |
 | Widget (frontend) | flutter_test | 28 (13 widget + 15 provider) | ✅ passing |
 | Performance | k6 | — | ⬜ planned |
 | Security | `npm audit --audit-level=high` | 0 high+ | ✅ CI gate (`.github/workflows/ci.yml`) |
@@ -26,6 +26,7 @@
 | `secrets.service.spec.ts` | env-only secrets, rotated secrets newest-first, signing-secret selection, encrypted-at-rest storage + version increment, DB-unavailable fallback |
 | `ocr.service.spec.ts` | OCR mime detection, image OCR + confidence, empty-text null, tesseract-unavailable/recognition-failure fallbacks, PDF text-layer fast path (pdf-parse), scanned-PDF page-by-page OCR, `OCR_MAX_PAGES` cap, `OCR_MIN_CONFIDENCE` page drop, language-pack normalization |
 | `email.service.spec.ts` | SMTP delivery + auth + TLS passthrough (`secure/requireTLS/rejectUnauthorized`), log-only fallback without SMTP_HOST, transient-failure retry then success, `SMTP_RETRIES` exhaustion → log fallback, outbound log rows (`OutboundEmail`) for delivered/undelivered attempts, invitation mail accept-link build |
+| `roles.guard.spec.ts` | no-user 403, VIEWER read allowed / write blocked (POST/PATCH/DELETE), ADMIN+USER writes allowed, `@Roles` list enforcement (VIEWER not whitelisted) |
 | `prisma.service.spec.ts` | service construction |
 
 Patterns: mocked Prisma delegates, `Object.defineProperty` for OpenAI/Qdrant clients,
@@ -49,6 +50,9 @@ cache-manager-redis-yet, bcrypt) and asserts:
   encrypted-at-rest `akg:v` value, hex secret returned once)
 - invitations: create (ADMIN RBAC 403/201), list, revoke, accept; resend
   (RBAC 403, token refresh + email re-send 201, non-pending 400)
+- VIEWER role (read-only): GET documents/chat-conversations/meetings/notifications/
+  search/expertise/graph allowed; POST documents/chat-messages/upload/meetings/
+  notifications-read and PATCH users/me forbidden (403)
 
 Run:
 

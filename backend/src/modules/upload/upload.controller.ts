@@ -19,12 +19,13 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
+import { RolesGuard } from '../../presentation/guards/roles.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { DocumentsService } from '../documents/documents.service';
 
 @ApiTags('Upload')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('upload')
 export class UploadController {
   constructor(private documentsService: DocumentsService) {}
