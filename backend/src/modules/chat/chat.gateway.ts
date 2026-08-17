@@ -9,15 +9,19 @@ import {
   WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { SecretsService } from '../../infrastructure/security/secrets.service';
+import { UserRole } from '../../domain/entities/user.entity';
 
 interface AuthenticatedSocket extends Socket {
   user?: {
     id: string;
     email: string;
     organizationId: string;
+    role: string;
   };
 }
 
@@ -36,6 +40,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private chatService: ChatService,
     private config: ConfigService,
+    private prisma: PrismaService,
+    private secrets: SecretsService,
   ) {}
 
   async handleConnection(client: AuthenticatedSocket) {
@@ -48,23 +54,57 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      const jwt = require('jsonwebtoken');
-      const secret = this.config.get('JWT_SECRET');
-      const payload = jwt.verify(token, secret);
+      const payload = await this.verifyToken(token);
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+      if (!user || !user.isActive) {
+        throw new Error('User not found or inactive');
+      }
 
       client.user = {
-        id: payload.sub,
-        email: payload.email,
-        organizationId: payload.orgId,
+        id: user.id,
+        email: user.email,
+        organizationId: user.organizationId,
+        role: user.role,
       };
 
       this.connectedClients.set(client.id, client);
-      this.logger.log(`Client connected: ${client.id} (${payload.email})`);
+      this.logger.log(`Client connected: ${client.id} (${user.email})`);
       client.emit('connected', { clientId: client.id });
     } catch (error) {
       this.logger.warn(`Connection rejected: ${error}`);
       client.emit('error', { message: 'Invalid token' });
       client.disconnect();
+    }
+  }
+
+  private async verifyToken(token: string): Promise<{
+    sub: string;
+    email: string;
+    orgId: string;
+  }> {
+    const { verify } = require('jsonwebtoken');
+    const candidates = await this.secrets.getActiveJwtSecrets();
+    for (const candidate of candidates) {
+      try {
+        const payload = verify(token, candidate);
+        return {
+          sub: payload.sub as string,
+          email: payload.email as string,
+          orgId: payload.orgId as string,
+        };
+      } catch {
+        // try the next active secret
+      }
+    }
+    throw new Error('Invalid token signature');
+  }
+
+  private assertCanWrite(client: AuthenticatedSocket): void {
+    if (!client.user) throw new WsException('Unauthenticated');
+    if (client.user.role === UserRole.VIEWER) {
+      throw new WsException('VIEWER role is read-only');
     }
   }
 
@@ -78,12 +118,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { content: string; conversationId?: string },
   ) {
-    if (!client.user) throw new WsException('Unauthenticated');
+    this.assertCanWrite(client);
     if (!data.content?.trim())
       throw new WsException('Message content required');
 
     const { content, conversationId } = data;
-    const userId = client.user.id;
+    const userId = client.user!.id;
 
     try {
       const conversation = await this.chatService.getOrCreateConversation(
@@ -201,10 +241,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { conversationId: string },
   ) {
-    if (!client.user) throw new WsException('Unauthenticated');
+    this.assertCanWrite(client);
     await this.chatService.deleteConversation(
       data.conversationId,
-      client.user.id,
+      client.user!.id,
     );
     client.emit('conversation:deleted', {
       conversationId: data.conversationId,

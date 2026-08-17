@@ -4,7 +4,7 @@
 
 | Level | Tool | Count | Status |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | 82 | ✅ passing |
+| Unit (backend) | Jest + ts-jest | 90 | ✅ passing |
 | e2e (backend) | Jest + Supertest | 62 | ✅ passing |
 | Widget (frontend) | flutter_test | 28 (13 widget + 15 provider) | ✅ passing |
 | Performance | k6 | — | ⬜ planned |
@@ -27,6 +27,7 @@
 | `ocr.service.spec.ts` | OCR mime detection, image OCR + confidence, empty-text null, tesseract-unavailable/recognition-failure fallbacks, PDF text-layer fast path (pdf-parse), scanned-PDF page-by-page OCR, `OCR_MAX_PAGES` cap, `OCR_MIN_CONFIDENCE` page drop, language-pack normalization |
 | `email.service.spec.ts` | SMTP delivery + auth + TLS passthrough (`secure/requireTLS/rejectUnauthorized`), log-only fallback without SMTP_HOST, transient-failure retry then success, `SMTP_RETRIES` exhaustion → log fallback, outbound log rows (`OutboundEmail`) for delivered/undelivered attempts, invitation mail accept-link build |
 | `roles.guard.spec.ts` | no-user 403, VIEWER read allowed / write blocked (POST/PATCH/DELETE), ADMIN+USER writes allowed, `@Roles` list enforcement (VIEWER not whitelisted) |
+| `chat.gateway.spec.ts` | WS connection auth (missing token, unknown-signature rejection, inactive-user rejection, multi-secret verification via `SecretsService`, DB role attach), VIEWER blocked on `message:send`/`conversation:delete`, VIEWER allowed on `conversation:list`, USER write allowed |
 | `prisma.service.spec.ts` | service construction |
 
 Patterns: mocked Prisma delegates, `Object.defineProperty` for OpenAI/Qdrant clients,

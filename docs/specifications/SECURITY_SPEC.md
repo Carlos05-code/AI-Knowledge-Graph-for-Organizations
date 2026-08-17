@@ -31,11 +31,13 @@ recommendations). `@Roles()`-restricted endpoints (admin) additionally exclude
 VIEWER from their read endpoints. Role is taken from the DB (`JwtStrategy`
 revalidates per request) — a forged token claim is not trusted.
 
-Known gap: the WebSocket chat gateway (`/chat`) authenticates via token but does
-not enforce roles — VIEWER could send WS messages. Tracked in ROADMAP.
-
 Enforced via `RolesGuard` + `@Roles()` on endpoints; `JwtStrategy` revalidates user +
-`isActive` per request.
+`isActive` per request. The WebSocket chat gateway applies the same policy on
+connections: tokens are verified against every active JWT secret (env boot secret
++ rotated `AppSecret` rows), the DB user is revalidated (`isActive`, real role),
+and `message:send` / `conversation:delete` are denied for VIEWER
+(`WsException "VIEWER role is read-only"`); reads (`conversation:list`/`get`)
+stay open to VIEWER.
 
 ## 3. OAuth
 
