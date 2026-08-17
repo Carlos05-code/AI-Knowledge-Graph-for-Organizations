@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 
@@ -54,7 +54,11 @@ export class NotificationsService {
     };
   }
 
-  async markAsRead(id: string, _userId: string) {
+  async markAsRead(id: string, userId: string) {
+    const existing = await this.prisma.notification.findFirst({
+      where: { id, userId },
+    });
+    if (!existing) throw new NotFoundException('Notification not found');
     return this.prisma.notification.update({
       where: { id },
       data: { isRead: true },
@@ -74,7 +78,11 @@ export class NotificationsService {
     });
   }
 
-  async delete(id: string, _userId: string) {
+  async delete(id: string, userId: string) {
+    const existing = await this.prisma.notification.findFirst({
+      where: { id, userId },
+    });
+    if (!existing) throw new NotFoundException('Notification not found');
     return this.prisma.notification.delete({
       where: { id },
     });

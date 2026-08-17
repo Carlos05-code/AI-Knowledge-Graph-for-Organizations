@@ -110,6 +110,10 @@ Viewable by admins (`GET /admin/audit-logs`).
 
 - All queries filter `organizationId` (docs, meetings, policies, connectors, search
   filters on vector payload).
+- Mutating single-record endpoints enforce scope server-side: `meetings.delete`,
+  `policies.delete` verify `{ id, organizationId }` (404 otherwise);
+  `notifications.markAsRead`/`delete` verify `{ id, userId }` (404 otherwise);
+  chat `deleteConversation` verifies `{ id, userId }`.
 - Chat sources restricted to org content; expertise scores scoped per org.
 - Notification recipients limited to org members / org admins.
 

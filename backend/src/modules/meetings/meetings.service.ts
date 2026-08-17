@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 
 @Injectable()
@@ -107,7 +107,7 @@ export class MeetingsService {
 
   async generateSummary(id: string, organizationId: string) {
     const meeting = await this.findById(id, organizationId);
-    if (!meeting) throw new Error('Meeting not found');
+    if (!meeting) throw new NotFoundException('Meeting not found');
 
     // In production, use LLM to generate summary from transcript
     const summary = `AI-generated summary for "${meeting.title}"`;
@@ -121,7 +121,11 @@ export class MeetingsService {
     return { summary, actionItems };
   }
 
-  async delete(id: string, _organizationId: string) {
+  async delete(id: string, organizationId: string) {
+    const existing = await this.prisma.meeting.findFirst({
+      where: { id, organizationId },
+    });
+    if (!existing) throw new NotFoundException('Meeting not found');
     return this.prisma.meeting.update({
       where: { id },
       data: { deletedAt: new Date() },

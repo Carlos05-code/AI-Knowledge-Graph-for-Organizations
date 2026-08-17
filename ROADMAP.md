@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat w/ citations, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies, notifications)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 90 unit + 62 e2e + 28 frontend tests, all passing
+- ✅ Tests: 90 unit + 70 e2e + 28 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -40,7 +40,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate, DB-backed refresh token rotation + logout revocation, `npm audit` CI gate (0 high), connector credentials encrypted at rest (AES-256-GCM), versioned ciphertext (`akg:v{N}:`, `ENCRYPTION_KEYS` chain), DB-backed JWT secret rotation endpoint (`POST /admin/secrets/rotate-jwt`, dual-key grace), VIEWER read-only enforcement (RolesGuard blocks non-GET for VIEWER; WS chat role-gated: multi-secret verify + DB revalidation on connect, writes denied for VIEWER) — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 90 unit + 62 e2e + 28 frontend tests; load/security suites pending |
+| 24 | Testing | 🔄 | 90 unit + 70 e2e + 28 frontend tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
@@ -51,7 +51,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned. `freezed`/`json_serializable` were pruned with the other dead deps; a small `json_annotation`-only codegen for models could return later.
 - Widget test suite: 10 widget + 15 provider tests (login/register, admin gating + invites, chat citations, notifications UI + provider, router redirect/shell; search/chat/notifications/invitations providers).
 - Backend `npm run lint` gate restored — resolved 2026-08-17: `eslint.config.mjs` now exits 0 (0 errors / 1093 warnings). Legacy `no-unsafe-*` rules (assignment/member-access/call/return) and `no-require-imports` downgraded to `warn` (intentional lazy `require()` for optional deps: nodemailer, pdf-parse, pdf-to-img, googleapis, jsonwebtoken); `no-unused-vars` configured with `^_` ignore patterns; `dist/`/`coverage/`/`uploads/` ignored; leftover 64 errors fixed (require-await stubs, enum comparisons, unused imports/args, empty blocks, unbound methods).
-- Org-scoped deletes not enforced in service layer — `meetings.delete(id, organizationId)`, `policies.delete(id, organizationId)`, `notifications.markAsRead(id, userId)`, `notifications.delete(id, userId)` accept scope ids but delete by `id` only (params renamed `_`-prefixed during lint cleanup); chat `deleteConversation` IS ownership-scoped (fixed during cleanup). Enforce scoping or narrow to tenant-scoped composite keys in a future release.
+- Org-scoped delete enforcement — **resolved 2026-08-17**: `meetings.delete`/`policies.delete` now verify the record belongs to the caller's org (`findFirst({ id, organizationId })` → `404` otherwise), `notifications.markAsRead`/`delete` verify ownership (`findFirst({ id, userId })` → `404`), `meetings.generateSummary`/`policies.update` now throw `NotFoundException` (404) instead of generic 500; chat `deleteConversation` was already ownership-scoped. 8 new e2e cases; 90 unit + 70 e2e green.
 
 ## Quarter ahead (priority order)
 
@@ -61,3 +61,4 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 4. ✅ VIEWER role enforcement — done: `RolesGuard` now denies every non-GET/HEAD/OPTIONS request for VIEWER (`403 VIEWER role is read-only`), attached to the JWT-only write controllers (chat, upload, meetings, notifications, users), role taken from the DB per request; 13 e2e VIEWER cases + `roles.guard.spec` (6) added; 82 unit + 62 e2e green.
 5. ✅ WebSocket chat role-gating — done: `ChatGateway` verifies tokens against every active JWT secret (env + rotated `AppSecret` rows via `SecretsService`), revalidates the DB user on connect (`isActive`, real role), and denies `message:send`/`conversation:delete` for VIEWER (reads allowed); `chat.gateway.spec` (8 tests); 90 unit + 62 e2e green.
 6. ✅ Lint gate restoration — done: CI `npm run lint` passes again (0 errors; 1093 legacy warnings documented above); `--fix` auto-formats; leftover errors fixed across adapters/services/specs; flaky e2e `memory_heap` health check eliminated by mocking `MemoryHealthIndicator` in `app.e2e-spec.ts`; 90 unit + 62 e2e green (2 consecutive full e2e runs).
+7. ✅ Org-scoped delete enforcement — done: tenant/ownership scoping enforced on `meetings.delete`, `policies.delete`, `notifications.markAsRead`, `notifications.delete` (scoped `findFirst` → `404 Not Found` when the record is not in the caller's org / not owned); `generateSummary` + `policies.update` now return 404 instead of generic 500; e2e suites hardened against slow-CI hook timeouts (30 s `beforeAll`); 8 new e2e cases; 90 unit + 70 e2e green.

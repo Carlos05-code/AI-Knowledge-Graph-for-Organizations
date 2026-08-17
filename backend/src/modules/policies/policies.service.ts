@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 
 @Injectable()
@@ -94,7 +94,7 @@ export class PoliciesService {
     const existing = await this.prisma.policy.findFirst({
       where: { id, organizationId },
     });
-    if (!existing) throw new Error('Policy not found');
+    if (!existing) throw new NotFoundException('Policy not found');
 
     return this.prisma.policy.update({
       where: { id },
@@ -105,7 +105,11 @@ export class PoliciesService {
     });
   }
 
-  async delete(id: string, _organizationId: string) {
+  async delete(id: string, organizationId: string) {
+    const existing = await this.prisma.policy.findFirst({
+      where: { id, organizationId },
+    });
+    if (!existing) throw new NotFoundException('Policy not found');
     return this.prisma.policy.update({
       where: { id },
       data: { deletedAt: new Date(), isActive: false },

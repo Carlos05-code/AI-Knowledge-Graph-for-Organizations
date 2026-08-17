@@ -103,6 +103,7 @@ describe('API Integration (e2e)', () => {
       create: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       delete: jest.fn(),
       update: jest.fn(),
       count: jest.fn(),
@@ -115,6 +116,7 @@ describe('API Integration (e2e)', () => {
       create: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
@@ -123,6 +125,7 @@ describe('API Integration (e2e)', () => {
       create: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
       updateMany: jest.fn(),
@@ -276,7 +279,7 @@ describe('API Integration (e2e)', () => {
       orgId: 'org-1',
       role: 'VIEWER',
     });
-  });
+  }, 30000);
 
   afterAll(async () => {
     await app.close();
@@ -848,6 +851,93 @@ describe('API Integration (e2e)', () => {
     });
   });
 
+  // ─── Meetings ─────────────────────────────────────────────────
+
+  describe('Meetings', () => {
+    it('DELETE /api/v1/meetings/:id should soft-delete a meeting in own org', async () => {
+      mockPrisma.meeting.findFirst.mockResolvedValue({
+        id: 'm-1',
+        title: 'Sprint planning',
+        organizationId: 'org-1',
+      });
+      mockPrisma.meeting.update.mockResolvedValue({
+        id: 'm-1',
+        deletedAt: new Date(),
+      });
+
+      await request(app.getHttpServer())
+        .delete('/api/v1/meetings/m-1')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200);
+
+      expect(mockPrisma.meeting.findFirst).toHaveBeenCalledWith({
+        where: { id: 'm-1', organizationId: 'org-1' },
+      });
+    });
+
+    it('DELETE /api/v1/meetings/:id should 404 for a meeting in another org', async () => {
+      mockPrisma.meeting.findFirst.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .delete('/api/v1/meetings/m-9')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(404);
+    });
+  });
+
+  // ─── Policies ─────────────────────────────────────────────────
+
+  describe('Policies', () => {
+    it('DELETE /api/v1/policies/:id should soft-delete a policy in own org (admin)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+      });
+      mockPrisma.policy.findFirst.mockResolvedValue({
+        id: 'p-1',
+        title: 'Travel policy',
+        organizationId: 'org-1',
+      });
+      mockPrisma.policy.update.mockResolvedValue({
+        id: 'p-1',
+        deletedAt: new Date(),
+        isActive: false,
+      });
+
+      await request(app.getHttpServer())
+        .delete('/api/v1/policies/p-1')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(mockPrisma.policy.findFirst).toHaveBeenCalledWith({
+        where: { id: 'p-1', organizationId: 'org-1' },
+      });
+    });
+
+    it('DELETE /api/v1/policies/:id should 404 for a policy in another org', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+      });
+      mockPrisma.policy.findFirst.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .delete('/api/v1/policies/p-9')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(404);
+    });
+  });
+
   // ─── Notifications ─────────────────────────────────────────────
 
   describe('Notifications', () => {
@@ -867,6 +957,66 @@ describe('API Integration (e2e)', () => {
         .get('/api/v1/notifications')
         .set('Authorization', `Bearer ${validToken}`)
         .expect(200);
+    });
+
+    it('POST /api/v1/notifications/:id/read should mark own notification as read', async () => {
+      mockPrisma.notification.findFirst.mockResolvedValue({
+        id: 'notif-1',
+        userId: 'user-1',
+        isRead: false,
+      });
+      mockPrisma.notification.update.mockResolvedValue({
+        id: 'notif-1',
+        userId: 'user-1',
+        isRead: true,
+      });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/notifications/notif-1/read')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(201);
+
+      expect(mockPrisma.notification.findFirst).toHaveBeenCalledWith({
+        where: { id: 'notif-1', userId: 'user-1' },
+      });
+    });
+
+    it('POST /api/v1/notifications/:id/read should 404 for another user notification', async () => {
+      mockPrisma.notification.findFirst.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/notifications/notif-9/read')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(404);
+    });
+
+    it('DELETE /api/v1/notifications/:id should delete own notification', async () => {
+      mockPrisma.notification.findFirst.mockResolvedValue({
+        id: 'notif-1',
+        userId: 'user-1',
+      });
+      mockPrisma.notification.delete.mockResolvedValue({
+        id: 'notif-1',
+        userId: 'user-1',
+      });
+
+      await request(app.getHttpServer())
+        .delete('/api/v1/notifications/notif-1')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200);
+
+      expect(mockPrisma.notification.findFirst).toHaveBeenCalledWith({
+        where: { id: 'notif-1', userId: 'user-1' },
+      });
+    });
+
+    it('DELETE /api/v1/notifications/:id should 404 for another user notification', async () => {
+      mockPrisma.notification.findFirst.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .delete('/api/v1/notifications/notif-9')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(404);
     });
   });
 

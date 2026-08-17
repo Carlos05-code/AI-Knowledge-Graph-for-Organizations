@@ -27,7 +27,7 @@ describe('AppController (e2e)', () => {
     );
     app.setGlobalPrefix('/api/v1');
     await app.init();
-  });
+  }, 30000);
 
   it('/api/v1/health (GET) should return health status', () => {
     return request(app.getHttpServer())
