@@ -84,6 +84,12 @@ All via `ConfigService` + `.env` (see `.env.example`): `DATABASE_URL` (required)
 `CORS_ORIGINS`, `LOG_LEVEL`, `LOG_FORMAT`.
 Mail (optional, log-only fallback when unset): `MAIL_ENABLED`,
 `SMTP_HOST/PORT/SECURE/USER/PASS`, `MAIL_FROM`, `FRONTEND_URL`.
+SMTP hardening: `SMTP_REQUIRE_TLS` (STARTTLS enforcement), `SMTP_REJECT_UNAUTHORIZED`
+(cert validation, false for dev self-signed), `SMTP_RETRIES` (transient-failure
+retries; total attempts = 1 + retries), `SMTP_RETRY_DELAY_MS` (base backoff,
+scaled per attempt). Every send attempt is recorded in the `OutboundEmail`
+table (to/subject/mode/delivered/messageId, best-effort — never blocks or fails
+the caller).
 OCR (optional): `OCR_ENABLED`, `OCR_LANGUAGE` (comma-separated packs → `eng+spa`
 style), `OCR_MIN_CONFIDENCE` (0 = off; pages/results below threshold are dropped),
 `OCR_MAX_PAGES` (per-document cap for scanned-PDF page OCR). PDFs: `pdf-parse`

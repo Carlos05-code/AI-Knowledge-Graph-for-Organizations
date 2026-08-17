@@ -65,6 +65,20 @@ export class InvitationsService {
       },
     });
 
+    await this.sendInvitationEmail(invitation, organizationId);
+
+    return invitation;
+  }
+
+  private async sendInvitationEmail(
+    invitation: {
+      id: string;
+      token: string;
+      email: string;
+      invitedById: string;
+    },
+    organizationId: string,
+  ) {
     try {
       const [organization, inviter] = await Promise.all([
         this.prisma.organization.findUnique({
@@ -72,7 +86,7 @@ export class InvitationsService {
           select: { name: true },
         }),
         this.prisma.user.findUnique({
-          where: { id: invitedById },
+          where: { id: invitation.invitedById },
           select: {
             firstName: true,
             lastName: true,
@@ -85,10 +99,12 @@ export class InvitationsService {
           ? `${inviter.firstName || ''} ${inviter.lastName || ''}`.trim()
           : inviter?.email || 'An administrator';
       await this.emailService.sendInvitationMail({
-        to: email,
+        to: invitation.email,
         organizationName: organization?.name || 'your organization',
         inviterName,
         token: invitation.token,
+        invitationId: invitation.id,
+        organizationId,
       });
     } catch (error) {
       this.logger.warn(
@@ -96,8 +112,6 @@ export class InvitationsService {
         error instanceof Error ? error.message : error,
       );
     }
-
-    return invitation;
   }
 
   async findAll(
@@ -150,6 +164,39 @@ export class InvitationsService {
       where: { id },
       data: { status: 'REVOKED', updatedAt: new Date() },
     });
+  }
+
+  async resend(organizationId: string, id: string) {
+    const invitation = await this.prisma.invitation.findFirst({
+      where: { id, organizationId },
+    });
+    if (!invitation) {
+      throw new NotFoundException('Invitation not found');
+    }
+    if (invitation.status !== 'PENDING') {
+      throw new BadRequestException('Only pending invitations can be resent');
+    }
+    if (invitation.expiresAt < new Date()) {
+      throw new BadRequestException(
+        'Invitation has expired - revoke it and invite the user again',
+      );
+    }
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + DEFAULT_EXPIRES_IN_DAYS);
+
+    const refreshed = await this.prisma.invitation.update({
+      where: { id },
+      data: {
+        token: crypto.randomUUID(),
+        expiresAt,
+        updatedAt: new Date(),
+      },
+    });
+
+    await this.sendInvitationEmail(refreshed, organizationId);
+
+    return refreshed;
   }
 
   async accept(dto: AcceptInvitationDto) {

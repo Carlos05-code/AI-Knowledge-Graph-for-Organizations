@@ -63,4 +63,16 @@ export class InvitationsController {
   revoke(@CurrentUser() user: any, @Param('id') id: string) {
     return this.invitationsService.revoke(user.organizationId, id);
   }
+
+  @Post(':id/resend')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary:
+      'Resend a pending invitation with a fresh token + expiry (admin)',
+  })
+  resend(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.invitationsService.resend(user.organizationId, id);
+  }
 }

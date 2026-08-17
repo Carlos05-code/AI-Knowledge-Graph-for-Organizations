@@ -42,6 +42,15 @@ Swagger at `/api/v1/docs`).
 | GET | `/users` | JWT, ADMIN | org members; `page, limit(≤100), q?` → `{ data, meta }` |
 | PATCH | `/users/:id` | JWT, ADMIN | change `role` or `isActive`; self-demotion/deactivation blocked (400) |
 
+### Invitations
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| POST | `/invitations` | JWT, ADMIN | `{ email, role?, expiresInDays? }` → PENDING invite + email with accept link |
+| GET | `/invitations` | JWT, ADMIN | `page, limit, status?` |
+| POST | `/invitations/:id/revoke` | JWT, ADMIN | PENDING → REVOKED |
+| POST | `/invitations/:id/resend` | JWT, ADMIN | refreshes token + 7-day expiry, re-sends email; PENDING only (400 otherwise) |
+| POST | `/invitations/accept` | Public | `{ token, email, firstName, lastName, password }` → creates user, marks ACCEPTED |
+
 ### Documents
 | Method | Path | Auth | Notes |
 |---|---|---|---|

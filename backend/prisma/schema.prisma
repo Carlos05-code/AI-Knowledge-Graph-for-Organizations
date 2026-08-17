@@ -396,6 +396,26 @@ model Invitation {
   @@index([email, organizationId])
 }
 
+// =========================================================================
+// Outbound email log
+// =========================================================================
+
+model OutboundEmail {
+  id             String   @id @default(uuid())
+  to             String
+  subject        String
+  mode           String
+  delivered      Boolean
+  messageId      String?
+  invitationId   String?
+  organizationId String?
+  createdAt      DateTime @default(now())
+
+  @@index([invitationId])
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
 enum InvitationStatus {
   PENDING
   ACCEPTED

@@ -158,6 +158,9 @@ describe('API Integration (e2e)', () => {
       findMany: jest.fn(),
       updateMany: jest.fn(),
     },
+    outboundEmail: {
+      create: jest.fn(),
+    },
     auditLog: {
       create: jest.fn(),
       findMany: jest.fn(),
@@ -953,6 +956,80 @@ describe('API Integration (e2e)', () => {
         .post('/api/v1/invitations/inv-1/revoke')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(201);
+    });
+
+    it('POST /api/v1/invitations/:id/resend should require ADMIN role', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/invitations/inv-1/resend')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(403);
+    });
+
+    it('POST /api/v1/invitations/:id/resend should refresh token + expiry and resend (admin)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+      mockPrisma.invitation.findFirst.mockResolvedValue({
+        id: 'inv-1',
+        email: 'jane@test.com',
+        role: 'USER',
+        status: 'PENDING',
+        token: 'old-token',
+        invitedById: 'admin-1',
+        organizationId: 'org-1',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
+      mockPrisma.organization.findUnique.mockResolvedValue({
+        id: 'org-1',
+        name: 'Test Org',
+      });
+      mockPrisma.invitation.update.mockResolvedValue({
+        id: 'inv-1',
+        email: 'jane@test.com',
+        role: 'USER',
+        status: 'PENDING',
+        token: 'new-token',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/invitations/inv-1/resend')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(201);
+
+      expect(res.body.data.token).toBe('new-token');
+      expect(res.body.data.status).toBe('PENDING');
+      const updateArgs = mockPrisma.invitation.update.mock.calls[0][0];
+      expect(updateArgs.data.token).not.toBe('old-token');
+    });
+
+    it('POST /api/v1/invitations/:id/resend should reject non-pending invitations', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+      mockPrisma.invitation.findFirst.mockResolvedValue({
+        id: 'inv-1',
+        status: 'ACCEPTED',
+      });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/invitations/inv-1/resend')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(400);
     });
 
     it('POST /api/v1/invitations/accept should create the user and mark accepted', async () => {
