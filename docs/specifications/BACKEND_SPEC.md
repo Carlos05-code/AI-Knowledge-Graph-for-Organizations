@@ -84,7 +84,12 @@ All via `ConfigService` + `.env` (see `.env.example`): `DATABASE_URL` (required)
 `CORS_ORIGINS`, `LOG_LEVEL`, `LOG_FORMAT`.
 Mail (optional, log-only fallback when unset): `MAIL_ENABLED`,
 `SMTP_HOST/PORT/SECURE/USER/PASS`, `MAIL_FROM`, `FRONTEND_URL`.
-OCR (optional): `OCR_ENABLED`, `OCR_LANGUAGE`.
+OCR (optional): `OCR_ENABLED`, `OCR_LANGUAGE` (comma-separated packs → `eng+spa`
+style), `OCR_MIN_CONFIDENCE` (0 = off; pages/results below threshold are dropped),
+`OCR_MAX_PAGES` (per-document cap for scanned-PDF page OCR). PDFs: `pdf-parse`
+extracts embedded text layers first (no OCR needed); scanned PDFs render each
+page via `pdf-to-img` and OCR page-by-page. Documents store
+`metadata.ocrExtracted/ocrEngine/ocrPages/ocrConfidence`.
 Encryption (single current key): `ENCRYPTION_KEY`; rotation: `ENCRYPTION_KEYS`
 (comma-separated previous keys, oldest first — only used for decryption).
 Rotated JWT secrets live in the `AppSecret` table (encrypted, versioned) rather

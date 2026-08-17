@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat w/ citations, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies, notifications)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 67 unit + 46 e2e + 28 frontend tests, all passing
+- ✅ Tests: 73 unit + 46 e2e + 28 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -24,7 +24,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 5 | User management | ✅ | Profile edit, org members list + search, role/status management (ADMIN), self-demotion guard; org invitations (invite/accept/revoke + accept-link email) |
 | 6 | Connector framework | ✅ | Registry + adapters (Slack real: auth.test, files.list/download, channel export; GitHub adapter stubs); CRUD/test/sync UI + run history |
 | 7 | Document ingestion pipeline | ✅ | Upload → checksum → chunk (512/64) → Qdrant; docs UI (list/upload/detail/process/delete); OCR & versions partial |
-| 8 | OCR pipeline | ✅ | Tesseract (`tesseract.js`) for scanned PDFs/images: `OcrService` w/ `isOcrCandidate` + graceful fallback, wired into document processing (OCR'd text → chunked/indexed, `metadata.ocrExtracted`) |
+| 8 | OCR pipeline | ✅ | Tesseract (`tesseract.js`) for scanned PDFs/images: `OcrService` w/ `isOcrCandidate` + graceful fallback, wired into document processing (OCR'd text → chunked/indexed, `metadata.ocrExtracted`); hardened: PDF text-layer fast path (`pdf-parse`), per-page scanned-PDF OCR (`pdf-to-img`), `OCR_MAX_PAGES` cap, `OCR_MIN_CONFIDENCE` threshold, language packs (`eng+spa`), `metadata.ocrPages/ocrConfidence` |
 | 9 | Embedding service | ✅ | OpenAI `text-embedding-3-small` + deterministic fallback |
 | 10 | Vector database integration | ✅ | Qdrant, cosine, collection `knowledge_chunks` |
 | 11 | Knowledge Graph service | ✅ | Neo4j CRUD, subgraph via APOC, graph explorer UI |
@@ -40,7 +40,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate, DB-backed refresh token rotation + logout revocation, `npm audit` CI gate (0 high), connector credentials encrypted at rest (AES-256-GCM), versioned ciphertext (`akg:v{N}:`, `ENCRYPTION_KEYS` chain), DB-backed JWT secret rotation endpoint (`POST /admin/secrets/rotate-jwt`, dual-key grace) — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 67 unit + 46 e2e + 28 frontend tests; load/security suites pending |
+| 24 | Testing | 🔄 | 73 unit + 46 e2e + 28 frontend tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
@@ -55,5 +55,5 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 ## Quarter ahead (priority order)
 
 1. ✅ Secrets rotation — done: versioned ciphertext (`akg:v{N}:` + `ENCRYPTION_KEYS`), `AppSecret` table (encrypted at rest), `POST /admin/secrets/rotate-jwt` with dual-key grace (env + DB secrets verified/signed), 67 unit + 46 e2e green.
-2. OCR perf/hardening: PDF page iteration, language packs + confidence threshold, per-document re-page OCR.
+2. ✅ OCR perf/hardening — done: PDF text-layer fast path (`pdf-parse`), per-page scanned-PDF OCR (`pdf-to-img`, `OCR_MAX_PAGES` cap), `OCR_MIN_CONFIDENCE` threshold, language packs (`OCR_LANGUAGE` comma → `eng+spa`), per-document OCR metadata (`ocrPages`/`ocrConfidence`); 73 unit + 46 e2e green.
 3. Invitation email follow-ups: SMTP TLS/retry config, resend endpoint, outbound email log.

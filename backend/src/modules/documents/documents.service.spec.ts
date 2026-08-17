@@ -117,6 +117,8 @@ describe('DocumentsService', () => {
     mockOcr.extractText.mockResolvedValue({
       text: 'scanned invoice text',
       engine: 'tesseract',
+      pages: 3,
+      confidence: 88,
     });
     mockPrisma.document.findUnique.mockResolvedValue({
       id: '2',
@@ -139,6 +141,8 @@ describe('DocumentsService', () => {
     );
     expect(updateCall[0].data.metadata.ocrExtracted).toBe(true);
     expect(updateCall[0].data.metadata.ocrEngine).toBe('tesseract');
+    expect(updateCall[0].data.metadata.ocrPages).toBe(3);
+    expect(updateCall[0].data.metadata.ocrConfidence).toBe(88);
     expect(updateCall[0].data.wordCount).toBeGreaterThan(0);
     fs.unlinkSync(scanPath);
   });

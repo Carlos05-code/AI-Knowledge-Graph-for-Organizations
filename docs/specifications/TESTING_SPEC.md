@@ -4,7 +4,7 @@
 
 | Level | Tool | Count | Status |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | 67 | ✅ passing |
+| Unit (backend) | Jest + ts-jest | 73 | ✅ passing |
 | e2e (backend) | Jest + Supertest | 46 | ✅ passing |
 | Widget (frontend) | flutter_test | 28 (13 widget + 15 provider) | ✅ passing |
 | Performance | k6 | — | ⬜ planned |
@@ -24,6 +24,7 @@
 | `slack.adapter.spec.ts` | auth.test ok/invalid/missing token, listFiles mapping, syncAll text-download + binary-skip, channel export (all via mocked `fetch`) |
 | `encryption.service.spec.ts` | AES-256-GCM round-trip, per-call random IV, wrong-key failure, malformed payload, legacy `tryDecrypt` fallback, versioned `akg:v{N}:` payloads (active version tag, mid-chain + rotated decryption, unknown-future-version rejection, unversioned legacy decrypt) |
 | `secrets.service.spec.ts` | env-only secrets, rotated secrets newest-first, signing-secret selection, encrypted-at-rest storage + version increment, DB-unavailable fallback |
+| `ocr.service.spec.ts` | OCR mime detection, image OCR + confidence, empty-text null, tesseract-unavailable/recognition-failure fallbacks, PDF text-layer fast path (pdf-parse), scanned-PDF page-by-page OCR, `OCR_MAX_PAGES` cap, `OCR_MIN_CONFIDENCE` page drop, language-pack normalization |
 | `prisma.service.spec.ts` | service construction |
 
 Patterns: mocked Prisma delegates, `Object.defineProperty` for OpenAI/Qdrant clients,

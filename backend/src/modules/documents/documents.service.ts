@@ -154,7 +154,7 @@ export class DocumentsService {
     await this.prisma.chunk.deleteMany({ where: { documentId: id } });
 
     try {
-      const content = await this.readDocumentContent(doc);
+      const { content, ocr } = await this.readDocumentContent(doc);
       const metadata = (doc.metadata || {}) as Record<string, unknown>;
       const ocrApplied =
         this.ocr.isOcrCandidate(doc.mimeType) &&
@@ -172,7 +172,16 @@ export class DocumentsService {
           wordCount: content.split(/\s+/).length,
           metadata: {
             ...metadata,
-            ...(ocrApplied ? { ocrExtracted: true, ocrEngine: 'tesseract' } : {}),
+            ...(ocrApplied && ocr
+              ? {
+                  ocrExtracted: true,
+                  ocrEngine: ocr.engine,
+                  ...(ocr.pages !== undefined ? { ocrPages: ocr.pages } : {}),
+                  ...(ocr.confidence !== undefined
+                    ? { ocrConfidence: ocr.confidence }
+                    : {}),
+                }
+              : {}),
           },
         },
       });
@@ -208,7 +217,10 @@ export class DocumentsService {
     }
   }
 
-  private async readDocumentContent(doc: any): Promise<string> {
+  private async readDocumentContent(doc: any): Promise<{
+    content: string;
+    ocr: { engine: string; pages?: number; confidence?: number } | null;
+  }> {
     try {
       const fs = require('fs');
       if (fs.existsSync(doc.filePath)) {
@@ -216,16 +228,31 @@ export class DocumentsService {
           const result = await this.ocr.extractText(doc.filePath);
           if (result && result.text.length > 0) {
             this.logger.log(
-              `Document ${doc.id} OCR'd via ${result.engine}`,
+              `Document ${doc.id} OCR'd via ${result.engine}${
+                result.pages ? ` (${result.pages} pages)` : ''
+              }${result.confidence !== undefined ? `, confidence ${result.confidence}` : ''}`,
             );
-            return result.text;
+            return {
+              content: result.text,
+              ocr: {
+                engine: result.engine,
+                pages: result.pages,
+                confidence: result.confidence,
+              },
+            };
           }
-          return `Simulated content for document: ${doc.title}. OCR produced no text for this scanned file.`;
+          return {
+            content: `Simulated content for document: ${doc.title}. OCR produced no text for this scanned file.`,
+            ocr: null,
+          };
         }
-        return fs.readFileSync(doc.filePath, 'utf-8');
+        return { content: fs.readFileSync(doc.filePath, 'utf-8'), ocr: null };
       }
     } catch {}
-    return `Simulated content for document: ${doc.title}. In production, this would read from MinIO storage and parse the file.`;
+    return {
+      content: `Simulated content for document: ${doc.title}. In production, this would read from MinIO storage and parse the file.`,
+      ocr: null,
+    };
   }
 
   private async chunkDocument(documentId: string, content: string) {
