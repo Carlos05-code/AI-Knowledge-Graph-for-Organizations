@@ -54,7 +54,7 @@ export class NotificationsService {
     };
   }
 
-  async markAsRead(id: string, userId: string) {
+  async markAsRead(id: string, _userId: string) {
     return this.prisma.notification.update({
       where: { id },
       data: { isRead: true },
@@ -74,7 +74,7 @@ export class NotificationsService {
     });
   }
 
-  async delete(id: string, userId: string) {
+  async delete(id: string, _userId: string) {
     return this.prisma.notification.delete({
       where: { id },
     });

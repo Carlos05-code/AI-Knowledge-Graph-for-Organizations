@@ -112,3 +112,18 @@ Additional planned suites:
 
 GitHub Actions runs: backend lint → unit → e2e → build; frontend analyze → test →
 build. See `DEVOPS_SPEC.md` §3.
+
+### Lint policy
+
+`npm run lint` (eslint flat config, type-checked) is an exit-code gate: **0 errors
+(legacy warnings tolerated — see ROADMAP)**. Legacy `no-unsafe-*` (assignment,
+member-access, call, return) and `no-require-imports` are configured as `warn`
+(documented intentional exceptions: optional-dep `require()` calls for
+nodemailer, pdf-parse, pdf-to-img, googleapis, jsonwebtoken). New code should not
+add warnings where avoidable; `no-unused-vars` uses `^_` ignore patterns.
+
+### E2e health suite
+
+`app.e2e-spec.ts` mocks `MemoryHealthIndicator` (always `up`) so the suite is
+independent of the test machine's heap usage under parallel jest workers
+(previously flaky 503 on `/api/v1/health`).

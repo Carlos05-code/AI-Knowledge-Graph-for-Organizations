@@ -34,10 +34,9 @@ describe('ChatGateway', () => {
   type FakeSocket = ReturnType<typeof makeSocket>;
   type GatewaySocket = Parameters<typeof gateway.handleConnection>[0];
 
-  const asSocket = (socket: FakeSocket) =>
-    socket as unknown as GatewaySocket;
+  const asSocket = (socket: FakeSocket) => socket as unknown as GatewaySocket;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
     chatServiceMock = {
       getOrCreateConversation: jest.fn().mockResolvedValue({ id: 'c1' }),

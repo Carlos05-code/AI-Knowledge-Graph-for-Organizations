@@ -248,7 +248,9 @@ export class DocumentsService {
         }
         return { content: fs.readFileSync(doc.filePath, 'utf-8'), ocr: null };
       }
-    } catch {}
+    } catch {
+      // fall back to simulated content
+    }
     return {
       content: `Simulated content for document: ${doc.title}. In production, this would read from MinIO storage and parse the file.`,
       ocr: null,

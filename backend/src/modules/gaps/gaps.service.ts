@@ -24,7 +24,7 @@ export class GapsService {
   }
 
   private async detectUndocumentedServices(
-    organizationId: string,
+    _organizationId: string,
   ): Promise<any[]> {
     try {
       const services = await this.neo4j.executeRaw(
@@ -50,7 +50,6 @@ export class GapsService {
   }
 
   private async detectStaleDocuments(organizationId: string): Promise<any[]> {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const sixMonthsAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
 
     const staleDocs = await this.prisma.document.findMany({
@@ -103,7 +102,7 @@ export class GapsService {
   }
 
   private async detectOrphanRepositories(
-    organizationId: string,
+    _organizationId: string,
   ): Promise<any[]> {
     try {
       const orphans = await this.neo4j.executeRaw(

@@ -21,7 +21,10 @@ export class RolesGuard implements CanActivate {
 
     // VIEWER is strictly read-only: any non-read HTTP method is denied,
     // regardless of @Roles annotations (VIEWER is not listed anywhere).
-    if (user.role === UserRole.VIEWER && !READ_METHODS.includes(request.method)) {
+    if (
+      user.role === UserRole.VIEWER &&
+      !READ_METHODS.includes(request.method)
+    ) {
       throw new ForbiddenException('VIEWER role is read-only');
     }
 

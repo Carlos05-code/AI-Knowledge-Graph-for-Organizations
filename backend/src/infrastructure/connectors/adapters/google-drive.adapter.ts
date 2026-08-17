@@ -14,23 +14,19 @@ export class GoogleDriveAdapter extends ConnectorAdapter {
     super(config, 'GOOGLE_DRIVE');
   }
 
-  async authenticate(): Promise<void> {
-    try {
-      const { google } = require('googleapis');
-      this.oauth2Client = new google.auth.OAuth2(
-        this.config.clientId,
-        this.config.clientSecret,
-        this.config.redirectUri,
-      );
-      this.oauth2Client.setCredentials({
-        access_token: this.config.accessToken,
-        refresh_token: this.config.refreshToken,
-      });
-      this.logger.log('Google Drive authenticated');
-    } catch (error) {
-      this.logger.error('Google Drive authentication failed', error);
-      throw error;
-    }
+  authenticate(): Promise<void> {
+    const { google } = require('googleapis');
+    this.oauth2Client = new google.auth.OAuth2(
+      this.config.clientId,
+      this.config.clientSecret,
+      this.config.redirectUri,
+    );
+    this.oauth2Client.setCredentials({
+      access_token: this.config.accessToken,
+      refresh_token: this.config.refreshToken,
+    });
+    this.logger.log('Google Drive authenticated');
+    return Promise.resolve();
   }
 
   async refreshAccessToken(): Promise<void> {
@@ -152,8 +148,8 @@ export class GoogleDriveAdapter extends ConnectorAdapter {
 
       for (const file of files) {
         try {
-          const content = await this.downloadFile(file.id);
-          const metadata = await this.getFileMetadata(file.id);
+          await this.downloadFile(file.id);
+          await this.getFileMetadata(file.id);
 
           result.documentsSynced++;
           result.metadata[file.id] = {

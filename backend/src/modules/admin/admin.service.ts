@@ -80,12 +80,12 @@ export class AdminService {
     };
   }
 
-  async getSystemHealth() {
-    return {
+  getSystemHealth() {
+    return Promise.resolve({
       status: 'healthy',
       uptime: process.uptime(),
       memory: process.memoryUsage(),
       timestamp: new Date().toISOString(),
-    };
+    });
   }
 }

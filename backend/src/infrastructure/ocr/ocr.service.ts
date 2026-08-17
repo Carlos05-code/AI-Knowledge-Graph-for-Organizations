@@ -116,7 +116,7 @@ export class OcrService {
       }
     } catch (error) {
       this.logger.warn(
-        `pdf-parse text extraction failed, falling back to page OCR: ${error instanceof Error ? error.message : error}`,
+        `pdf-parse text extraction failed, falling back to page OCR: ${String(error instanceof Error ? error.message : error)}`,
       );
     }
 

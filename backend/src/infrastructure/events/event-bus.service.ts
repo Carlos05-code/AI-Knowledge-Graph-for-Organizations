@@ -8,11 +8,12 @@ export class EventBusService {
 
   constructor(private eventEmitter: EventEmitter2) {}
 
-  async publish<T extends BaseEvent>(event: T): Promise<void> {
+  publish<T extends BaseEvent>(event: T): Promise<void> {
     this.logger.debug(
       `Publishing event: ${event.eventName} (${event.eventId})`,
     );
     this.eventEmitter.emit(event.eventName, event);
+    return Promise.resolve();
   }
 
   async publishAll<T extends BaseEvent>(events: T[]): Promise<void> {
@@ -25,6 +26,10 @@ export class EventBusService {
     eventName: string,
     handler: (event: BaseEvent) => Promise<void>,
   ): void {
-    this.eventEmitter.on(eventName, handler);
+    this.eventEmitter.on(eventName, (event: BaseEvent) => {
+      void handler(event).catch((error) =>
+        this.logger.error(`Event handler failed for ${eventName}`, error),
+      );
+    });
   }
 }

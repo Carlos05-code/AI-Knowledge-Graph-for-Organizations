@@ -16,7 +16,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname } from 'path';
 import { v4 as uuid } from 'uuid';
 import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '../../presentation/guards/roles.guard';

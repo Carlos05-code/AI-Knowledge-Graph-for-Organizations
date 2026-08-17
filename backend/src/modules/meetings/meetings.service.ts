@@ -121,7 +121,7 @@ export class MeetingsService {
     return { summary, actionItems };
   }
 
-  async delete(id: string, organizationId: string) {
+  async delete(id: string, _organizationId: string) {
     return this.prisma.meeting.update({
       where: { id },
       data: { deletedAt: new Date() },

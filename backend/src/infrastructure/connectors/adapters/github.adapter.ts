@@ -63,7 +63,7 @@ export class GitHubAdapter extends ConnectorAdapter {
   }
 
   async downloadFile(_fileId: string): Promise<Buffer> {
-    return Buffer.from('');
+    return Promise.resolve(Buffer.from(''));
   }
 
   async getFileMetadata(fileId: string): Promise<Record<string, unknown>> {
@@ -100,8 +100,8 @@ export class GitHubAdapter extends ConnectorAdapter {
     }
   }
 
-  async syncAll(): Promise<SyncResult> {
-    return { documentsSynced: 0, errors: [], metadata: {} };
+  syncAll(): Promise<SyncResult> {
+    return Promise.resolve({ documentsSynced: 0, errors: [], metadata: {} });
   }
 
   private async ensureAuth(): Promise<void> {

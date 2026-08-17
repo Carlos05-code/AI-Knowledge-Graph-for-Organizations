@@ -16,13 +16,15 @@ describe('SlackAdapter', () => {
     new SlackAdapter({ token: 'xoxb-test-token', ...overrides });
 
   const apiJson = (body: Record<string, unknown>) =>
-    ({ ok: true, json: async () => body }) as Response;
+    ({ ok: true, json: () => Promise.resolve(body) }) as Response;
 
   const apiBytes = (body: Buffer) =>
     ({
       ok: true,
-      arrayBuffer: async () =>
-        body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
+      arrayBuffer: () =>
+        Promise.resolve(
+          body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
+        ),
     }) as Response;
 
   it('authenticates and returns identity', async () => {
@@ -75,7 +77,7 @@ describe('SlackAdapter', () => {
   });
 
   it('downloads text files and skips binary in syncAll', async () => {
-    fetchSpy.mockImplementation(async (url: unknown) => {
+    fetchSpy.mockImplementation((url: unknown) => {
       const target = String(url);
       if (target.includes('files.list')) {
         return apiJson({
@@ -115,7 +117,7 @@ describe('SlackAdapter', () => {
   });
 
   it('exports a configured channel into a markdown document', async () => {
-    fetchSpy.mockImplementation(async (url: unknown) => {
+    fetchSpy.mockImplementation((url: unknown) => {
       const target = String(url);
       if (target.includes('conversations.list')) {
         return apiJson({ ok: true, channels: [{ id: 'C1', name: 'eng' }] });

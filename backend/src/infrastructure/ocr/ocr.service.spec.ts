@@ -25,18 +25,18 @@ const mockPdfParse = {
   total: 3,
   PDFParse: class {
     constructor(public params: any) {}
-    async getText() {
+    getText() {
       return { text: mockPdfParse.text, total: mockPdfParse.total };
     }
-    async destroy() {}
+    destroy() {}
   },
 };
 
 const mockPdfToImg = {
   pages: [] as Buffer[],
-  pdf: jest.fn().mockImplementation(async () => ({
+  pdf: jest.fn().mockImplementation(() => ({
     length: mockPdfToImg.pages.length,
-    [Symbol.asyncIterator]: async function* () {
+    [Symbol.asyncIterator]: function* () {
       for (const page of mockPdfToImg.pages) {
         yield page;
       }
@@ -105,7 +105,7 @@ describe('OcrService', () => {
   });
 
   it('should extract image text via tesseract', async () => {
-    createWorkerMock.mockImplementation(async () => ({
+    createWorkerMock.mockImplementation(() => ({
       recognize: jest.fn().mockResolvedValue({
         data: { text: 'Hello OCR', confidence: 92 },
       }),
@@ -121,7 +121,7 @@ describe('OcrService', () => {
   });
 
   it('should return null when OCR yields empty text', async () => {
-    createWorkerMock.mockImplementation(async () => ({
+    createWorkerMock.mockImplementation(() => ({
       recognize: jest.fn().mockResolvedValue({ data: { text: '   ' } }),
       terminate: jest.fn().mockResolvedValue(undefined),
     }));
@@ -137,7 +137,7 @@ describe('OcrService', () => {
   });
 
   it('should return null and not throw when recognition fails', async () => {
-    createWorkerMock.mockImplementation(async () => {
+    createWorkerMock.mockImplementation(() => {
       throw new Error('worker failed');
     });
 
@@ -160,7 +160,7 @@ describe('OcrService', () => {
 
   it('should OCR scanned PDF page-by-page when no text layer', async () => {
     mockPdfToImg.pages = [Buffer.from('p1'), Buffer.from('p2')];
-    createWorkerMock.mockImplementation(async () => ({
+    createWorkerMock.mockImplementation(() => ({
       recognize: jest.fn().mockResolvedValue({ data: { text: 'Page text' } }),
       terminate: jest.fn().mockResolvedValue(undefined),
     }));
@@ -181,7 +181,7 @@ describe('OcrService', () => {
       Buffer.from('p2'),
       Buffer.from('p3'),
     ];
-    createWorkerMock.mockImplementation(async () => ({
+    createWorkerMock.mockImplementation(() => ({
       recognize: jest.fn().mockResolvedValue({ data: { text: 'X' } }),
       terminate: jest.fn().mockResolvedValue(undefined),
     }));
@@ -194,7 +194,7 @@ describe('OcrService', () => {
 
   it('should drop pages below OCR_MIN_CONFIDENCE', async () => {
     mockPdfToImg.pages = [Buffer.from('p1')];
-    createWorkerMock.mockImplementation(async () => ({
+    createWorkerMock.mockImplementation(() => ({
       recognize: jest
         .fn()
         .mockResolvedValue({ data: { text: 'Low conf', confidence: 30 } }),
@@ -207,7 +207,7 @@ describe('OcrService', () => {
   });
 
   it('should reject image OCR below OCR_MIN_CONFIDENCE', async () => {
-    createWorkerMock.mockImplementation(async () => ({
+    createWorkerMock.mockImplementation(() => ({
       recognize: jest
         .fn()
         .mockResolvedValue({ data: { text: 'junk', confidence: 12 } }),
@@ -219,7 +219,7 @@ describe('OcrService', () => {
   });
 
   it('should normalize comma-separated language packs', async () => {
-    createWorkerMock.mockImplementation(async () => ({
+    createWorkerMock.mockImplementation(() => ({
       recognize: jest.fn().mockResolvedValue({ data: { text: 'Hola' } }),
       terminate: jest.fn().mockResolvedValue(undefined),
     }));

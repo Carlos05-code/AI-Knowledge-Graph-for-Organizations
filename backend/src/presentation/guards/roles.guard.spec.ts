@@ -17,8 +17,9 @@ describe('RolesGuard', () => {
     }) as unknown as ExecutionContext;
 
   beforeEach(() => {
-    reflector = { getAllAndOverride: jest.fn(() => undefined) } as unknown as
-      Reflector;
+    reflector = {
+      getAllAndOverride: jest.fn(() => undefined),
+    } as unknown as Reflector;
     guard = new RolesGuard(reflector);
   });
 
@@ -64,9 +65,7 @@ describe('RolesGuard', () => {
     expect(() =>
       guard.canActivate(makeContext('GET', { role: 'VIEWER' })),
     ).toThrow('Insufficient permissions');
-    expect(
-      guard.canActivate(makeContext('GET', { role: 'USER' })),
-    ).toBe(true);
+    expect(guard.canActivate(makeContext('GET', { role: 'USER' }))).toBe(true);
     expect(guard.canActivate(makeContext('GET', { role: 'ADMIN' }))).toBe(true);
   });
 });

@@ -21,7 +21,7 @@ interface AuthenticatedSocket extends Socket {
     id: string;
     email: string;
     organizationId: string;
-    role: string;
+    role: UserRole;
   };
 }
 
@@ -66,14 +66,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         id: user.id,
         email: user.email,
         organizationId: user.organizationId,
-        role: user.role,
+        role: user.role as UserRole,
       };
 
       this.connectedClients.set(client.id, client);
       this.logger.log(`Client connected: ${client.id} (${user.email})`);
       client.emit('connected', { clientId: client.id });
     } catch (error) {
-      this.logger.warn(`Connection rejected: ${error}`);
+      this.logger.warn(
+        `Connection rejected: ${error instanceof Error ? error.message : String(error)}`,
+      );
       client.emit('error', { message: 'Invalid token' });
       client.disconnect();
     }

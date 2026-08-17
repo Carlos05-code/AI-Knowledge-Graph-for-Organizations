@@ -4,7 +4,6 @@ import { AuthService } from './auth.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let service: AuthService;
 
   const mockAuthService = {
     login: jest.fn(),
@@ -19,7 +18,6 @@ describe('AuthController', () => {
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
-    service = module.get<AuthService>(AuthService);
   });
 
   it('should be defined', () => {
@@ -34,7 +32,7 @@ describe('AuthController', () => {
 
       const result = await controller.login(dto);
       expect(result).toEqual(expected);
-      expect(service.login).toHaveBeenCalledWith(dto);
+      expect(mockAuthService.login).toHaveBeenCalledWith(dto);
     });
   });
 

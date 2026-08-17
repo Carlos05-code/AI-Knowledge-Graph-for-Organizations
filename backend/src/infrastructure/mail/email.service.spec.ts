@@ -23,8 +23,7 @@ describe('EmailService', () => {
   };
 
   beforeEach(async () => {
-    createTransportMock =
-      require('nodemailer').createTransport as unknown as jest.Mock;
+    createTransportMock = require('nodemailer').createTransport;
     createTransportMock.mockReset();
     sendMailMock = jest.fn().mockResolvedValue({ messageId: 'm1' });
     createTransportMock.mockReturnValue({ sendMail: sendMailMock });

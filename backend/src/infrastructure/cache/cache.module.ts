@@ -23,7 +23,7 @@ import Keyv from 'keyv';
           });
           Logger.log(`Cache store: Redis (${host}:${port})`, CacheModule.name);
           return { store, ttl: 300 };
-        } catch (error) {
+        } catch {
           Logger.warn(
             `Redis unavailable at ${host}:${port} — falling back to in-memory cache`,
             CacheModule.name,

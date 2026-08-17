@@ -73,7 +73,7 @@ export class SlackAdapter extends ConnectorAdapter {
 
   private async api<T extends { ok: boolean; error?: string }>(
     path: string,
-    params: Record<string, unknown> = {},
+    params: Record<string, string | number | boolean | null | undefined> = {},
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}/${path}`);
     for (const [key, value] of Object.entries(params)) {
@@ -113,17 +113,19 @@ export class SlackAdapter extends ConnectorAdapter {
     };
   }
 
-  async refreshAccessToken(): Promise<void> {
+  refreshAccessToken(): Promise<void> {
     // Slack bot tokens are long-lived; refresh only applies to OAuth apps
     // that negotiate token exchange elsewhere. No-op by design.
     this.logger.log('SlackAdapter: token refresh no-op (long-lived bot token)');
+    return Promise.resolve();
   }
 
   async listFiles(channelId?: string): Promise<ConnectorFile[]> {
-    const params: Record<string, unknown> = {
-      limit: this.limit,
-      types: 'files',
-    };
+    const params: Record<string, string | number | boolean | null | undefined> =
+      {
+        limit: this.limit,
+        types: 'files',
+      };
     if (channelId) params.channel = channelId;
     const res = await this.api<{ ok: boolean; files?: SlackApiFile[] }>(
       'files.list',

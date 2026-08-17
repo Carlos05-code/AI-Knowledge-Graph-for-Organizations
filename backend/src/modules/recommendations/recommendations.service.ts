@@ -118,7 +118,9 @@ export class RecommendationsService {
         });
         return docs;
       }
-    } catch {}
+    } catch {
+      // fall back to generic recent documents
+    }
 
     return this.prisma.document.findMany({
       where: { organizationId, deletedAt: null, status: 'INDEXED' },

@@ -11,7 +11,6 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { EmailService } from '../../infrastructure/mail/email.service';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
-import { UserRole } from '../../domain/entities/user.entity';
 
 const DEFAULT_EXPIRES_IN_DAYS = 7;
 

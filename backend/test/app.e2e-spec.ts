@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { MemoryHealthIndicator } from '@nestjs/terminus';
 
 jest.mock('uuid', () => ({ v4: () => '00000000-0000-4000-8000-000000000000' }));
 
@@ -11,7 +12,14 @@ describe('AppController (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(MemoryHealthIndicator)
+      .useValue({
+        checkHeap: jest
+          .fn()
+          .mockResolvedValue({ memory_heap: { status: 'up' } }),
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(

@@ -211,15 +211,15 @@ export class ConnectorsService {
     return { ...config, ...parsed };
   }
 
-  private expose(connector: {
-    credentials: string;
-    [key: string]: unknown;
-  }) {
-    return { ...connector, credentials: this.encryption.tryDecrypt(connector.credentials) };
+  private expose(connector: { credentials: string; [key: string]: unknown }) {
+    return {
+      ...connector,
+      credentials: this.encryption.tryDecrypt(connector.credentials),
+    };
   }
 
   private sourceForType(type: string): DocumentSource {
-    switch (type) {
+    switch (type as ConnectorType) {
       case ConnectorType.GOOGLE_DRIVE:
         return DocumentSource.GOOGLE_DRIVE;
       case ConnectorType.SHAREPOINT:

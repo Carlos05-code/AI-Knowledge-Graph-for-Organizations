@@ -284,6 +284,10 @@ Context:\n${contextText}`,
   }
 
   async deleteConversation(conversationId: string, userId: string) {
+    const conversation = await this.prisma.conversation.findFirst({
+      where: { id: conversationId, userId },
+    });
+    if (!conversation) return;
     await this.prisma.message.deleteMany({ where: { conversationId } });
     await this.prisma.conversation.delete({ where: { id: conversationId } });
   }

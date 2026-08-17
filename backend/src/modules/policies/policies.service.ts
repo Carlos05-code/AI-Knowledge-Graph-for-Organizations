@@ -105,7 +105,7 @@ export class PoliciesService {
     });
   }
 
-  async delete(id: string, organizationId: string) {
+  async delete(id: string, _organizationId: string) {
     return this.prisma.policy.update({
       where: { id },
       data: { deletedAt: new Date(), isActive: false },

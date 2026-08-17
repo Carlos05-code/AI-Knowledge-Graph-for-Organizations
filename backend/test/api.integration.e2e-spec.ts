@@ -30,7 +30,7 @@ jest.mock('bcrypt', () => ({
   hash: jest.fn().mockResolvedValue('$2b$10$hashedpassword'),
   compare: jest
     .fn()
-    .mockImplementation((pw, hash) => Promise.resolve(pw === 'password123')),
+    .mockImplementation((pw, _hash) => Promise.resolve(pw === 'password123')),
 }));
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/infrastructure/database/prisma.service';
@@ -367,7 +367,6 @@ describe('API Integration (e2e)', () => {
         lastName: registerDto.lastName,
         role: 'USER',
       };
-      const tokens = { accessToken: 'at', refreshToken: 'rt', user };
 
       mockPrisma.organization.create.mockResolvedValue(org);
       mockPrisma.user.create.mockResolvedValue(user);
@@ -769,31 +768,34 @@ describe('API Integration (e2e)', () => {
 
     it('POST /api/v1/connectors/:id/sync should sync documents via the Slack adapter', async () => {
       const fetchSpy = jest.spyOn(global as any, 'fetch');
-      fetchSpy.mockImplementation(async (url: unknown) => {
+      fetchSpy.mockImplementation((url: unknown) => {
         const target = String(url);
         if (target.includes('files.list')) {
           return {
             ok: true,
-            json: async () => ({
-              ok: true,
-              files: [
-                {
-                  id: 'E2E_FILE',
-                  name: 'notes.txt',
-                  filetype: 'text',
-                  mimetype: 'text/plain',
-                  size: 14,
-                  url_private: 'https://files.slack.com/e2e',
-                },
-              ],
-            }),
+            json: () =>
+              Promise.resolve({
+                ok: true,
+                files: [
+                  {
+                    id: 'E2E_FILE',
+                    name: 'notes.txt',
+                    filetype: 'text',
+                    mimetype: 'text/plain',
+                    size: 14,
+                    url_private: 'https://files.slack.com/e2e',
+                  },
+                ],
+              }),
           };
         }
         if (target.includes('/e2e')) {
           return {
             ok: true,
-            arrayBuffer: async () =>
-              Buffer.from('hello from e2e\n').buffer.slice(0, 14),
+            arrayBuffer: () =>
+              Promise.resolve(
+                Buffer.from('hello from e2e\n').buffer.slice(0, 14),
+              ),
           };
         }
         throw new Error(`Unexpected fetch URL: ${target}`);
@@ -1214,8 +1216,7 @@ describe('API Integration (e2e)', () => {
       });
       expect(data.secret).toMatch(/^[0-9a-f]{64}$/);
       expect(mockPrisma.appSecret.create).toHaveBeenCalled();
-      const stored =
-        mockPrisma.appSecret.create.mock.calls[0][0].data.value;
+      const stored = mockPrisma.appSecret.create.mock.calls[0][0].data.value;
       expect(stored).not.toContain(data.secret);
       expect(stored.startsWith('akg:v')).toBe(true);
     });
