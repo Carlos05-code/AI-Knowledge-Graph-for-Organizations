@@ -16,6 +16,7 @@ they are not part of the default CI pipeline.
 npm run test:load:login
 npm run test:load:search
 npm run test:load:chat
+npm run test:load:soak
 
 # staging
 BASE_URL=https://staging.example.com/api/v1 WS_URL=wss://staging.example.com \
@@ -29,6 +30,7 @@ LOAD_USER=load@test.com LOAD_PASSWORD=secret npm run test:load:search
 | `login.js` | 100 VU ramp, login with real credentials | P95 < 500 ms, error rate < 1% |
 | `search.js` | 60 VU ramp, `GET /search?q=knowledge&mode=hybrid` | P95 < 300 ms, error rate < 1% |
 | `chat.js` | 20 concurrent WS sessions, 3 messages each | connect P95 < 1 s, session P95 < 15 s |
+| `soak.js` | 32 min ramp + hold (20 VU): 30% login / 70% search + WS chat smoke | HTTP P95 < 1 s, P99 < 2.5 s, error rate < 1% |
 
 ## Notes
 

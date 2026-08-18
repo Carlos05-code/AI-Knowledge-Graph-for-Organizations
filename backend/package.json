@@ -1,7 +1,7 @@
 {
   "name": "@akg/backend",
   "version": "1.0.0",
-  "description": "AI Knowledge Graph for Organizations — Enterprise Backend API",
+  "description": "AI Knowledge Graph for Organizations â€” Enterprise Backend API",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -19,6 +19,7 @@
     "test:load:login": "k6 run test/k6/login.js",
     "test:load:search": "k6 run test/k6/search.js",
     "test:load:chat": "k6 run test/k6/chat.js",
+    "test:load:soak": "k6 run test/k6/soak.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",

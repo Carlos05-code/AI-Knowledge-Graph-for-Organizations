@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -98,3 +101,49 @@ jobs:
       - uses: actions/checkout@v4
 
       - run: docker compose -f docker/docker-compose.yml config
+
+  zap-baseline:
+    name: Security — OWASP ZAP Baseline
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run ZAP baseline scan
+        run: |
+          mkdir -p backend/test/zap/reports
+          docker run --rm \
+            -v $PWD/backend/test/zap/reports:/zap/wrk/:rw \
+            -u zap \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t "${{ secrets.STAGING_URL }}" \
+            -l WARN \
+            -r zap-report.html \
+            -J zap-report.json \
+            -w zap-report.md \
+            -x zap-report.xml
+
+      - name: Check for HIGH alerts
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          with open("backend/test/zap/reports/zap-report.json", encoding="utf-8") as f:
+              data = json.load(f)
+          high = [
+              a for a in data.get("site", [])
+              if any(int(i.get("riskcode", 0)) >= 3 for i in a.get("alerts", []))
+          ]
+          if high:
+              print(f"ZAP scan FAILED: {len(high)} HIGH-risk alert(s).")
+              sys.exit(1)
+          print("ZAP scan passed: no HIGH-risk alerts.")
+          PY
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: backend/test/zap/reports/
+          retention-days: 14

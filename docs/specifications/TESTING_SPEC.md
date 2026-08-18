@@ -7,7 +7,7 @@
 | Unit (backend) | Jest + ts-jest | 108 | ✅ passing |
 | e2e (backend) | Jest + Supertest | 76 | ✅ passing |
 | Widget (frontend) | flutter_test | 28 (13 widget + 15 provider) | ✅ passing |
-| Performance | k6 | 3 scripts (`test/k6/`) | ✅ scripts, run against staging |
+| Performance | k6 | 4 scripts (`test/k6/` incl. soak) | ✅ scripts, run against staging |
 | Security | `npm audit --audit-level=high` | 0 high+ | ✅ CI gate (`.github/workflows/ci.yml`) |
 
 ## 2. Backend unit tests (`src/**/*.spec.ts`)
@@ -103,7 +103,9 @@ Additional planned suites:
   - `login.js` — 100 VU ramp, P95 < 500 ms, error rate < 1%.
   - `search.js` — 60 VU ramp, hybrid search P95 < 300 ms.
   - `chat.js` — 20 concurrent WS sessions, connect P95 < 1 s, session P95 < 15 s.
-  - Run via `npm run test:load:login|search|chat` (see `test/k6/README.md`).
+  - `soak.js` — 32 min soak (ramp → 20 VU hold → ramp down), 30% login / 70% search
+    mix plus WS chat smoke, P95 < 1 s / P99 < 2.5 s, error rate < 1%.
+  - Run via `npm run test:load:login|search|chat|soak` (see `test/k6/README.md`).
 - Vector index refresh test at 20 k chunks (Qdrant indexing threshold) — future.
 - Upload pipeline soak (100 files) — future.
 
@@ -114,7 +116,11 @@ Additional planned suites:
   ("Auth token edge cases", 6 cases): expired token → 401, tampered signature → 401,
   token for deleted user → 401, token for inactive user → 401, forged role/org
   claims rejected (role taken from DB) → 403, missing Authorization → 401.
-- OWASP ZAP baseline scan against staging — planned.
+- **Done (2026-08-18)** — OWASP ZAP baseline: `backend/test/zap/zap-baseline.sh`
+  (Docker, passive scan, fails on HIGH alerts, HTML/JSON/MD/XML reports) + CI job
+  `zap-baseline` (weekly Monday 03:00 + `workflow_dispatch`, needs `STAGING_URL`
+  secret, uploads report artifact). Unauthenticated scope; authenticated active
+  scanning is a follow-up.
 
 ## 8. CI integration
 
