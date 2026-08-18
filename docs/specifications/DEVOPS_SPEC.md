@@ -4,7 +4,7 @@
 
 - Backend Dockerfile (multi-stage, `nest build` → slim runtime).
 - Frontend Dockerfile (Flutter build → static nginx serve).
-- Full compose stack in `docker/docker-compose.yml` (16 services, all with resource limits and healthchecks):
+- Full compose stack in `docker/docker-compose.yml` (17 services, all with resource limits and healthchecks):
 
 | Service | Port (host) | Notes |
 |---|---|---|
@@ -18,6 +18,7 @@
 | backend | 3000 | API |
 | frontend | 4200 | Flutter web served |
 | grafana / prometheus / loki | 3001 / 9090 / 3100 | observability |
+| alertmanager | 9093 | alert routing → webhook receiver |
 | promtail | - | container logs -> Loki (docker socket) |
 | postgres-exporter | 9187 | DB metrics |
 | node-exporter | 9100 | host metrics |
@@ -33,7 +34,8 @@ secrets manifest. Pods run hardened: non-root (backend node uid 1000; frontend n
 read-only root filesystem with emptyDir mounts (backend `/app/uploads`, frontend nginx
 cache/run dirs), all capabilities dropped, seccomp RuntimeDefault, and
 `terminationGracePeriodSeconds` tuned. PodDisruptionBudgets keep 2 backend / 1 frontend
-replica available during node drains. Ingress TLS termination is the remaining staging item.
+replica available during node drains. Ingress terminates TLS via cert-manager
+(`letsencrypt-prod` cluster issuer, `akg-tls` secret, HTTP→HTTPS redirect enabled).
 
 ## 3. GitHub Actions (CI)
 
@@ -49,7 +51,8 @@ replica available during node drains. Ingress TLS termination is the remaining s
 |---|---|---|
 | local | dev machine | `.env` (only `DATABASE_URL` needed to boot; others default) |
 | ci | GitHub Actions | defaults + ephemeral services |
-| staging / prod | planned | full `.env` + K8s secrets; `LOG_FORMAT=json`, `CORS_ORIGINS` pinned |
+| staging | pre-prod verification (k6 loads, ZAP, soak) | full `.env` + compose stack (all 17 services); `LOG_FORMAT=json`, `CORS_ORIGINS` pinned, `APP_PREFIX=/api/v1`, `SWAGGER_ENABLED=false` |
+| prod | production | K8s (namespace `akg`) — env via `k8s/secrets.yml` (`akg-secrets`), hardened pods, TLS via cert-manager |
 
 ## 5. Deployment
 
@@ -70,7 +73,9 @@ replica available during node drains. Ingress TLS termination is the remaining s
 - **Health**: `/health` (db/memory/disk), `/health/live`, `/health/ready` for probes.
 - **Alerting**: `docker/prometheus/alerts.yml` ships with the stack — backend down, 5xx
   error rate > 5%, P95 latency > 2s, heap > 85%, host CPU/memory pressure, exporter/Redis
-  down, Postgres connection count. Grafana provisions the `AKG Backend Overview` dashboard
+  down, Postgres connection count. Alerts are routed to the bundled Alertmanager
+  (`docker/alertmanager/alertmanager.yml`, webhook receiver — replace the placeholder URL
+  with the production receiver). Grafana provisions the `AKG Backend Overview` dashboard
   (`docker/grafana/dashboards/akg-backend.json`): request rate by status, P95 latency by
   route, heap, CPU, event loop lag, uptime, 5xx rate.
 
