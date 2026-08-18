@@ -15,11 +15,30 @@ spec:
       labels:
         app: akg-frontend
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 15
       containers:
         - name: frontend
           image: akg-frontend:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
-            - containerPort: 80
+            - containerPort: 8080
+          volumeMounts:
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
           env:
             - name: API_BASE_URL
               value: "https://api.akg.company.com"
@@ -33,9 +52,14 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 80
+              port: 8080
             initialDelaySeconds: 15
             periodSeconds: 15
+      volumes:
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -47,7 +71,7 @@ spec:
     app: akg-frontend
   ports:
     - port: 80
-      targetPort: 80
+      targetPort: 8080
   type: ClusterIP
 ---
 apiVersion: autoscaling/v2
@@ -69,3 +93,14 @@ spec:
         target:
           type: Utilization
           averageUtilization: 70
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: akg-frontend
+  namespace: akg
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: akg-frontend

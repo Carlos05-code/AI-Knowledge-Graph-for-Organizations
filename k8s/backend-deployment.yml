@@ -20,11 +20,28 @@ spec:
       labels:
         app: akg-backend
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 30
       containers:
         - name: backend
           image: akg-backend:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 3000
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
           env:
             - name: NODE_ENV
               value: "production"
@@ -81,6 +98,9 @@ spec:
               port: 3000
             initialDelaySeconds: 15
             periodSeconds: 10
+      volumes:
+        - name: uploads
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -120,3 +140,14 @@ spec:
         target:
           type: Utilization
           averageUtilization: 80
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: akg-backend
+  namespace: akg
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: akg-backend

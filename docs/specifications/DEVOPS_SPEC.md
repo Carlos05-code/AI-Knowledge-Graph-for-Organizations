@@ -4,7 +4,7 @@
 
 - Backend Dockerfile (multi-stage, `nest build` → slim runtime).
 - Frontend Dockerfile (Flutter build → static nginx serve).
-- Full compose stack in `docker/docker-compose.yml` (13 services):
+- Full compose stack in `docker/docker-compose.yml` (16 services, all with resource limits and healthchecks):
 
 | Service | Port (host) | Notes |
 |---|---|---|
@@ -18,6 +18,9 @@
 | backend | 3000 | API |
 | frontend | 4200 | Flutter web served |
 | grafana / prometheus / loki | 3001 / 9090 / 3100 | observability |
+| promtail | - | container logs -> Loki (docker socket) |
+| postgres-exporter | 9187 | DB metrics |
+| node-exporter | 9100 | host metrics |
 
 ```bash
 docker compose -f docker/docker-compose.yml up -d
@@ -25,8 +28,12 @@ docker compose -f docker/docker-compose.yml up -d
 
 ## 2. Kubernetes
 
-Manifests in `k8s/` — deployments + services for backend, frontend, postgres; secrets via
-env. Production tuning (HPA, PDBs, Ingress TLS) is staged.
+Manifests in `k8s/`: deployments + services + HPAs for backend and frontend, Ingress, and a
+secrets manifest. Pods run hardened: non-root (backend node uid 1000; frontend nginx uid 101),
+read-only root filesystem with emptyDir mounts (backend `/app/uploads`, frontend nginx
+cache/run dirs), all capabilities dropped, seccomp RuntimeDefault, and
+`terminationGracePeriodSeconds` tuned. PodDisruptionBudgets keep 2 backend / 1 frontend
+replica available during node drains. Ingress TLS termination is the remaining staging item.
 
 ## 3. GitHub Actions (CI)
 
@@ -52,10 +59,20 @@ env. Production tuning (HPA, PDBs, Ingress TLS) is staged.
 
 ## 6. Monitoring & logging
 
-- **Metrics**: Prometheus default metrics at `/api/v1/metrics` (prom-client).
-- **Logs**: winston JSON (`LOG_FORMAT=json`) → Loki → Grafana (compose includes all three).
+- **Metrics**: Prometheus default metrics plus HTTP request metrics at `/api/v1/metrics`:
+  `http_requests_total{method,route,status}` counter and `http_request_duration_seconds`
+  histogram, recorded by a global interceptor
+  (`src/infrastructure/metrics/http-metrics.interceptor.ts`). Postgres exporter (`:9187`)
+  and node exporter (`:9100`) provide DB and host metrics.
+- **Logs**: winston JSON (`LOG_FORMAT=json`) collected from all containers by promtail
+  (`docker/promtail/promtail-config.yml`, docker-socket discovery) and shipped to Loki;
+  all three (Loki, Grafana, promtail) are in the compose stack with healthchecks.
 - **Health**: `/health` (db/memory/disk), `/health/live`, `/health/ready` for probes.
-- **Alerting**: Grafana dashboards (staged).
+- **Alerting**: `docker/prometheus/alerts.yml` ships with the stack — backend down, 5xx
+  error rate > 5%, P95 latency > 2s, heap > 85%, host CPU/memory pressure, exporter/Redis
+  down, Postgres connection count. Grafana provisions the `AKG Backend Overview` dashboard
+  (`docker/grafana/dashboards/akg-backend.json`): request rate by status, P95 latency by
+  route, heap, CPU, event loop lag, uptime, 5xx rate.
 
 ## 7. Backups & disaster recovery
 
@@ -74,5 +91,5 @@ env. Production tuning (HPA, PDBs, Ingress TLS) is staged.
 ## 9. Observability roadmap
 
 - OpenTelemetry traces (dependency available) — staged.
-- Request duration histograms + error-rate panels.
-- AI latency/cost metrics per model call.
+- AI latency/cost metrics per model call — staged.
+- DONE: HTTP request duration histograms + error-rate panels (dashboard + alerts above).

@@ -37,6 +37,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AllExceptionsFilter } from './presentation/filters/http-exception.filter';
 import { TransformInterceptor } from './presentation/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './presentation/interceptors/logging.interceptor';
+import { HttpMetricsInterceptor } from './infrastructure/metrics/http-metrics.interceptor';
 import { ThrottlerBehindProxyGuard } from './presentation/guards/throttler-behind-proxy.guard';
 import { ConfigService } from '@nestjs/config';
 
@@ -93,6 +94,7 @@ import { ConfigService } from '@nestjs/config';
     { provide: APP_GUARD, useClass: ThrottlerBehindProxyGuard },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: HttpMetricsInterceptor },
   ],
 })
 export class AppModule {}

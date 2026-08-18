@@ -4,7 +4,7 @@
 
 | Level | Tool | Count | Status |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | 104 | ✅ passing |
+| Unit (backend) | Jest + ts-jest | 108 | ✅ passing |
 | e2e (backend) | Jest + Supertest | 76 | ✅ passing |
 | Widget (frontend) | flutter_test | 28 (13 widget + 15 provider) | ✅ passing |
 | Performance | k6 | 3 scripts (`test/k6/`) | ✅ scripts, run against staging |
@@ -29,6 +29,7 @@
 | `roles.guard.spec.ts` | no-user 403, VIEWER read allowed / write blocked (POST/PATCH/DELETE), ADMIN+USER writes allowed, `@Roles` list enforcement (VIEWER not whitelisted) |
 | `chat.gateway.spec.ts` | WS connection auth (missing token, unknown-signature rejection, inactive-user rejection, multi-secret verification via `SecretsService`, DB role attach), VIEWER blocked on `message:send`/`conversation:delete`, VIEWER allowed on `conversation:list`, USER write allowed |
 | `prisma.service.spec.ts` | service construction |
+| `http-metrics.interceptor.spec.ts` | counter + histogram recorded on success, response-status capture, 500 on thrown errors, path fallback when route is undefined |
 
 Patterns: mocked Prisma delegates, `Object.defineProperty` for OpenAI/Qdrant clients,
 no network in unit tests.

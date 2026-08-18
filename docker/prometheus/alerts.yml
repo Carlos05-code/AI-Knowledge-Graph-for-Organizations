@@ -1,0 +1,98 @@
+groups:
+  - name: akg-backend
+    rules:
+      - alert: BackendDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AKG backend is down"
+          description: "Prometheus cannot scrape {{ $labels.instance }} (job={{ $labels.job }})."
+
+      - alert: BackendHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="backend",status=~"5.."}[5m]))
+            / clamp_min(sum(rate(http_requests_total{job="backend"}[5m])), 1)
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AKG backend 5xx error rate > 5%"
+          description: "5xx rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: BackendHighLatency
+        expr: |
+          histogram_quantile(0.95, sum by (route, le) (rate(http_request_duration_seconds_bucket[5m])))
+          > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend P95 latency > 2s"
+          description: "Route {{ $labels.route }} P95 latency is {{ $value }}s over 5 minutes."
+
+      - alert: BackendHeapHigh
+        expr: |
+          nodejs_heap_size_total_bytes{job="backend"}
+            / nodejs_heap_size_available_bytes{job="backend"}
+          > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend heap usage > 85%"
+          description: "Heap utilization is {{ $value | humanizePercentage }}."
+
+  - name: akg-infrastructure
+    rules:
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+
+      - alert: PostgresExporterDown
+        expr: up{job="postgres"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Postgres exporter is down"
+
+      - alert: NodeExporterDown
+        expr: up{job="node"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node exporter is down"
+
+      - alert: HostHighCpu
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host CPU > 85%"
+          description: "Host {{ $labels.instance }} CPU utilization is {{ $value | humanize }}%."
+
+      - alert: HostHighMemory
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host memory > 85%"
+          description: "Host {{ $labels.instance }} memory utilization is {{ $value | humanizePercentage }}."
+
+      - alert: PostgresConnectionsHigh
+        expr: pg_stat_database_numbackends > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Postgres connection count > 80"
