@@ -469,6 +469,89 @@ describe('API Integration (e2e)', () => {
     });
   });
 
+  // ─── Auth token edge cases (security) ───────────────────────────
+
+  describe('Auth token edge cases', () => {
+    it('should reject an expired access token', async () => {
+      const expiredToken = jwtService.sign(
+        {
+          sub: 'user-1',
+          email: 'user@test.com',
+          orgId: 'org-1',
+          role: 'USER',
+        },
+        { expiresIn: '-60s' },
+      );
+
+      await request(app.getHttpServer())
+        .get('/api/v1/meetings')
+        .set('Authorization', `Bearer ${expiredToken}`)
+        .expect(401);
+    });
+
+    it('should reject a tampered access token (wrong signature)', async () => {
+      const tamperedToken = jwtService.sign(
+        {
+          sub: 'user-1',
+          email: 'user@test.com',
+          orgId: 'org-1',
+          role: 'ADMIN',
+        },
+        { secret: 'attacker-secret' },
+      );
+
+      await request(app.getHttpServer())
+        .get('/api/v1/users')
+        .set('Authorization', `Bearer ${tamperedToken}`)
+        .expect(401);
+    });
+
+    it('should reject a token for a non-existent user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .get('/api/v1/meetings')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(401);
+    });
+
+    it('should reject a token for an inactive user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@test.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        role: 'USER',
+        isActive: false,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/v1/meetings')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(401);
+    });
+
+    it('should take role/org from the DB, not token claims (privilege escalation)', async () => {
+      const forgedToken = jwtService.sign({
+        sub: 'user-1',
+        email: 'user@test.com',
+        orgId: 'org-2',
+        role: 'ADMIN',
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/v1/users')
+        .set('Authorization', `Bearer ${forgedToken}`)
+        .expect(403);
+    });
+
+    it('should reject requests with no Authorization header', async () => {
+      await request(app.getHttpServer()).get('/api/v1/meetings').expect(401);
+    });
+  });
+
   // ─── Documents ─────────────────────────────────────────────────
 
   describe('Documents', () => {

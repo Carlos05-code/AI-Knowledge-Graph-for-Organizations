@@ -5,9 +5,9 @@
 | Level | Tool | Count | Status |
 |---|---|---|---|
 | Unit (backend) | Jest + ts-jest | 104 | ✅ passing |
-| e2e (backend) | Jest + Supertest | 70 | ✅ passing |
+| e2e (backend) | Jest + Supertest | 76 | ✅ passing |
 | Widget (frontend) | flutter_test | 28 (13 widget + 15 provider) | ✅ passing |
-| Performance | k6 | — | ⬜ planned |
+| Performance | k6 | 3 scripts (`test/k6/`) | ✅ scripts, run against staging |
 | Security | `npm audit --audit-level=high` | 0 high+ | ✅ CI gate (`.github/workflows/ci.yml`) |
 
 ## 2. Backend unit tests (`src/**/*.spec.ts`)
@@ -96,17 +96,24 @@ Additional planned suites:
 - e2e: every public endpoint exercised at least once (current: 36 specs covering all 17 controllers).
 - Frontend: critical flows (auth, chat, search) ≥ 70%.
 
-## 6. Performance & load (planned)
+## 6. Performance & load
 
-- k6: login (100 VU), hybrid search (P95 < 300 ms), chat streaming throughput.
-- Vector index refresh test at 20 k chunks (Qdrant indexing threshold).
-- Upload pipeline soak (100 files).
+- k6 scripts in `backend/test/k6/` (run against staging, not CI):
+  - `login.js` — 100 VU ramp, P95 < 500 ms, error rate < 1%.
+  - `search.js` — 60 VU ramp, hybrid search P95 < 300 ms.
+  - `chat.js` — 20 concurrent WS sessions, connect P95 < 1 s, session P95 < 15 s.
+  - Run via `npm run test:load:login|search|chat` (see `test/k6/README.md`).
+- Vector index refresh test at 20 k chunks (Qdrant indexing threshold) — future.
+- Upload pipeline soak (100 files) — future.
 
-## 7. Security testing (planned)
+## 7. Security testing
 
 - `npm audit` + `dart pub outdated` gates in CI.
-- OWASP ZAP baseline scan against staging.
-- JWT/token edge cases (expired, tampered, wrong org) — extend e2e suite.
+- **Done (2026-08-18)** — JWT/token edge cases in `api.integration.e2e-spec.ts`
+  ("Auth token edge cases", 6 cases): expired token → 401, tampered signature → 401,
+  token for deleted user → 401, token for inactive user → 401, forged role/org
+  claims rejected (role taken from DB) → 403, missing Authorization → 401.
+- OWASP ZAP baseline scan against staging — planned.
 
 ## 8. CI integration
 
