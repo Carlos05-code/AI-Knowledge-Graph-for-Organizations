@@ -4,11 +4,12 @@
 
 - Backend Dockerfile (multi-stage, `nest build` → slim runtime).
 - Frontend Dockerfile (Flutter build → static nginx serve).
-- Full compose stack in `docker/docker-compose.yml` (17 services, all with resource limits and healthchecks):
+- Full compose stack in `docker/docker-compose.yml` (18 services, all with resource limits and healthchecks):
 
 | Service | Port (host) | Notes |
 |---|---|---|
 | postgres | 5432 | PostgreSQL 16, named volume |
+| pgbouncer | 6432 | transaction-mode connection pooler (API → pgbouncer → postgres) |
 | neo4j | 7687 (bolt), 7474 (http) | APOC plugin enabled |
 | qdrant | 6333 | vectors |
 | redis | 6379 | cache |

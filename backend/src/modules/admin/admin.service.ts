@@ -41,7 +41,6 @@ export class AdminService {
         where: { organizationId },
         orderBy: { createdAt: 'desc' },
         take: 10,
-        include: { organization: false },
       }),
     ]);
 

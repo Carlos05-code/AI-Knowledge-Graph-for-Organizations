@@ -88,7 +88,8 @@ All via `ConfigService` + `.env` (see `.env.example`): `DATABASE_URL` (required)
 `NEO4J_URI/USER/PASSWORD`, `QDRANT_HOST/PORT/API_KEY`, `REDIS_HOST/PORT/PASSWORD`,
 `RABBITMQ_URL`, `MINIO_HOST/ACCESS_KEY/SECRET_KEY/BUCKET`,
 `OPENAI_API_KEY/MODEL`, `EMBEDDING_MODEL/DIMENSION`, `APP_PREFIX`, `APP_PORT`,
-`CORS_ORIGINS`, `LOG_LEVEL`, `LOG_FORMAT`.
+`CORS_ORIGINS`, `LOG_LEVEL`, `LOG_FORMAT`, `SLOW_QUERY_MS` (query duration
+threshold in ms, default 500; 0 disables slow-query warnings).
 Mail (optional, log-only fallback when unset): `MAIL_ENABLED`,
 `SMTP_HOST/PORT/SECURE/USER/PASS`, `MAIL_FROM`, `FRONTEND_URL`.
 SMTP hardening: `SMTP_REQUIRE_TLS` (STARTTLS enforcement), `SMTP_REJECT_UNAUTHORIZED`

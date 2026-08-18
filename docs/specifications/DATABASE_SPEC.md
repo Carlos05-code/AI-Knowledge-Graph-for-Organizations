@@ -17,6 +17,18 @@ Three storage engines with clear responsibilities:
 - Migrations: `prisma/migrations/20260801220749_init` (config via `prisma.config.ts`).
 - Seed: `prisma/seed.ts` (ts-node) — demo org/users/documents/chunks/meeting/policy.
 
+### Connection pooling (PgBouncer)
+
+- Runtime connections go through **PgBouncer in transaction mode** (compose service
+  `pgbouncer`, host port 6432): the API never opens more than `connection_limit=9`
+  Prisma connections per instance (`pool_timeout=10`, `pgbouncer=true` URL params),
+  with `DEFAULT_POOL_SIZE=20` / `MAX_CLIENT_CONN=200` on the pooler.
+- **Migrations must NOT run through PgBouncer** — `prisma migrate deploy` targets
+  Postgres directly (`postgres:5432`) because transaction-mode pooling breaks DDL
+  transactions; CI and release jobs use the direct URL.
+- Slow-query observability: `PrismaService` logs any query exceeding
+  `SLOW_QUERY_MS` (default 500 ms) as a warning with the query target.
+
 ### Conventions
 
 - PKs: `String @id @default(uuid())`.

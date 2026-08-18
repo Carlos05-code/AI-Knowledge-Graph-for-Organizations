@@ -4,11 +4,20 @@ import {
   OnModuleDestroy,
   Logger,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+
+type PrismaServiceOptions = {
+  log: [
+    { emit: 'event'; level: 'query' },
+    { emit: 'stdout'; level: 'info' },
+    { emit: 'stdout'; level: 'warn' },
+    { emit: 'stdout'; level: 'error' },
+  ];
+};
 
 @Injectable()
 export class PrismaService
-  extends PrismaClient
+  extends PrismaClient<PrismaServiceOptions>
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(PrismaService.name);
@@ -22,6 +31,17 @@ export class PrismaService
         { emit: 'stdout', level: 'error' },
       ],
     });
+
+    const slowQueryMs = Number(process.env.SLOW_QUERY_MS ?? 500);
+    if (slowQueryMs > 0) {
+      void this.$on('query', (e: Prisma.QueryEvent) => {
+        if (e.duration > slowQueryMs) {
+          this.logger.warn(
+            `Slow query (${e.duration}ms > ${slowQueryMs}ms): ${e.target}`,
+          );
+        }
+      });
+    }
   }
 
   async onModuleInit() {
