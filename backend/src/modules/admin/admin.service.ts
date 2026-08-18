@@ -1,11 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { CacheService } from '../../infrastructure/cache/cache.service';
+
+const DASHBOARD_STATS_TTL_MS = 60_000;
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cache: CacheService,
+  ) {}
 
   async getDashboardStats(organizationId: string) {
+    const key = `admin:stats:${organizationId}`;
+    const cached = await this.cache.get<object>(key);
+    if (cached !== null) return cached;
+
     const [
       totalDocuments,
       indexedDocuments,
@@ -35,7 +45,7 @@ export class AdminService {
       }),
     ]);
 
-    return {
+    const stats = {
       documents: {
         total: totalDocuments,
         indexed: indexedDocuments,
@@ -47,8 +57,9 @@ export class AdminService {
       policies: { total: totalPolicies },
       recentActivity,
     };
+    await this.cache.set(key, stats, DASHBOARD_STATS_TTL_MS);
+    return stats;
   }
-
   async getAuditLogs(
     organizationId: string,
     params: { page: number; limit: number; entity?: string; action?: string },

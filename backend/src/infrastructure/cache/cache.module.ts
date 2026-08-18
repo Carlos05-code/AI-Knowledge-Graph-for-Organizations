@@ -4,6 +4,7 @@ import { redisStore } from 'cache-manager-redis-yet';
 import { ConfigService } from '@nestjs/config';
 import { KeyvAdapter } from 'cache-manager';
 import Keyv from 'keyv';
+import { CacheService } from './cache.service';
 
 @Global()
 @Module({
@@ -25,7 +26,7 @@ import Keyv from 'keyv';
           return { store, ttl: 300 };
         } catch {
           Logger.warn(
-            `Redis unavailable at ${host}:${port} — falling back to in-memory cache`,
+            `Redis unavailable at ${host}:${port} �?" falling back to in-memory cache`,
             CacheModule.name,
           );
           return { store: new KeyvAdapter(new Keyv() as never), ttl: 300 };
@@ -34,6 +35,7 @@ import Keyv from 'keyv';
       inject: [ConfigService],
     }),
   ],
-  exports: [NestCacheModule],
+  providers: [CacheService],
+  exports: [NestCacheModule, CacheService],
 })
 export class CacheModule {}

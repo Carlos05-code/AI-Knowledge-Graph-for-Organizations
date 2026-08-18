@@ -10,7 +10,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Flutter app shell (login/register, chat w/ citations, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies, notifications)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (13 services), Kubernetes manifests
-- ✅ Tests: 90 unit + 70 e2e + 28 frontend tests, all passing
+- ✅ Tests: 104 unit + 70 e2e + 28 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -38,9 +38,9 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 19 | Notifications | ✅ | Domain-event notifications API + UI (screen, unread badge in shell, mark read/all, swipe delete) |
 | 20 | Admin dashboard | ✅ | Metrics + audit logs API; dashboard UI (Overview/Members/Audit Logs tabs) |
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
-| 22 | Performance optimization | ⬜ | Pagination done; query tuning, caching strategy |
+| 22 | Performance optimization | 🔄 | Pagination done; 16 query indexes (migration `add_performance_indexes`, 2026-08-18) + caching on hot paths (notification unread count, admin dashboard stats, expertise summary); query tuning / connection pooling pending |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate, DB-backed refresh token rotation + logout revocation, `npm audit` CI gate (0 high), connector credentials encrypted at rest (AES-256-GCM), versioned ciphertext (`akg:v{N}:`, `ENCRYPTION_KEYS` chain), DB-backed JWT secret rotation endpoint (`POST /admin/secrets/rotate-jwt`, dual-key grace), VIEWER read-only enforcement (RolesGuard blocks non-GET for VIEWER; WS chat role-gated: multi-secret verify + DB revalidation on connect, writes denied for VIEWER) — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 90 unit + 70 e2e + 28 frontend tests; load/security suites pending |
+| 24 | Testing | 🔄 | 104 unit + 70 e2e + 28 frontend tests; load/security suites pending |
 | 25 | Production deployment | ⬜ | K8s manifests drafted; observability stack pending |
 
 ## Known gaps tracked for next releases
@@ -62,3 +62,4 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 5. ✅ WebSocket chat role-gating — done: `ChatGateway` verifies tokens against every active JWT secret (env + rotated `AppSecret` rows via `SecretsService`), revalidates the DB user on connect (`isActive`, real role), and denies `message:send`/`conversation:delete` for VIEWER (reads allowed); `chat.gateway.spec` (8 tests); 90 unit + 62 e2e green.
 6. ✅ Lint gate restoration — done: CI `npm run lint` passes again (0 errors; 1093 legacy warnings documented above); `--fix` auto-formats; leftover errors fixed across adapters/services/specs; flaky e2e `memory_heap` health check eliminated by mocking `MemoryHealthIndicator` in `app.e2e-spec.ts`; 90 unit + 62 e2e green (2 consecutive full e2e runs).
 7. ✅ Org-scoped delete enforcement — done: tenant/ownership scoping enforced on `meetings.delete`, `policies.delete`, `notifications.markAsRead`, `notifications.delete` (scoped `findFirst` → `404 Not Found` when the record is not in the caller's org / not owned); `generateSummary` + `policies.update` now return 404 instead of generic 500; e2e suites hardened against slow-CI hook timeouts (30 s `beforeAll`); 8 new e2e cases; 90 unit + 70 e2e green.
+8. ✅ Performance optimization (part 1) — done: 16 query indexes added (`add_performance_indexes` migration: User/Document/DocumentVersion/Chunk/Connector/ConnectorRun/Conversation/Message/Meeting/MeetingParticipant/Notification/Policy); `CacheService` fail-open wrapper over `CACHE_MANAGER` (Redis w/ in-memory fallback) applied to hottest paths — notification unread count (15 s TTL, invalidated on write), admin dashboard stats (60 s), expertise summary (300 s); chat list/history and doc lists audited (already lean, no N+1); 14 new unit tests (cache.service 5, notifications.service 9 incl. milestone-7 404 behavior); 104 unit + 70 e2e green.

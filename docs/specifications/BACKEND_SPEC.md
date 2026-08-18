@@ -66,7 +66,14 @@ Helmet + Compression
 
 - `CacheModule`: Redis (`cache-manager-redis-yet`, TTL 300 s) with automatic
   **in-memory Keyv fallback** when Redis is down.
-- Not yet applied to hot endpoints (recommendations/feed, expertise/summary candidates).
+- `CacheService` (global, fail-open wrapper over `CACHE_MANAGER`): `get/set/del`
+  never throw — a Redis outage degrades to cache misses, never errors.
+- Applied hot paths (2026-08-18):
+  - `NotificationsService.getUnreadCount` — per-user, TTL 15 s, invalidated on
+    create/markAsRead/markAllAsRead/delete (badge polling path).
+  - `AdminService.getDashboardStats` — per-org, TTL 60 s (aggregate snapshot).
+  - `ExpertiseService.getExpertiseSummary` — per-org, TTL 300 s (recomputed on
+    score recalculation cadence).
 
 ## 9. Logging
 

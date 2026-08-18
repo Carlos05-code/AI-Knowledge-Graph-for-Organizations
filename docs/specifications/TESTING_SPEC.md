@@ -4,8 +4,8 @@
 
 | Level | Tool | Count | Status |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | 90 | ✅ passing |
-| e2e (backend) | Jest + Supertest | 62 | ✅ passing |
+| Unit (backend) | Jest + ts-jest | 104 | ✅ passing |
+| e2e (backend) | Jest + Supertest | 70 | ✅ passing |
 | Widget (frontend) | flutter_test | 28 (13 widget + 15 provider) | ✅ passing |
 | Performance | k6 | — | ⬜ planned |
 | Security | `npm audit --audit-level=high` | 0 high+ | ✅ CI gate (`.github/workflows/ci.yml`) |

@@ -78,6 +78,7 @@ erDiagram
 
 - Unique: `Organization.slug`, `User.email`, `User.keycloakId`, `GraphEntity(type,name)`, `GraphRelationship(source,target,type)`, `ExpertiseScore(userId,topic)`.
 - Query indexes: `AuditLog(organizationId, createdAt)`, `AuditLog(entity, entityId)`, `GraphEntity(type)`.
+- Query indexes (added 2026-08-18, migration `add_performance_indexes`): `User(organizationId)`, `Document(organizationId, deletedAt, status)`, `Document(organizationId, checksum)`, `Document(status)`, `DocumentVersion(documentId)`, `Chunk(documentId)`, `Connector(organizationId, deletedAt)`, `ConnectorRun(connectorId, createdAt)`, `Conversation(userId, updatedAt)`, `Message(conversationId, createdAt)`, `Meeting(organizationId, deletedAt)`, `Meeting(organizerId)`, `MeetingParticipant(meetingId)`, `MeetingParticipant(userId)`, `Notification(userId, isRead, createdAt)`, `Policy(organizationId, deletedAt)`.
 - Soft-delete filtering everywhere (`deletedAt: null`).
 
 ## Neo4j (graph model)

@@ -1,6 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
+import { CacheService } from '../../infrastructure/cache/cache.service';
+
+const EXPERTISE_SUMMARY_TTL_MS = 300_000;
+
+export interface ExpertiseSummaryItem {
+  topic: string;
+  averageScore: number;
+  expertCount: number;
+  topExperts: { name: string; score: number }[];
+}
 
 @Injectable()
 export class ExpertiseService {
@@ -9,6 +19,7 @@ export class ExpertiseService {
   constructor(
     private prisma: PrismaService,
     private neo4j: Neo4jService,
+    private cache: CacheService,
   ) {}
 
   async findExperts(topic: string, organizationId: string, limit = 10) {
@@ -174,7 +185,13 @@ export class ExpertiseService {
     return Array.from(userMap.values()).sort((a, b) => b.score - a.score);
   }
 
-  async getExpertiseSummary(organizationId: string) {
+  async getExpertiseSummary(
+    organizationId: string,
+  ): Promise<ExpertiseSummaryItem[]> {
+    const key = `expertise:summary:${organizationId}`;
+    const cached = await this.cache.get<ExpertiseSummaryItem[]>(key);
+    if (cached !== null) return cached;
+
     const scores = await this.prisma.expertiseScore.findMany({
       where: { user: { organizationId, isActive: true } },
       include: {
@@ -202,7 +219,7 @@ export class ExpertiseService {
       }
     }
 
-    return Array.from(topicSummary.entries())
+    const summary = Array.from(topicSummary.entries())
       .map(([topic, data]) => ({
         topic,
         averageScore: data.count > 0 ? data.totalScore / data.count : 0,
@@ -210,5 +227,7 @@ export class ExpertiseService {
         topExperts: data.topExperts,
       }))
       .sort((a, b) => b.averageScore - a.averageScore);
+    await this.cache.set(key, summary, EXPERTISE_SUMMARY_TTL_MS);
+    return summary;
   }
 }

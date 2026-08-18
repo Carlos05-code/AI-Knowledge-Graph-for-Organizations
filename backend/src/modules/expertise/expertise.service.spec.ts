@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ExpertiseService } from './expertise.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
+import { CacheService } from '../../infrastructure/cache/cache.service';
 
 describe('ExpertiseService', () => {
   let service: ExpertiseService;
@@ -24,13 +25,21 @@ describe('ExpertiseService', () => {
     searchNodes: jest.fn(),
   };
 
+  const mockCache = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockCache.get.mockResolvedValue(null);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ExpertiseService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: Neo4jService, useValue: mockNeo4j },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -99,6 +108,18 @@ describe('ExpertiseService', () => {
     expect(result[1].topic).toBe('Kubernetes');
     expect(result[1].averageScore).toBeCloseTo(0.9, 2);
     expect(result[1].expertCount).toBe(2);
+  });
+
+  it('should serve the expertise summary from cache', async () => {
+    mockCache.get.mockResolvedValue([
+      { topic: 'React', averageScore: 0.92, expertCount: 1, topExperts: [] },
+    ]);
+
+    const result = await service.getExpertiseSummary('org-1');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].topic).toBe('React');
+    expect(mockPrisma.expertiseScore.findMany).not.toHaveBeenCalled();
   });
 
   it('should fallback gracefully when graph query fails', async () => {
