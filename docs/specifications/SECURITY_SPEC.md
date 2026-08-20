@@ -12,8 +12,21 @@
 - **Logout**: `POST /auth/logout` revokes the presented refresh token server-side
   (best-effort from the client, which always clears local storage).
 - **`GET /auth/me`**: returns profile; used by frontend `checkAuth()`.
-- **Keycloak**: schema-ready (`keycloakId` unique) and env vars documented, but not
-  integrated — local JWT is the active path (ADR-003).
+- **Keycloak SSO** (enabled when `KEYCLOAK_URL` + `KEYCLOAK_REALM` are set):
+  - `POST /auth/sso/keycloak` accepts a Keycloak access token; verification is
+    **RS256-only**, with 30 s clock skew on `exp`, plus `iss` and `aud`
+    (`KEYCLOAK_CLIENT_ID`) checks.
+  - Public keys are fetched from the realm JWKS endpoint
+    (`${issuer}/protocol/openid-connect/certs`, override `KEYCLOAK_JWKS_URL`),
+    5-minute in-memory cache, 5 s HTTP timeout.
+  - Sign-in links by `sub` (keycloakId) first, then by email (`user.update` sets
+    `keycloakId`); unknown users are provisioned into `KEYCLOAK_DEFAULT_ORG_ID`
+    (or a new `sso-{org}` organization) with a null password.
+  - Realm roles map `admin→ADMIN`, `user→USER`, `viewer→VIEWER`; no match
+    defaults to `USER`. Inactive accounts are rejected with 401.
+  - On success a local JWT pair is issued via the normal `issueTokens` path.
+  - `GET /auth/sso/keycloak/status` reports enabled/issuer for the frontend.
+  - Local email+password auth remains the primary path; SSO is additive (ADR-003).
 
 ## 2. RBAC
 

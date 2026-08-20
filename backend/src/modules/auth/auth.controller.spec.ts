@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { KeycloakService } from './keycloak.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -11,10 +12,18 @@ describe('AuthController', () => {
     refreshToken: jest.fn(),
   };
 
+  const mockKeycloakService = {
+    getStatus: jest.fn(),
+    ssoLogin: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: KeycloakService, useValue: mockKeycloakService },
+      ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);

@@ -144,6 +144,10 @@ export class AuthService {
     return { success: true };
   }
 
+  async issueTokens(user: any) {
+    return this.createTokenPair(user);
+  }
+
   private async createTokenPair(user: any) {
     const payload = {
       sub: user.id,

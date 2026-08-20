@@ -9,8 +9,8 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 - ✅ Databases wired (PostgreSQL 16 + Prisma, Neo4j, Qdrant, Redis cache w/ in-memory fallback)
 - ✅ Flutter app shell (login/register, chat w/ citations, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies, notifications)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
-- ✅ Docker Compose stack (16 services), Kubernetes manifests; observability stack (Prometheus alerts.yml + provisioned Grafana dashboards + Loki/promtail log shipping + exporters)
-- ✅ Tests: 108 unit + 76 e2e + 28 frontend tests, all passing
+- ✅ Docker Compose stack (18 services), Kubernetes manifests; observability stack (Prometheus alerts.yml + provisioned Grafana dashboards + Loki/promtail log shipping + exporters)
+- ✅ Tests: 117 unit + 80 e2e + 28 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -40,14 +40,12 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 21 | Monitoring | ✅ | Prometheus `/api/v1/metrics`, winston, health checks |
 | 22 | Performance optimization | 🔄 | Pagination done; 16 query indexes (migration `add_performance_indexes`, 2026-08-18) + caching on hot paths (notification unread count, admin dashboard stats, expertise summary); query tuning done (audit: no N+1; batch/join queries confirmed); connection pooling via PgBouncer (transaction mode, connection_limit=9, migrations bypass pooler) |
 | 23 | Security hardening | 🔄 | Helmet, bcrypt, validation, global rate limiting, graph auth, Swagger prod gate, DB-backed refresh token rotation + logout revocation, `npm audit` CI gate (0 high), connector credentials encrypted at rest (AES-256-GCM), versioned ciphertext (`akg:v{N}:`, `ENCRYPTION_KEYS` chain), DB-backed JWT secret rotation endpoint (`POST /admin/secrets/rotate-jwt`, dual-key grace), VIEWER read-only enforcement (RolesGuard blocks non-GET for VIEWER; WS chat role-gated: multi-secret verify + DB revalidation on connect, writes denied for VIEWER) — see SECURITY_SPEC remaining items |
-| 24 | Testing | 🔄 | 104 unit + 76 e2e + 28 frontend tests; k6 scripts (login/search/chat) + JWT security edge cases done; k6 soak added; ZAP baseline wired into CI (weekly + manual) |
-| 25 | Production deployment | done | Compose stack completed (17 services: exporters, promtail, alertmanager, healthchecks, resource limits); K8s hardened (non-root, read-only root FS, PDBs, termination grace, TLS via cert-manager); HTTP metrics interceptor (http_requests_total + http_request_duration_seconds); alerts.yml rule set + Alertmanager webhook routing; AKG Backend Overview Grafana dashboard; frontend nginx on 8080 for non-root (uid 101); staging env defined in DEVOPS_SPEC |
+| 24 | Testing | 🔄 | 117 unit + 80 e2e + 28 frontend tests; k6 scripts (login/search/chat) + JWT security edge cases done; k6 soak added; ZAP baseline wired into CI (weekly + manual) |
+| 25 | Production deployment | done | Compose stack completed (18 services: exporters, promtail, alertmanager, healthchecks, resource limits); K8s hardened (non-root, read-only root FS, PDBs, termination grace, TLS via cert-manager); HTTP metrics interceptor (http_requests_total + http_request_duration_seconds); alerts.yml rule set + Alertmanager webhook routing; AKG Backend Overview Grafana dashboard; frontend nginx on 8080 for non-root (uid 101); staging env defined in DEVOPS_SPEC |
 
 ## Known gaps tracked for next releases
 
-- Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
-- All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned.
-- Keycloak referenced in schema/env but not integrated — `keycloakId` is populated with a random UUID; JWT local auth is the active path.
+- Keycloak SSO - resolved 2026-08-20: POST /auth/sso/keycloak (RS256 verify via JWKS w/ 5-min cache + 30 s exp skew, iss/aud checks, link by keycloakId then email, auto-provisioning w/ realm-role mapping admin/user/viewer to ADMIN/USER/VIEWER, default USER); GET /auth/sso/keycloak/status; enabled when KEYCLOAK_URL + KEYCLOAK_REALM are set; 9 unit + 4 e2e tests added.
 - All shell routes are wired to real screens (no "Coming soon" placeholders); typed models (freezed) planned. `freezed`/`json_serializable` were pruned with the other dead deps; a small `json_annotation`-only codegen for models could return later.
 - Widget test suite: 10 widget + 15 provider tests (login/register, admin gating + invites, chat citations, notifications UI + provider, router redirect/shell; search/chat/notifications/invitations providers).
 - Backend `npm run lint` gate restored — resolved 2026-08-17: `eslint.config.mjs` now exits 0 (0 errors / 1093 warnings). Legacy `no-unsafe-*` rules (assignment/member-access/call/return) and `no-require-imports` downgraded to `warn` (intentional lazy `require()` for optional deps: nodemailer, pdf-parse, pdf-to-img, googleapis, jsonwebtoken); `no-unused-vars` configured with `^_` ignore patterns; `dist/`/`coverage/`/`uploads/` ignored; leftover 64 errors fixed (require-await stubs, enum comparisons, unused imports/args, empty blocks, unbound methods).
