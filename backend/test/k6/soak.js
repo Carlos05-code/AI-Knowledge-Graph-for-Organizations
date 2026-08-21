@@ -1,14 +1,27 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import ws from 'k6/ws';
 
-// Soak test: long-duration moderate load mixing HTTP workloads (login/search)
-// plus a small WebSocket chat smoke, to catch leaks, drift and degradation.
-//
-// Usage:
-//   k6 run test/k6/soak.js
-//   BASE_URL=https://staging.example.com/api/v1 WS_URL=wss://staging.example.com \
-//     LOAD_USER=load@test.com LOAD_PASSWORD=secret k6 run test/k6/soak.js
+// Soak test: long-duration moderate load mixing HTTP workloads (login/search),
+// file upload, and a small WebSocket chat smoke, to catch leaks, drift and degradation.
+// Usage: k6 run test/k6/soak.js
+// Set env: BASE_URL, WS_URL, LOAD_USER, LOAD_PASSWORD, UPLOAD_DIR (optional)
+
+// t: number of files to upload (default 100 via __ENV.UPLOAD_FILES)
+const UPLOAD_FILES = Number(__ENV.UPLOAD_FILES || 100);
+
+// Simulated local file paths — in CI these would be real paths or generated.
+// For the soak we just POST multipart with file contents; the server accepts
+// multipart/form-data with a "file" field.
+const FILE_PAYLOAD =
+  __ENV.UPLOAD_DIR
+    ? http.formData([{ name: 'file', filePath: `${__ENV.UPLOAD_DIR}/sample.txt` }])
+    : http.formData([
+        {
+          name: 'file',
+          content: 'x'.repeat(1024 * 10), // 10 KB per file (adjust as needed)
+          filename: 'sample.txt',
+        },
+      ]);
 
 export const options = {
   scenarios: {
@@ -28,6 +41,13 @@ export const options = {
       iterations: 30,
       startTime: '5m',
       exec: 'wsSession',
+    },
+    file_upload: {
+      executor: 'shared-iterations',
+      vus: 2,
+      iterations: UPLOAD_FILES,
+      startTime: '10m',
+      exec: 'uploadFiles',
     },
   },
   thresholds: {
@@ -76,6 +96,34 @@ export function httpSoak(data) {
       'search returns 200': (r) => r.status === 200,
     });
   }
+  sleep(1 + Math.random());
+}
+
+export function uploadFiles(data) {
+  const token = data.token;
+  const payload = FILE_PAYLOAD;
+  if (typeof payload === 'string') {
+    // fallback: just post JSON if no multipart available
+    const res = http.post(`${BASE_URL}/documents`, JSON.stringify({}), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    check(res, { 'upload placeholder: 200': (r) => r.status === 200 });
+    return;
+  }
+  const res = http.post(
+    `${BASE_URL}/documents`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  );
+  check(res, {
+    'upload returns 200': (r) => r.status === 200,
+    'upload has id': (r) => r.json('data.id') !== undefined,
+  });
   sleep(1 + Math.random());
 }
 
