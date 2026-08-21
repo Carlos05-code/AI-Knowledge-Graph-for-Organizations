@@ -102,13 +102,25 @@ jobs:
 
       - run: docker compose -f docker/docker-compose.yml config
 
-  zap-baseline:
-    name: Security — OWASP ZAP Baseline
+zap-baseline:
+    name: Security - OWASP ZAP Baseline
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Login and capture auth token
+        run: |
+          mkdir -p backend/test/zap/reports
+          TOKEN=$(curl -s -X POST "${{ secrets.STAGING_URL }}/api/v1/auth/login" \
+            -H "Content-Type: application/json" \
+            -d '{"email": "sso@acme.com", "password": "password123"}' | jq -r .accessToken)
+          if [ -z "$TOKEN" ]; then
+            echo "::error ::Failed to login, no token returned"
+            exit 1
+          fi
+          echo "Auth token captured (first 10 chars): ${TOKEN:0:10}"
 
       - name: Run ZAP baseline scan
         run: |
