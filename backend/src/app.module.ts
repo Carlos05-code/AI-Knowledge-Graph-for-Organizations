@@ -24,6 +24,7 @@ import { StorageModule } from './infrastructure/storage/storage.module';
 import { EventsModule } from './infrastructure/events/events.module';
 import { LoggerModule } from './infrastructure/logger/logger.module';
 import { MetricsModule } from './infrastructure/metrics/metrics.module';
+import { OtelModule } from './infrastructure/opentelemetry/opentelemetry.module';
 import { SecurityModule } from './infrastructure/security/security.module';
 import { OcrModule } from './infrastructure/ocr/ocr.module';
 import { MailModule } from './infrastructure/mail/mail.module';
@@ -65,6 +66,7 @@ import { ConfigService } from '@nestjs/config';
     LoggerModule,
     EventsModule,
     MetricsModule,
+    OtelModule,
     SecurityModule,
     OcrModule,
     MailModule,

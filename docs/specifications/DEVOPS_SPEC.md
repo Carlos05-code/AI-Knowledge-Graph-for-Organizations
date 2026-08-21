@@ -96,6 +96,6 @@ replica available during node drains. Ingress terminates TLS via cert-manager
 
 ## 9. Observability roadmap
 
-- OpenTelemetry traces (dependency available) — staged.
+- DONE: OpenTelemetry traces (SDKNode + Express/HTTP/Prisma instrumentation, console exporter) — instrumented 2026-08-20.
 - AI latency/cost metrics per model call — staged.
 - DONE: HTTP request duration histograms + error-rate panels (dashboard + alerts above).
