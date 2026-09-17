@@ -7,17 +7,23 @@ describe('ConnectorRegistryService', () => {
     registry = new ConnectorRegistryService();
   });
 
-  it.each(['GOOGLE_DRIVE', 'SLACK', 'GITHUB', 'NOTION', 'JIRA', 'LINEAR'])(
-    'resolves a %s adapter',
-    (type) => {
-      expect(registry.isTypeSupported(type)).toBe(true);
-      const adapter = registry.getAdapter(type, { accessToken: 'x' });
-      expect(adapter.getType()).toBe(type);
-    },
-  );
+  it.each([
+    'GOOGLE_DRIVE',
+    'SLACK',
+    'GITHUB',
+    'NOTION',
+    'JIRA',
+    'LINEAR',
+    'CONFLUENCE',
+    'GITLAB',
+  ])('resolves a %s adapter', (type) => {
+    expect(registry.isTypeSupported(type)).toBe(true);
+    const adapter = registry.getAdapter(type, { accessToken: 'x' });
+    expect(adapter.getType()).toBe(type);
+  });
 
   it('throws for an unregistered connector type', () => {
-    expect(() => registry.getAdapter('CONFLUENCE', {})).toThrow(
+    expect(() => registry.getAdapter('ONEDRIVE', {})).toThrow(
       /No adapter registered/,
     );
   });
@@ -31,6 +37,8 @@ describe('ConnectorRegistryService', () => {
         'NOTION',
         'JIRA',
         'LINEAR',
+        'CONFLUENCE',
+        'GITLAB',
       ]),
     );
   });

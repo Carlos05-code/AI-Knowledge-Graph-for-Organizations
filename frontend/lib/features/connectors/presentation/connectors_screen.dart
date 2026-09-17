@@ -28,6 +28,8 @@ const _connectorTypeMeta = [
   _ConnectorTypeMeta('NOTION', 'Notion', Icons.notes, '{"token": "ntn_..."}'),
   _ConnectorTypeMeta('JIRA', 'Jira', Icons.bug_report_outlined, '{"email": "...", "apiToken": "...", "domain": "yoursite"}'),
   _ConnectorTypeMeta('LINEAR', 'Linear', Icons.trending_up, '{"apiKey": "..."}'),
+  _ConnectorTypeMeta('CONFLUENCE', 'Confluence', Icons.article_outlined, '{"email": "...", "apiToken": "...", "domain": "yoursite"}'),
+  _ConnectorTypeMeta('GITLAB', 'GitLab', Icons.account_tree_outlined, '{"token": "glpat-...", "defaultProject": "group/project"}'),
   _ConnectorTypeMeta('CUSTOM', 'Custom API', Icons.extension_outlined, '{"key": "..."}'),
 ];
 
