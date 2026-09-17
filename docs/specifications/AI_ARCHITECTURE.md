@@ -42,7 +42,7 @@ Knowledge graph (Neo4j) is both an *index* and a *retrieval source*:
 
 1. **Vector**: embed query → Qdrant search (`knowledge_chunks`, top-k).
 2. **Graph**: Neo4j `searchNodes`.
-3. **Keyword**: Postgres ILIKE over documents.
+3. **Keyword**: OpenSearch BM25 over the `knowledge_chunks` index (org-scoped), falling back to Postgres ILIKE over documents/chunks when OpenSearch is unavailable.
 
 Results are merged, deduplicated, and passed to the LLM as context with the user
 question; the response includes `sources` (citations) and `confidence`.

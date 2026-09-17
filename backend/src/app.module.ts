@@ -30,6 +30,7 @@ import { OcrModule } from './infrastructure/ocr/ocr.module';
 import { MailModule } from './infrastructure/mail/mail.module';
 import { Neo4jModule } from './infrastructure/graph/graph.module';
 import { VectorModule } from './infrastructure/vector/vector.module';
+import { OpenSearchModule } from './infrastructure/search/opensearch.module';
 import { AIModule } from './infrastructure/ai/ai.module';
 import { ConnectorRegistryModule } from './infrastructure/connectors/connector-registry.module';
 import { UploadModule } from './modules/upload/upload.module';
@@ -71,6 +72,7 @@ import { ConfigService } from '@nestjs/config';
     OcrModule,
     MailModule,
     VectorModule,
+    OpenSearchModule,
     AIModule,
     ConnectorRegistryModule,
     UploadModule,

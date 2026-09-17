@@ -19,6 +19,7 @@ export class ChatController {
     return this.chatService.sendMessage(
       user.id,
       dto.content,
+      user.organizationId,
       dto.conversationId,
     );
   }

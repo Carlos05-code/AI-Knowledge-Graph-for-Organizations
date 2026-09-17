@@ -3,6 +3,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
 import { QdrantService } from '../../infrastructure/vector/qdrant.service';
 import { EmbeddingService } from '../../infrastructure/ai/embedding.service';
+import { OpenSearchService } from '../../infrastructure/search/opensearch.service';
 
 interface SearchOptions {
   mode?: 'keyword' | 'semantic' | 'hybrid';
@@ -22,6 +23,7 @@ export class SearchService implements OnModuleInit {
     private neo4j: Neo4jService,
     private qdrant: QdrantService,
     private embedding: EmbeddingService,
+    private opensearch: OpenSearchService,
   ) {}
 
   async onModuleInit() {
@@ -33,6 +35,9 @@ export class SearchService implements OnModuleInit {
         error instanceof Error ? error.message : error,
       );
     }
+    // OpenSearchService.onModuleInit already ensures its own index and
+    // degrades to `available = false` on failure — keyword search falls
+    // back to the Postgres path below when that happens.
   }
 
   async hybridSearch(
@@ -93,6 +98,36 @@ export class SearchService implements OnModuleInit {
   }
 
   private async keywordSearch(query: string, organizationId: string) {
+    if (this.opensearch.isAvailable()) {
+      try {
+        return await this.keywordSearchOpenSearch(query, organizationId);
+      } catch (error) {
+        this.logger.warn(
+          'OpenSearch keyword search failed, falling back to database search',
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+    return this.keywordSearchFallback(query, organizationId);
+  }
+
+  private async keywordSearchOpenSearch(query: string, organizationId: string) {
+    const hits = await this.opensearch.search(query, organizationId, {
+      limit: 20,
+    });
+
+    return hits.map((hit) => ({
+      id: hit.id,
+      title: (hit.source.title as string) || 'Untitled',
+      description: ((hit.source.content as string) || '').slice(0, 200),
+      type: 'chunk',
+      documentId: hit.source.documentId as string,
+      score: hit.score,
+    }));
+  }
+
+  /** BM25-via-OpenSearch unavailable path — Postgres ILIKE, weaker relevance but always available. */
+  private async keywordSearchFallback(query: string, organizationId: string) {
     const documents = await this.prisma.document.findMany({
       where: {
         organizationId,
@@ -277,9 +312,48 @@ export class SearchService implements OnModuleInit {
         error,
       );
     }
+
+    if (this.opensearch.isAvailable()) {
+      try {
+        const doc = await this.prisma.document.findUnique({
+          where: { id: documentId },
+          select: { title: true },
+        });
+        await this.opensearch.indexChunks(
+          chunks.map((chunk) => ({
+            id: chunk.id,
+            documentId,
+            organizationId,
+            title: doc?.title || 'Untitled',
+            content: chunk.content,
+            index: chunk.index,
+          })),
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to index document chunks into OpenSearch: ${documentId}`,
+          error,
+        );
+      }
+    }
   }
 
   async deleteDocumentChunks(documentId: string) {
+    await this.deleteQdrantChunks(documentId);
+
+    if (this.opensearch.isAvailable()) {
+      try {
+        await this.opensearch.deleteByDocumentId(documentId);
+      } catch (error) {
+        this.logger.error(
+          `Failed to delete OpenSearch chunks for document ${documentId}`,
+          error,
+        );
+      }
+    }
+  }
+
+  private async deleteQdrantChunks(documentId: string) {
     try {
       const collectionInfo = await this.qdrant.getCollectionInfo(
         this.collectionName,

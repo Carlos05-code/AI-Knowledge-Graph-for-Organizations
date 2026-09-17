@@ -6,11 +6,11 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 ## Current status
 
 - ✅ Backend API complete (NestJS 11, 16 controllers, ~60 endpoints, WebSocket chat)
-- ✅ Databases wired (PostgreSQL 16 + Prisma, Neo4j, Qdrant, Redis cache w/ in-memory fallback)
+- ✅ Databases wired (PostgreSQL 16 + Prisma, Neo4j, Qdrant, OpenSearch BM25 keyword index, Redis cache w/ in-memory fallback)
 - ✅ Flutter app shell (login/register, chat w/ citations, hybrid search, graph explorer, profile, admin, documents, connectors, meetings, policies, notifications)
 - ✅ CI (GitHub Actions: backend lint/test/build/docker, frontend analyze/build/docker)
 - ✅ Docker Compose stack (18 services), Kubernetes manifests; observability stack (Prometheus alerts.yml + provisioned Grafana dashboards + Loki/promtail log shipping + exporters)
-- ✅ Tests: 117 unit + 80 e2e + 28 frontend tests, all passing
+- ✅ Tests: 135 unit + 80 e2e + 28 frontend tests, all passing
 - ✅ Documentation suite (docs/)
 
 ## Milestones
@@ -28,7 +28,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 9 | Embedding service | ✅ | OpenAI `text-embedding-3-small` + deterministic fallback |
 | 10 | Vector database integration | ✅ | Qdrant, cosine, collection `knowledge_chunks` |
 | 11 | Knowledge Graph service | ✅ | Neo4j CRUD, subgraph via APOC, graph explorer UI |
-| 12 | Search engine | ✅ | Keyword (Postgres ILIKE) + semantic + graph hybrid |
+| 12 | Search engine | ✅ | Keyword (OpenSearch BM25, org-scoped, Postgres-ILIKE fallback when OpenSearch is down) + semantic + graph hybrid |
 | 13 | Hybrid retrieval | ✅ | Reranked fusion across 3 sources |
 | 14 | AI chat | ✅ | REST + WebSocket streaming (OpenAI), RAG context |
 | 15 | Citations | ✅ | `sources` in chat + WebSocket responses; citation chips in chat UI |
@@ -67,3 +67,4 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 12. ZAP scan + load soak - done: k6 soak.js (32 min, 20 VU hold, 30% login / 70% search + WS chat smoke, P95 < 1 s / P99 < 2.5 s, error rate < 1%, 
 pm run test:load:soak); OWASP ZAP baseline (ackend/test/zap/zap-baseline.sh, Docker passive scan, fails on HIGH, HTML/JSON/MD/XML reports) + CI job zap-baseline (weekly Mon 03:00 + workflow_dispatch, STAGING_URL secret, artifact upload). Remaining: authenticated active scanning, 100-file upload soak, 20k-chunk vector refresh.
 13. Performance optimization (part 2) - done: PgBouncer connection pooling (compose service, transaction mode, Prisma connection_limit=9&pool_timeout=10&pgbouncer=true, migrations run directly against postgres); slow-query instrumentation in PrismaService (SLOW_QUERY_MS, default 500 ms, winston/Nest warning with query target); hot-path query audit across search/chat/recommendations/gaps/meetings/policies/notifications/users - no N+1 found, includes/joins and pagination confirmed clean; dead include: { organization: false } removed from admin stats; docs updated (DATABASE_SPEC pooling section, BACKEND_SPEC env, DEVOPS_SPEC compose 18 services, .env.example).
+14. ✅ OpenSearch wired in (2026-09-17) — done: OpenSearch was provisioned (compose, k8s, env vars, docs) but had zero application code using it; keyword search ran on Postgres ILIKE only despite the "hybrid BM25 + vector + graph" claim. `OpenSearchService` added (fail-soft connect/index-ensure, matching the Qdrant/Neo4j resilience pattern); `SearchService.hybridSearch` and `ChatService.retrieveContext` now query OpenSearch BM25 first (org-scoped `multi_match` on title/content) and fall back to Postgres ILIKE only when OpenSearch is unavailable or errors; document chunk index/delete now write to OpenSearch alongside Qdrant. Fixed along the way: `docker-compose.yml` had `OPENSEARCH_HOST=http://...` and an unauthenticated healthcheck against an instance with the security plugin enabled (would 401/hang) — now `https://` + basic auth; `ChatService.keywordSearch` had no `organizationId` filter at all (cross-tenant RAG context leak) — now scoped like `SearchService`'s equivalent; a standalone `refresh-vector.ts` backfill script had a syntax error and three API-mismatch bugs that failed `tsc`/`npm run build` outright — fixed. 18 new unit tests (`opensearch.service.spec`, `search.service.spec`, extended `chat.service.spec`); 135 unit tests green. K8s (`backend-deployment.yml` + `secrets.yml`) and `.env.example` updated to match. **Not yet done**: OpenSearch isn't provisioned in CI, so this path is unit-tested via mocks only — not exercised end-to-end until a real cluster is available (e.g. in a docker-compose smoke test or staging).

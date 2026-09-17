@@ -113,7 +113,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    Q[Query] --> KW[Keyword: Postgres ILIKE over title/content]
+    Q[Query] --> KW[Keyword: OpenSearch BM25 over title/content, falls back to Postgres ILIKE if OpenSearch is unavailable]
     Q --> EMB2[Embedding: generateEmbedding]
     EMB2 --> VEC[Qdrant search knowledge_chunks]
     Q --> GRAPH[Neo4j searchNodes]

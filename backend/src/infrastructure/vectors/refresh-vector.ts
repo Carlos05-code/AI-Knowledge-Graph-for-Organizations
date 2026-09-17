@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { PrismaClient } from '../../infrastructure/database/prisma.service';
-import { QdrantClient, models } from '@qdrant/js-client-rest';
+import { PrismaClient } from '@prisma/client';
+import { QdrantClient } from '@qdrant/js-client-rest';
 
 async function main() {
   const prisma = new PrismaClient();
@@ -35,7 +35,7 @@ async function main() {
   // 3. Ensure collection exists (created with indexing_threshold 20000)
   const collectionName = 'knowledge_chunks';
   try {
-    await qdrant.recollections(collectionName);
+    await qdrant.getCollection(collectionName);
     console.log(`Collection '${collectionName}' already exists`);
   } catch {
     await qdrant.createCollection(collectionName, {
@@ -47,7 +47,9 @@ async function main() {
         indexing_threshold: 20000,
       },
     });
-    console.log(`Created collection '${collectionName}' with indexing_threshold=20000`);
+    console.log(
+      `Created collection '${collectionName}' with indexing_threshold=20000`,
+    );
   }
 
   // 4. Upsert chunks into Qdrant
@@ -56,7 +58,7 @@ async function main() {
   // In production the embedding service would generate real vectors.
   const vectorSize = 1536;
 
-  const points = chunks.map((chunk, idx) => ({
+  const points = chunks.map((chunk) => ({
     id: chunk.id,
     vector: Array(vectorSize).fill(0), // dummy vector — replace with real embeddings
     payload: {
@@ -68,14 +70,16 @@ async function main() {
     },
   }));
 
-  console.log(`Upserting ${points.length} points into Qdrant...`;
+  console.log(`Upserting ${points.length} points into Qdrant...`);
 
   await qdrant.upsert(collectionName, {
     wait: true,
     points,
   });
 
-  console.log(`Successfully refreshed ${points.length} chunks into Qdrant collection '${collectionName}'`);
+  console.log(
+    `Successfully refreshed ${points.length} chunks into Qdrant collection '${collectionName}'`,
+  );
 
   await prisma.$disconnect();
 }

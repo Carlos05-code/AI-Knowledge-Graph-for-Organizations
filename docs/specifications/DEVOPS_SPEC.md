@@ -15,7 +15,7 @@
 | redis | 6379 | cache |
 | rabbitmq | 5672, 15672 | management UI |
 | minio | 9000, 9001 | S3 + console |
-| opensearch | 9200 | search (reserved) |
+| opensearch | 9200 | BM25 keyword search (`knowledge_chunks` index); security plugin on, https + basic auth |
 | backend | 3000 | API |
 | frontend | 4200 | Flutter web served |
 | grafana / prometheus / loki | 3001 / 9090 / 3100 | observability |

@@ -141,7 +141,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         createdAt: new Date(),
       });
 
-      const context = await this.chatService.retrieveContext(content);
+      const context = await this.chatService.retrieveContext(
+        content,
+        client.user!.organizationId,
+      );
       await this.streamResponse(client, conversation.id, content, context);
     } catch (error) {
       this.logger.error('Message handling failed', error);

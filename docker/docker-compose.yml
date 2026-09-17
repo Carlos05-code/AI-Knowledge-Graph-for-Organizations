@@ -135,7 +135,7 @@ services:
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "-k", "https://localhost:9200/_cluster/health"]
+      test: ["CMD", "curl", "-f", "-k", "-u", "admin:admin", "https://localhost:9200/_cluster/health"]
       interval: 30s
       timeout: 20s
       retries: 10
@@ -451,7 +451,9 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: knowledge-graph
-      OPENSEARCH_HOST: http://opensearch:9200
+      OPENSEARCH_HOST: https://opensearch:9200
+      OPENSEARCH_USER: admin
+      OPENSEARCH_PASSWORD: admin
       JWT_SECRET: dev-jwt-secret-change-in-production
       JWT_ACCESS_EXPIRY: 15m
       JWT_REFRESH_EXPIRY: 7d
@@ -475,6 +477,8 @@ services:
       rabbitmq:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      opensearch:
         condition: service_healthy
 
   # =========================================================================

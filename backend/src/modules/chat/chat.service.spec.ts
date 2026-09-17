@@ -4,6 +4,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
 import { QdrantService } from '../../infrastructure/vector/qdrant.service';
 import { EmbeddingService } from '../../infrastructure/ai/embedding.service';
+import { OpenSearchService } from '../../infrastructure/search/opensearch.service';
 import { ConfigService } from '@nestjs/config';
 
 describe('ChatService', () => {
@@ -35,6 +36,11 @@ describe('ChatService', () => {
     generateEmbedding: jest.fn().mockResolvedValue(Array(1536).fill(0.1)),
   };
 
+  const mockOpenSearch = {
+    isAvailable: jest.fn().mockReturnValue(false),
+    search: jest.fn(),
+  };
+
   const mockConfig = {
     get: jest.fn((key: string, defaultValue?: any) => {
       const map: Record<string, any> = {
@@ -52,6 +58,8 @@ describe('ChatService', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     Object.defineProperty(ChatService.prototype, 'openai', {
       get: () => ({
         chat: {
@@ -70,6 +78,7 @@ describe('ChatService', () => {
         { provide: Neo4jService, useValue: mockNeo4j },
         { provide: QdrantService, useValue: mockQdrant },
         { provide: EmbeddingService, useValue: mockEmbedding },
+        { provide: OpenSearchService, useValue: mockOpenSearch },
         { provide: ConfigService, useValue: mockConfig },
       ],
     }).compile();
@@ -89,7 +98,11 @@ describe('ChatService', () => {
     mockPrisma.message.create.mockResolvedValue({ id: 'msg-1' });
     mockPrisma.document.findMany.mockResolvedValue([]);
 
-    const result = await service.sendMessage('user-1', 'Test question');
+    const result = await service.sendMessage(
+      'user-1',
+      'Test question',
+      'org-1',
+    );
     expect(result).toBeDefined();
     expect(result.conversationId).toBeDefined();
   });
@@ -106,5 +119,44 @@ describe('ChatService', () => {
     mockPrisma.message.create.mockResolvedValue({ id: 'msg-1' });
     const result = await service.saveUserMessage('conv-1', 'test');
     expect(result).toBeDefined();
+  });
+
+  describe('retrieveContext keyword search', () => {
+    it('scopes the Postgres fallback query to the given organization', async () => {
+      mockOpenSearch.isAvailable.mockReturnValue(false);
+      mockPrisma.document.findMany.mockResolvedValue([]);
+      mockPrisma.chunk.findMany.mockResolvedValue([]);
+
+      await service.retrieveContext('onboarding', 'org-1');
+
+      expect(mockPrisma.document.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ organizationId: 'org-1' }),
+        }),
+      );
+      expect(mockPrisma.chunk.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            document: { organizationId: 'org-1' },
+          }),
+        }),
+      );
+    });
+
+    it('uses OpenSearch, scoped to the organization, when available', async () => {
+      mockOpenSearch.isAvailable.mockReturnValue(true);
+      mockOpenSearch.search.mockResolvedValue([
+        { id: 'c1', score: 2.1, source: { title: 'Handbook', content: 'hi' } },
+      ]);
+
+      await service.retrieveContext('onboarding', 'org-1');
+
+      expect(mockOpenSearch.search).toHaveBeenCalledWith(
+        'onboarding',
+        'org-1',
+        expect.objectContaining({ limit: 10 }),
+      );
+      expect(mockPrisma.document.findMany).not.toHaveBeenCalled();
+    });
   });
 });

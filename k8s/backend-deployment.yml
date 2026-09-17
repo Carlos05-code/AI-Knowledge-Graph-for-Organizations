@@ -79,6 +79,15 @@ spec:
               value: "http://akg-minio:9000"
             - name: QDRANT_HOST
               value: "akg-qdrant"
+            - name: OPENSEARCH_HOST
+              value: "https://akg-opensearch:9200"
+            - name: OPENSEARCH_USER
+              value: "admin"
+            - name: OPENSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: akg-secrets
+                  key: opensearch-password
           resources:
             requests:
               memory: "256Mi"

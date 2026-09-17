@@ -3,6 +3,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
 import { QdrantService } from '../../infrastructure/vector/qdrant.service';
 import { EmbeddingService } from '../../infrastructure/ai/embedding.service';
+import { OpenSearchService } from '../../infrastructure/search/opensearch.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -23,10 +24,16 @@ export class ChatService {
     private neo4j: Neo4jService,
     private qdrant: QdrantService,
     private embedding: EmbeddingService,
+    private opensearch: OpenSearchService,
     private config: ConfigService,
   ) {}
 
-  async sendMessage(userId: string, content: string, conversationId?: string) {
+  async sendMessage(
+    userId: string,
+    content: string,
+    organizationId: string,
+    conversationId?: string,
+  ) {
     const conversation = await this.getOrCreateConversation(
       userId,
       content,
@@ -37,7 +44,7 @@ export class ChatService {
       data: { conversationId: conversation.id, role: 'USER', content },
     });
 
-    const context = await this.retrieveContext(content);
+    const context = await this.retrieveContext(content, organizationId);
     const answer = await this.generateAnswer(content, context);
 
     const message = await this.prisma.message.create({
@@ -86,11 +93,11 @@ export class ChatService {
     });
   }
 
-  async retrieveContext(query: string) {
+  async retrieveContext(query: string, organizationId: string) {
     const [vectorResults, graphResults, keywordResults] = await Promise.all([
       this.vectorSearch(query),
       this.graphSearch(query),
-      this.keywordSearch(query),
+      this.keywordSearch(query, organizationId),
     ]);
 
     const combined = [...vectorResults, ...graphResults, ...keywordResults];
@@ -143,9 +150,30 @@ export class ChatService {
     }
   }
 
-  private async keywordSearch(query: string) {
+  private async keywordSearch(query: string, organizationId: string) {
+    if (this.opensearch.isAvailable()) {
+      try {
+        const hits = await this.opensearch.search(query, organizationId, {
+          limit: 10,
+        });
+        return hits.map((hit) => ({
+          id: hit.id,
+          title: (hit.source.title as string) || 'Content Match',
+          content: ((hit.source.content as string) || '').slice(0, 500),
+          type: 'keyword',
+          score: hit.score,
+        }));
+      } catch (error) {
+        this.logger.warn(
+          'OpenSearch keyword search failed, falling back to database search',
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+
     const documents = await this.prisma.document.findMany({
       where: {
+        organizationId,
         deletedAt: null,
         status: 'INDEXED',
         OR: [
@@ -158,7 +186,10 @@ export class ChatService {
     });
 
     const chunks = await this.prisma.chunk.findMany({
-      where: { content: { contains: query, mode: 'insensitive' } },
+      where: {
+        content: { contains: query, mode: 'insensitive' },
+        document: { organizationId },
+      },
       select: { id: true, content: true, documentId: true },
       take: 5,
     });
