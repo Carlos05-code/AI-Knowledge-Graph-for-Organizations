@@ -81,9 +81,7 @@ Think of it as ChatGPT + Notion AI + Glean + GraphRAG, built for enterprise.
 ## Features
 
 ### Universal Connectors
-**Shipped:** Slack (channel export, file sync), Google Drive (OAuth file sync), Notion (page search + block content), Jira (JQL issue search + comments), Linear (GraphQL issue search + comments), Confluence (CQL page search + storage-format content), GitLab (repo tree + raw file sync, self-hosted capable). Plus local file upload (PDF, DOCX, PPTX, XLSX, MD, HTML, images).
-
-**Auth-only (sync not yet functional):** GitHub — connects and lists a repo's root directory, but `syncAll` doesn't pull content into the knowledge base yet (tracked in [ROADMAP.md](ROADMAP.md)).
+**Shipped:** Slack (channel export, file sync), GitHub (recursive repo tree + raw file sync), Google Drive (OAuth file sync, incl. Google Docs/Sheets/Slides export to text), Notion (page search + block content), Jira (JQL issue search + comments), Linear (GraphQL issue search + comments), Confluence (CQL page search + storage-format content), GitLab (repo tree + raw file sync, self-hosted capable). Plus local file upload (PDF, DOCX, PPTX, XLSX, MD, HTML, images).
 
 **Planned:** OneDrive, SharePoint, Gmail, Outlook, Teams, Dropbox — see [ROADMAP.md](ROADMAP.md).
 

@@ -2,9 +2,32 @@ import { Logger } from '@nestjs/common';
 import {
   ConnectorAdapter,
   ConnectorConfig,
+  ConnectorDocument,
   ConnectorFile,
   SyncResult,
 } from '../connector-adapter.interface';
+
+const MAX_DOWNLOAD_BYTES = 5 * 1024 * 1024;
+const GOOGLE_NATIVE_PREFIX = 'application/vnd.google-apps.';
+
+/** Google-native types can't be downloaded as raw bytes; they must be exported to a real format. */
+const EXPORT_MIME_TYPES: Record<
+  string,
+  { mimeType: string; fileType: string }
+> = {
+  [`${GOOGLE_NATIVE_PREFIX}document`]: {
+    mimeType: 'text/plain',
+    fileType: 'txt',
+  },
+  [`${GOOGLE_NATIVE_PREFIX}spreadsheet`]: {
+    mimeType: 'text/csv',
+    fileType: 'csv',
+  },
+  [`${GOOGLE_NATIVE_PREFIX}presentation`]: {
+    mimeType: 'text/plain',
+    fileType: 'txt',
+  },
+};
 
 export class GoogleDriveAdapter extends ConnectorAdapter {
   private readonly logger = new Logger(GoogleDriveAdapter.name);
@@ -139,34 +162,84 @@ export class GoogleDriveAdapter extends ConnectorAdapter {
     }
   }
 
+  private async exportGoogleNativeFile(
+    fileId: string,
+    mimeType: string,
+  ): Promise<Buffer> {
+    const { google } = require('googleapis');
+    const drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+    const response = await drive.files.export(
+      { fileId, mimeType },
+      { responseType: 'arraybuffer' },
+    );
+    return Buffer.from(response.data);
+  }
+
   async syncAll(): Promise<SyncResult> {
-    const result: SyncResult = { documentsSynced: 0, errors: [], metadata: {} };
+    const documents: ConnectorDocument[] = [];
+    const errors: Array<{ fileId: string; error: string }> = [];
+    const metadata: Record<string, unknown> = { skipped: 0 };
 
     try {
       await this.ensureAuth();
-      const files = await this.listFiles();
+      const files = (await this.listFiles()).filter(
+        (f) => f.mimeType !== `${GOOGLE_NATIVE_PREFIX}folder`,
+      );
+      metadata.filesFound = files.length;
 
       for (const file of files) {
         try {
-          await this.downloadFile(file.id);
-          await this.getFileMetadata(file.id);
+          let bytes: Buffer;
+          let fileType: string;
 
-          result.documentsSynced++;
-          result.metadata[file.id] = {
+          const exportTarget = EXPORT_MIME_TYPES[file.mimeType];
+          if (file.mimeType.startsWith(GOOGLE_NATIVE_PREFIX)) {
+            if (!exportTarget) {
+              metadata.skipped = (metadata.skipped as number) + 1;
+              continue; // Forms/Drawings/Sites/etc. have no useful text export
+            }
+            bytes = await this.exportGoogleNativeFile(
+              file.id,
+              exportTarget.mimeType,
+            );
+            fileType = exportTarget.fileType;
+          } else {
+            bytes = await this.downloadFile(file.id);
+            fileType = file.name.split('.').pop() || 'txt';
+          }
+
+          if (bytes.length > MAX_DOWNLOAD_BYTES) {
+            errors.push({
+              fileId: file.id,
+              error: `File exceeds the ${MAX_DOWNLOAD_BYTES} byte download limit`,
+            });
+            continue;
+          }
+          if (bytes.includes(0)) {
+            metadata.skipped = (metadata.skipped as number) + 1;
+            continue; // binary file — no text content to index
+          }
+
+          documents.push({
+            id: file.id,
             name: file.name,
-            size: file.size,
-            mimeType: file.mimeType,
-          };
+            filePath: file.path,
+            mimeType: exportTarget?.mimeType || file.mimeType,
+            fileType,
+            size: bytes.length,
+            content: bytes.toString('utf-8'),
+            metadata: { parentId: file.parentId, driveMimeType: file.mimeType },
+          });
         } catch (error: any) {
-          result.errors.push({ fileId: file.id, error: error.message });
+          errors.push({ fileId: file.id, error: error.message });
         }
       }
     } catch (error: any) {
       this.logger.error('Sync all failed', error);
-      result.errors.push({ fileId: 'all', error: error.message });
+      errors.push({ fileId: 'all', error: error.message });
     }
 
-    return result;
+    return { documentsSynced: documents.length, errors, metadata, documents };
   }
 
   private async ensureAuth(): Promise<void> {
