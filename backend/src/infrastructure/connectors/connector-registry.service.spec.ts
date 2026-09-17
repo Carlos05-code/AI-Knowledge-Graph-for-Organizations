@@ -19,6 +19,8 @@ describe('ConnectorRegistryService', () => {
     'ONEDRIVE',
     'SHAREPOINT',
     'OUTLOOK',
+    'GMAIL',
+    'TEAMS',
   ])('resolves a %s adapter', (type) => {
     expect(registry.isTypeSupported(type)).toBe(true);
     const adapter = registry.getAdapter(type, { accessToken: 'x' });
@@ -26,7 +28,7 @@ describe('ConnectorRegistryService', () => {
   });
 
   it('throws for an unregistered connector type', () => {
-    expect(() => registry.getAdapter('GMAIL', {})).toThrow(
+    expect(() => registry.getAdapter('DROPBOX', {})).toThrow(
       /No adapter registered/,
     );
   });
@@ -45,6 +47,8 @@ describe('ConnectorRegistryService', () => {
         'ONEDRIVE',
         'SHAREPOINT',
         'OUTLOOK',
+        'GMAIL',
+        'TEAMS',
       ]),
     );
   });

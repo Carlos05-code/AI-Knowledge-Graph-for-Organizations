@@ -14,6 +14,8 @@ import { GitLabAdapter } from './adapters/gitlab.adapter';
 import { OneDriveAdapter } from './adapters/onedrive.adapter';
 import { SharePointAdapter } from './adapters/sharepoint.adapter';
 import { OutlookAdapter } from './adapters/outlook.adapter';
+import { GmailAdapter } from './adapters/gmail.adapter';
+import { TeamsAdapter } from './adapters/teams.adapter';
 
 export type AdapterConstructor = new (
   config: ConnectorConfig,
@@ -36,6 +38,8 @@ export class ConnectorRegistryService {
     this.register('ONEDRIVE', OneDriveAdapter);
     this.register('SHAREPOINT', SharePointAdapter);
     this.register('OUTLOOK', OutlookAdapter);
+    this.register('GMAIL', GmailAdapter);
+    this.register('TEAMS', TeamsAdapter);
   }
 
   register(type: string, adapterClass: AdapterConstructor): void {
