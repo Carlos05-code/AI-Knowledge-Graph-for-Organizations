@@ -26,7 +26,7 @@ const _connectorTypeMeta = [
   _ConnectorTypeMeta('GITHUB', 'GitHub', Icons.code, '{"token": "ghp_..."}'),
   _ConnectorTypeMeta('GOOGLE_DRIVE', 'Google Drive', Icons.cloud_outlined, '{"refreshToken": "..."}'),
   _ConnectorTypeMeta('NOTION', 'Notion', Icons.notes, '{"token": "ntn_..."}'),
-  _ConnectorTypeMeta('JIRA', 'Jira', Icons.bug_report_outlined, '{"email": "...", "apiToken": "..."}'),
+  _ConnectorTypeMeta('JIRA', 'Jira', Icons.bug_report_outlined, '{"email": "...", "apiToken": "...", "domain": "yoursite"}'),
   _ConnectorTypeMeta('LINEAR', 'Linear', Icons.trending_up, '{"apiKey": "..."}'),
   _ConnectorTypeMeta('CUSTOM', 'Custom API', Icons.extension_outlined, '{"key": "..."}'),
 ];

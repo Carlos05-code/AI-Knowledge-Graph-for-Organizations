@@ -6,6 +6,9 @@ import {
 import { GoogleDriveAdapter } from './adapters/google-drive.adapter';
 import { SlackAdapter } from './adapters/slack.adapter';
 import { GitHubAdapter } from './adapters/github.adapter';
+import { NotionAdapter } from './adapters/notion.adapter';
+import { JiraAdapter } from './adapters/jira.adapter';
+import { LinearAdapter } from './adapters/linear.adapter';
 
 export type AdapterConstructor = new (
   config: ConnectorConfig,
@@ -20,6 +23,9 @@ export class ConnectorRegistryService {
     this.register('GOOGLE_DRIVE', GoogleDriveAdapter);
     this.register('SLACK', SlackAdapter);
     this.register('GITHUB', GitHubAdapter);
+    this.register('NOTION', NotionAdapter);
+    this.register('JIRA', JiraAdapter);
+    this.register('LINEAR', LinearAdapter);
   }
 
   register(type: string, adapterClass: AdapterConstructor): void {
