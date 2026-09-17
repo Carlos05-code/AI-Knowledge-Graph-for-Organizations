@@ -16,6 +16,8 @@ describe('ConnectorRegistryService', () => {
     'LINEAR',
     'CONFLUENCE',
     'GITLAB',
+    'ONEDRIVE',
+    'SHAREPOINT',
   ])('resolves a %s adapter', (type) => {
     expect(registry.isTypeSupported(type)).toBe(true);
     const adapter = registry.getAdapter(type, { accessToken: 'x' });
@@ -23,7 +25,7 @@ describe('ConnectorRegistryService', () => {
   });
 
   it('throws for an unregistered connector type', () => {
-    expect(() => registry.getAdapter('ONEDRIVE', {})).toThrow(
+    expect(() => registry.getAdapter('GMAIL', {})).toThrow(
       /No adapter registered/,
     );
   });
@@ -39,6 +41,8 @@ describe('ConnectorRegistryService', () => {
         'LINEAR',
         'CONFLUENCE',
         'GITLAB',
+        'ONEDRIVE',
+        'SHAREPOINT',
       ]),
     );
   });

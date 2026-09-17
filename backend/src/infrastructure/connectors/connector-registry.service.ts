@@ -11,6 +11,8 @@ import { JiraAdapter } from './adapters/jira.adapter';
 import { LinearAdapter } from './adapters/linear.adapter';
 import { ConfluenceAdapter } from './adapters/confluence.adapter';
 import { GitLabAdapter } from './adapters/gitlab.adapter';
+import { OneDriveAdapter } from './adapters/onedrive.adapter';
+import { SharePointAdapter } from './adapters/sharepoint.adapter';
 
 export type AdapterConstructor = new (
   config: ConnectorConfig,
@@ -30,6 +32,8 @@ export class ConnectorRegistryService {
     this.register('LINEAR', LinearAdapter);
     this.register('CONFLUENCE', ConfluenceAdapter);
     this.register('GITLAB', GitLabAdapter);
+    this.register('ONEDRIVE', OneDriveAdapter);
+    this.register('SHAREPOINT', SharePointAdapter);
   }
 
   register(type: string, adapterClass: AdapterConstructor): void {

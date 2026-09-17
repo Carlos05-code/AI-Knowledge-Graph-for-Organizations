@@ -23,13 +23,15 @@ class _ConnectorTypeMeta {
 
 const _connectorTypeMeta = [
   _ConnectorTypeMeta('SLACK', 'Slack', Icons.chat_bubble_outline, '{"token": "xoxb-..."}'),
-  _ConnectorTypeMeta('GITHUB', 'GitHub', Icons.code, '{"token": "ghp_..."}'),
-  _ConnectorTypeMeta('GOOGLE_DRIVE', 'Google Drive', Icons.cloud_outlined, '{"refreshToken": "..."}'),
+  _ConnectorTypeMeta('GITHUB', 'GitHub', Icons.code, '{"token": "ghp_...", "defaultRepo": "owner/repo"}'),
+  _ConnectorTypeMeta('GOOGLE_DRIVE', 'Google Drive', Icons.cloud_outlined, '{"refreshToken": "...", "clientId": "...", "clientSecret": "..."}'),
   _ConnectorTypeMeta('NOTION', 'Notion', Icons.notes, '{"token": "ntn_..."}'),
   _ConnectorTypeMeta('JIRA', 'Jira', Icons.bug_report_outlined, '{"email": "...", "apiToken": "...", "domain": "yoursite"}'),
   _ConnectorTypeMeta('LINEAR', 'Linear', Icons.trending_up, '{"apiKey": "..."}'),
   _ConnectorTypeMeta('CONFLUENCE', 'Confluence', Icons.article_outlined, '{"email": "...", "apiToken": "...", "domain": "yoursite"}'),
   _ConnectorTypeMeta('GITLAB', 'GitLab', Icons.account_tree_outlined, '{"token": "glpat-...", "defaultProject": "group/project"}'),
+  _ConnectorTypeMeta('ONEDRIVE', 'OneDrive', Icons.cloud_queue_outlined, '{"tenantId": "...", "clientId": "...", "clientSecret": "...", "driveId": "..."}'),
+  _ConnectorTypeMeta('SHAREPOINT', 'SharePoint', Icons.web_outlined, '{"tenantId": "...", "clientId": "...", "clientSecret": "...", "siteId": "..."}'),
   _ConnectorTypeMeta('CUSTOM', 'Custom API', Icons.extension_outlined, '{"key": "..."}'),
 ];
 
