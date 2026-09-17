@@ -22,7 +22,7 @@ Status of the **AI Knowledge Graph for Organizations** platform. Legend: ✅ don
 | 3 | Backend foundation | ✅ | NestJS modules, global pipe/filters/interceptors |
 | 4 | Authentication | ✅ | JWT login/register/refresh/me, RBAC roles |
 | 5 | User management | ✅ | Profile edit, org members list + search, role/status management (ADMIN), self-demotion guard; org invitations (invite/accept/revoke + accept-link email) |
-| 6 | Connector framework | ✅ | Registry + adapters (Slack real: auth.test, files.list/download, channel export; GitHub adapter stubs); CRUD/test/sync UI + run history |
+| 6 | Connector framework | ✅ | Registry + 3 real adapters — Slack (auth.test, files.list/download, channel export), GitHub (Octokit repo content sync), Google Drive (OAuth file sync); CRUD/test/sync UI + run history. OneDrive/SharePoint/Gmail/Outlook/Teams/Dropbox/Notion/Confluence/GitLab/Jira/Linear not yet built |
 | 7 | Document ingestion pipeline | ✅ | Upload → checksum → chunk (512/64) → Qdrant; docs UI (list/upload/detail/process/delete); OCR & versions partial |
 | 8 | OCR pipeline | ✅ | Tesseract (`tesseract.js`) for scanned PDFs/images: `OcrService` w/ `isOcrCandidate` + graceful fallback, wired into document processing (OCR'd text → chunked/indexed, `metadata.ocrExtracted`); hardened: PDF text-layer fast path (`pdf-parse`), per-page scanned-PDF OCR (`pdf-to-img`), `OCR_MAX_PAGES` cap, `OCR_MIN_CONFIDENCE` threshold, language packs (`eng+spa`), `metadata.ocrPages/ocrConfidence` |
 | 9 | Embedding service | ✅ | OpenAI `text-embedding-3-small` + deterministic fallback |

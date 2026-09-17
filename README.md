@@ -14,7 +14,7 @@ Organizations lose enormous amounts of knowledge because information is scattere
 
 **AI Knowledge Graph** solves this by:
 
-- **Ingesting** data from 20+ sources via universal connectors
+- **Ingesting** data via universal connectors (Slack, GitHub, Google Drive shipped today; more on the roadmap)
 - **Understanding** content through AI-powered document processing
 - **Connecting** information automatically into a knowledge graph
 - **Searching** across everything with hybrid search (BM25 + Vector + Graph)
@@ -81,7 +81,9 @@ Think of it as ChatGPT + Notion AI + Glean + GraphRAG, built for enterprise.
 ## Features
 
 ### Universal Connectors
-Ingest from: Google Drive, OneDrive, SharePoint, Gmail, Outlook, Slack, Teams, Dropbox, Notion, Confluence, GitHub, GitLab, Jira, Linear, local files (PDF, DOCX, PPTX, XLSX, MD, HTML, images).
+**Shipped:** Slack (channel export, file sync), GitHub (repo content sync), Google Drive (OAuth file sync). Plus local file upload (PDF, DOCX, PPTX, XLSX, MD, HTML, images).
+
+**Planned:** OneDrive, SharePoint, Gmail, Outlook, Teams, Dropbox, Notion, Confluence, GitLab, Jira, Linear — see [ROADMAP.md](ROADMAP.md).
 
 ### Document Processing Pipeline
 Upload → OCR → Parse → Clean → Chunk → Extract Metadata → Generate Embeddings → Extract Knowledge Graph → Index → AI Ready
