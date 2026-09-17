@@ -6,11 +6,11 @@ import {
   ConnectorFile,
   SyncResult,
 } from '../connector-adapter.interface';
+import { MicrosoftGraphAuth } from './microsoft-graph-auth';
 
 const GRAPH_API_BASE = 'https://graph.microsoft.com/v1.0';
 const DEFAULT_FILE_LIMIT = 100;
 const MAX_DOWNLOAD_BYTES = 5 * 1024 * 1024;
-const TOKEN_EXPIRY_SKEW_MS = 60_000;
 
 interface GraphDriveItem {
   id: string;
@@ -37,45 +37,15 @@ interface GraphDriveItemPage {
  */
 export abstract class MicrosoftGraphDriveAdapter extends ConnectorAdapter {
   private readonly logger = new Logger(MicrosoftGraphDriveAdapter.name);
-  private accessToken: string | null = null;
-  private tokenExpiresAt = 0;
+  private readonly auth: MicrosoftGraphAuth;
 
   constructor(config: ConnectorConfig, type: string) {
     super(config, type);
+    this.auth = new MicrosoftGraphAuth(config);
   }
 
   /** e.g. `/drives/{driveId}` for OneDrive, `/sites/{siteId}/drive` for SharePoint. */
   protected abstract get driveBase(): string;
-
-  private get tenantId(): string {
-    const tenantId = this.config.tenantId as string;
-    if (!tenantId) {
-      throw new Error(
-        'Microsoft tenant is missing. Provide `tenantId` in credentials.',
-      );
-    }
-    return tenantId;
-  }
-
-  private get clientId(): string {
-    const clientId = this.config.clientId as string;
-    if (!clientId) {
-      throw new Error(
-        'Microsoft client ID is missing. Provide `clientId` in credentials.',
-      );
-    }
-    return clientId;
-  }
-
-  private get clientSecret(): string {
-    const clientSecret = this.config.clientSecret as string;
-    if (!clientSecret) {
-      throw new Error(
-        'Microsoft client secret is missing. Provide `clientSecret` in credentials.',
-      );
-    }
-    return clientSecret;
-  }
 
   private get limit(): number {
     const n = Number(this.config.limit ?? DEFAULT_FILE_LIMIT);
@@ -84,55 +54,16 @@ export abstract class MicrosoftGraphDriveAdapter extends ConnectorAdapter {
   }
 
   async authenticate(): Promise<{ ok: boolean }> {
-    await this.getAccessToken(true);
+    await this.auth.getAccessToken(true);
     return { ok: true };
   }
 
   async refreshAccessToken(): Promise<void> {
-    await this.getAccessToken(true);
-  }
-
-  private async getAccessToken(forceRefresh = false): Promise<string> {
-    if (
-      !forceRefresh &&
-      this.accessToken &&
-      Date.now() < this.tokenExpiresAt - TOKEN_EXPIRY_SKEW_MS
-    ) {
-      return this.accessToken;
-    }
-
-    const response = await fetch(
-      `https://login.microsoftonline.com/${this.tenantId}/oauth2/v2.0/token`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: this.clientId,
-          client_secret: this.clientSecret,
-          scope: 'https://graph.microsoft.com/.default',
-          grant_type: 'client_credentials',
-        }).toString(),
-      },
-    );
-
-    const json = (await response.json()) as {
-      access_token?: string;
-      expires_in?: number;
-      error_description?: string;
-    };
-    if (!response.ok || !json.access_token) {
-      const message = json.error_description || `HTTP ${response.status}`;
-      this.logger.warn(`Microsoft Graph token request failed: ${message}`);
-      throw new Error(`Microsoft Graph token request failed: ${message}`);
-    }
-
-    this.accessToken = json.access_token;
-    this.tokenExpiresAt = Date.now() + (json.expires_in ?? 3600) * 1000;
-    return this.accessToken;
+    await this.auth.getAccessToken(true);
   }
 
   private async api<T>(path: string, absoluteUrl?: string): Promise<T> {
-    const token = await this.getAccessToken();
+    const token = await this.auth.getAccessToken();
     const url = absoluteUrl || `${GRAPH_API_BASE}${this.driveBase}${path}`;
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
@@ -208,7 +139,7 @@ export abstract class MicrosoftGraphDriveAdapter extends ConnectorAdapter {
   }
 
   private async fetchRawContent(fileId: string): Promise<Buffer> {
-    const token = await this.getAccessToken();
+    const token = await this.auth.getAccessToken();
     const response = await fetch(
       `${GRAPH_API_BASE}${this.driveBase}/items/${fileId}/content`,
       { headers: { Authorization: `Bearer ${token}` } },

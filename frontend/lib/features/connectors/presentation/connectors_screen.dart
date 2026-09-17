@@ -32,6 +32,7 @@ const _connectorTypeMeta = [
   _ConnectorTypeMeta('GITLAB', 'GitLab', Icons.account_tree_outlined, '{"token": "glpat-...", "defaultProject": "group/project"}'),
   _ConnectorTypeMeta('ONEDRIVE', 'OneDrive', Icons.cloud_queue_outlined, '{"tenantId": "...", "clientId": "...", "clientSecret": "...", "driveId": "..."}'),
   _ConnectorTypeMeta('SHAREPOINT', 'SharePoint', Icons.web_outlined, '{"tenantId": "...", "clientId": "...", "clientSecret": "...", "siteId": "..."}'),
+  _ConnectorTypeMeta('OUTLOOK', 'Outlook', Icons.mail_outline, '{"tenantId": "...", "clientId": "...", "clientSecret": "...", "userId": "mailbox@yourtenant.com"}'),
   _ConnectorTypeMeta('CUSTOM', 'Custom API', Icons.extension_outlined, '{"key": "..."}'),
 ];
 

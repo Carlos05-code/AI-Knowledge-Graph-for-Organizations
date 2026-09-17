@@ -18,6 +18,7 @@ describe('ConnectorRegistryService', () => {
     'GITLAB',
     'ONEDRIVE',
     'SHAREPOINT',
+    'OUTLOOK',
   ])('resolves a %s adapter', (type) => {
     expect(registry.isTypeSupported(type)).toBe(true);
     const adapter = registry.getAdapter(type, { accessToken: 'x' });
@@ -43,6 +44,7 @@ describe('ConnectorRegistryService', () => {
         'GITLAB',
         'ONEDRIVE',
         'SHAREPOINT',
+        'OUTLOOK',
       ]),
     );
   });

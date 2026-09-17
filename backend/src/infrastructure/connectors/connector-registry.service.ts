@@ -13,6 +13,7 @@ import { ConfluenceAdapter } from './adapters/confluence.adapter';
 import { GitLabAdapter } from './adapters/gitlab.adapter';
 import { OneDriveAdapter } from './adapters/onedrive.adapter';
 import { SharePointAdapter } from './adapters/sharepoint.adapter';
+import { OutlookAdapter } from './adapters/outlook.adapter';
 
 export type AdapterConstructor = new (
   config: ConnectorConfig,
@@ -34,6 +35,7 @@ export class ConnectorRegistryService {
     this.register('GITLAB', GitLabAdapter);
     this.register('ONEDRIVE', OneDriveAdapter);
     this.register('SHAREPOINT', SharePointAdapter);
+    this.register('OUTLOOK', OutlookAdapter);
   }
 
   register(type: string, adapterClass: AdapterConstructor): void {
