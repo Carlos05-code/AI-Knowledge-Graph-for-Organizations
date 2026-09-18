@@ -64,7 +64,7 @@ describe('KeycloakService', () => {
     (global as { fetch: unknown }).fetch = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({
+      json: () => ({
         keys: [{ kty: 'RSA', alg: 'RS256', kid: 'kid1', n: jwk.n, e: jwk.e }],
       }),
     });
@@ -184,7 +184,7 @@ describe('KeycloakService', () => {
   it('provisions a new user with role mapped from Keycloak realm roles', async () => {
     mockPrisma.user.findFirst.mockResolvedValue(null);
     mockPrisma.organization.create.mockResolvedValue({ id: 'org-new' });
-    mockPrisma.user.create.mockImplementation(async (args: any) => ({
+    mockPrisma.user.create.mockImplementation((args: any) => ({
       id: 'u-new',
       ...args.data,
       organizationId: 'org-new',
@@ -221,7 +221,7 @@ describe('KeycloakService', () => {
   it('defaults role to USER when no matching realm role is present', async () => {
     mockPrisma.user.findFirst.mockResolvedValue(null);
     mockPrisma.organization.create.mockResolvedValue({ id: 'org-new' });
-    mockPrisma.user.create.mockImplementation(async (args: any) => ({
+    mockPrisma.user.create.mockImplementation((args: any) => ({
       id: 'u-new',
       ...args.data,
       organizationId: 'org-new',

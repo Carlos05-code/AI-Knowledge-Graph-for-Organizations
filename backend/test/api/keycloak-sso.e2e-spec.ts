@@ -95,7 +95,7 @@ describe('Keycloak SSO (e2e)', () => {
   it('POST /api/v1/auth/sso/keycloak provisions and authenticates a new user', async () => {
     mockPrisma.user.findFirst.mockResolvedValue(null);
     mockPrisma.organization.create.mockResolvedValue({ id: 'org-e2e' });
-    mockPrisma.user.create.mockImplementation(async (args: any) => ({
+    mockPrisma.user.create.mockImplementation((args: any) => ({
       id: 'kc-user-1',
       ...args.data,
       organizationId: 'org-e2e',
