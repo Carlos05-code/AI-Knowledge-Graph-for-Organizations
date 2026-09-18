@@ -60,6 +60,11 @@ jobs:
         env:
           NODE_ENV: test
 
+      - run: npm run test:e2e
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_knowledge_graph
+
       - run: npm run build
 
       - run: docker build -t akg-backend -f ../docker/Dockerfile.backend .
@@ -102,7 +107,7 @@ jobs:
 
       - run: docker compose -f docker/docker-compose.yml config
 
-zap-baseline:
+  zap-baseline:
     name: Security - OWASP ZAP Baseline
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
