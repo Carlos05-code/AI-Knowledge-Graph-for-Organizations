@@ -2,11 +2,16 @@ FROM ghcr.io/cirruslabs/flutter:3.35.7 AS builder
 
 WORKDIR /app
 
+# Flutter web has no runtime environment variables once built — the API
+# base URL must be baked in at compile time via --dart-define, so it has
+# to flow through as a build ARG rather than a container `environment:`.
+ARG API_BASE_URL=http://localhost:3000/api/v1
+
 COPY pubspec.yaml pubspec.lock ./
 RUN flutter pub get
 
 COPY . .
-RUN flutter build web --release --no-tree-shake-icons
+RUN flutter build web --release --no-tree-shake-icons --dart-define=API_BASE_URL=${API_BASE_URL}
 
 FROM nginx:alpine AS production
 

@@ -127,7 +127,10 @@ See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) for full tokens. Highlights:
 
 ## 7. Responsive & accessibility
 
-- NavigationRail (labels always) — expands to BottomNavigation for mobile (planned).
+- NavigationRail (labels always) on viewports ≥600px; below that, `AppShell` switches to a
+  bottom `NavigationBar` (Material's own compact/medium breakpoint) — **resolved 2026-09-18**,
+  was previously always-on regardless of width, which left almost no room for content on an
+  actual mobile-width viewport with 8 destinations shown labeled and full-width.
 - Forms use semantic validators; Material defaults provide contrast & focus rings.
 - Full a11y pass (labels, semantics) tracked in ROADMAP.
 
@@ -149,4 +152,12 @@ See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) for full tokens. Highlights:
 - `widget_test.dart` + `providers_test.dart` run (25 tests total: 10 widget + 15 provider); broader harness suites planned.
 - Dead dependencies in pubspec swept (retrofit, freezed/graphview/fl_chart, mockito,
   etc. removed) — pubspec now holds only in-use packages; `pubspec.lock` pruned.
-- `ApiClient` base URL hardcoded to localhost — needs build-time config (`--dart-define`).
+- ~~`ApiClient` base URL hardcoded to localhost — needs build-time config (`--dart-define`).~~
+  **Resolved 2026-09-18**: `ApiClient.defaultBaseUrl` now reads `String.fromEnvironment('API_BASE_URL', ...)`,
+  set via `docker/Dockerfile.frontend`'s `ARG API_BASE_URL` → `flutter build web --dart-define=...`.
+  Along the way, found the fix that had already been attempted for this was itself broken:
+  `docker-compose.yml` and `k8s/frontend-deployment.yml` both set `API_BASE_URL` as a container
+  runtime `environment:` variable — inert, since a Flutter web build is static once compiled and
+  nginx serving it has no reason to read that variable. Moved to `docker-compose.yml`'s build
+  `args:` (actually reaches the Dockerfile ARG) and replaced the k8s manifest's dead `env:` block
+  with a comment pointing at the real mechanism (`docker build --build-arg`, at image-build time).

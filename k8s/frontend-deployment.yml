@@ -39,9 +39,12 @@ spec:
               mountPath: /var/cache/nginx
             - name: nginx-run
               mountPath: /var/run
-          env:
-            - name: API_BASE_URL
-              value: "https://api.akg.company.com"
+          # NOTE: the API base URL is NOT configurable here — a Flutter web
+          # build is static once compiled, so there is no runtime env var
+          # nginx can hand it. It must be baked in when this image is built,
+          # via `docker build --build-arg API_BASE_URL=https://api.akg.company.com`
+          # (see docker/Dockerfile.frontend). Rebuild and repush `akg-frontend:latest`
+          # to change it, not this manifest.
           resources:
             requests:
               memory: "128Mi"

@@ -3,7 +3,12 @@
 ## 1. Docker
 
 - Backend Dockerfile (multi-stage, `nest build` → slim runtime).
-- Frontend Dockerfile (Flutter build → static nginx serve).
+- Frontend Dockerfile (Flutter build → static nginx serve). The backend API URL it points
+  at is a **build-time** setting (`ARG API_BASE_URL` → `flutter build web --dart-define=...`),
+  not a container runtime env var — a compiled Flutter web bundle can't read one. To point a
+  built image at a different backend, pass `--build-arg API_BASE_URL=https://your-api` and
+  rebuild; changing it in `docker-compose.yml`'s `build.args` or re-running with a different
+  `env:` on an already-built image does nothing for the latter.
 - Full compose stack in `docker/docker-compose.yml` (18 services, all with resource limits and healthchecks):
 
 | Service | Port (host) | Notes |

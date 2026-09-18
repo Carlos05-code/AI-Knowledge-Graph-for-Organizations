@@ -38,6 +38,8 @@ Swagger at `/api/v1/docs`).
 | POST | `/auth/refresh` | Public | `{ refreshToken }` → new tokens (rotates the stored token) |
 | POST | `/auth/logout` | Public | `{ refreshToken }` → revokes the token server-side |
 | GET | `/auth/me` | JWT | current profile + organization (legacy alias of `/users/me`) |
+| POST | `/auth/sso/keycloak` | Public | `{ accessToken }` (Keycloak RS256 token) → local JWT pair; links by `keycloakId` then email, auto-provisions unknown users; 401 if Keycloak isn't configured or the token is invalid |
+| GET | `/auth/sso/keycloak/status` | Public | `{ enabled, issuer }` — whether Keycloak SSO is configured (`KEYCLOAK_URL` + `KEYCLOAK_REALM` set) |
 
 ### Users
 | Method | Path | Auth | Notes |
@@ -146,9 +148,12 @@ Swagger at `/api/v1/docs`).
 | POST | `/connectors/:id/sync` | JWT, ADMIN | adapter sync → documents + chunks persisted; run tracked |
 | GET | `/connectors/:id/runs` | JWT | last 20 runs |
 
-Adapters registry: `GOOGLE_DRIVE`, `SLACK`, `GITHUB`. Slack sync exports configured
-channels (`conversations.history`) and recent files (`files.list` → download), skipping
-binary payloads and recording per-item errors on the run.
+Adapters registry (14): `GOOGLE_DRIVE`, `SLACK`, `GITHUB`, `NOTION`, `JIRA`, `LINEAR`,
+`CONFLUENCE`, `GITLAB`, `ONEDRIVE`, `SHAREPOINT`, `OUTLOOK`, `GMAIL`, `TEAMS`, `DROPBOX` —
+every connector type in the `ConnectorType` enum has a real adapter. Slack sync exports
+configured channels (`conversations.history`) and recent files (`files.list` → download),
+skipping binary payloads and recording per-item errors on the run; see README.md for the
+full per-connector sync behavior summary.
 
 ### Policies
 | Method | Path | Auth | Notes |

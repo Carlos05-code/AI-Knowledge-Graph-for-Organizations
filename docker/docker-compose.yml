@@ -491,6 +491,11 @@ services:
     build:
       context: ../frontend
       dockerfile: ../docker/Dockerfile.frontend
+      # Flutter web has no runtime env vars once built — this must be a
+      # build arg (baked in via --dart-define), not a container `environment:`
+      # entry, which nginx serving the static bundle would never read.
+      args:
+        API_BASE_URL: http://localhost:3000/api/v1
     container_name: akg-frontend
     restart: unless-stopped
     deploy:
@@ -500,8 +505,6 @@ services:
           memory: 256M
     ports:
       - "4200:8080"
-    environment:
-      API_BASE_URL: http://localhost:3000/api/v1
     depends_on:
       - backend
 

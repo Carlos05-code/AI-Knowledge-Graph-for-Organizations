@@ -337,6 +337,41 @@ void main() {
       expect(find.byType(NavigationRail), findsOneWidget);
       expect(find.text('Alerts'), findsWidgets);
     });
+
+    testWidgets('switches to a bottom NavigationBar on a narrow viewport',
+        (tester) async {
+      tester.view.physicalSize = const Size(375, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            (ref) => _FakeAuthNotifier(
+              const Authenticated(
+                userId: 'u1',
+                email: 'admin@test.com',
+                role: 'ADMIN',
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            routerConfig: container.read(appRouterProvider),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationRail), findsNothing);
+    });
   });
 }
 

@@ -9,9 +9,18 @@ class ApiClient {
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
 
+  /// Baked in at build time via `--dart-define=API_BASE_URL=...` (see
+  /// docker/Dockerfile.frontend's ARG). A Flutter web build is static once
+  /// compiled — there is no runtime environment variable it can read after
+  /// that, so this must be resolved at compile time, not container startup.
+  static const String defaultBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:3000/api/v1',
+  );
+
   ApiClient({String? baseUrl}) {
     _dio = Dio(BaseOptions(
-      baseUrl: baseUrl ?? 'http://localhost:3000/api/v1',
+      baseUrl: baseUrl ?? defaultBaseUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 30),
       headers: {'Content-Type': 'application/json'},
