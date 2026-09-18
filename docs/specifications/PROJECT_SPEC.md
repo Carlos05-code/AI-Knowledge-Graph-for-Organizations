@@ -26,8 +26,6 @@ lacks the *graph* view of how information relates.
 - Cross-organization sharing / public collaboration.
 - Real-time co-editing of documents.
 - On-premise hardware support (cloud-native only).
-- Full Keycloak/SSO federation (JWT local auth first; Keycloak schema-ready only).
-- OCR of scanned documents (pipeline hook exists; engine not integrated).
 
 ## User personas
 
@@ -46,7 +44,8 @@ lacks the *graph* view of how information relates.
 
 ## Functional requirements (implemented)
 
-- Auth: register (auto-creates org), login, refresh, `GET /auth/me`, JWT + RBAC.
+- Auth: register (auto-creates org), login, refresh, logout, `GET /auth/me`, JWT + RBAC,
+  Keycloak SSO (`POST /auth/sso/keycloak`, RS256/JWKS, auto-provisioning, role mapping).
 - Users: profile view/edit (`/users/me`), org members list + search, role/status management (ADMIN) (`/users`, `/users/:id`).
 - Documents: create, list (paginated/filtered), get, soft-delete (admin), process.
 - Upload: multipart, 50 MB cap, MIME allowlist, SHA-256 checksum.
@@ -58,7 +57,7 @@ lacks the *graph* view of how information relates.
 - Recommendations: top experts/docs/meetings/reusable code, personalized feed.
 - Meetings: CRUD, participants, summarize.
 - Notifications: list, unread count, read/read-all.
-- Connectors: CRUD (admin), registry (GOOGLE_DRIVE real, SLACK/GITHUB adapters), sync + run history.
+- Connectors: CRUD (admin), registry (14 real adapters — see API_SPEC.md), sync + run history.
 - Policies: CRUD (admin), search, document links.
 - Admin: dashboard stats, audit logs, health.
 - Health: full check (db/memory/disk), live, ready. Metrics: Prometheus.
@@ -91,5 +90,7 @@ lacks the *graph* view of how information relates.
 
 ## Future roadmap
 
-User management, OCR, meeting transcript AI, policy-compliance checks, SSO/Keycloak,
-multi-region, mobile push, admin dashboards UI. See [ROADMAP.md](../../ROADMAP.md).
+Audio-to-transcript meeting transcription (summarization of an already-provided transcript
+is implemented; recording/transcribing the audio itself is not), automated policy-compliance
+checks (distinct from the policy *search* already implemented), multi-region, mobile push.
+See [ROADMAP.md](../../ROADMAP.md).

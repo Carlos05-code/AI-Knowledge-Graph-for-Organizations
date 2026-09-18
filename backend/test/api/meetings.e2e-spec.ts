@@ -55,5 +55,50 @@ describe('Meetings (e2e)', () => {
         .set('Authorization', `Bearer ${validToken}`)
         .expect(404);
     });
+
+    it('POST /api/v1/meetings/:id/summarize should 400 when the meeting has no transcript', async () => {
+      mockPrisma.meeting.findFirst.mockResolvedValue({
+        id: 'm-1',
+        title: 'Sprint planning',
+        transcript: null,
+        organizationId: 'org-1',
+        participants: [],
+      });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/meetings/m-1/summarize')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(400);
+    });
+
+    it('POST /api/v1/meetings/:id/summarize should 404 for a meeting in another org', async () => {
+      mockPrisma.meeting.findFirst.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/meetings/m-9/summarize')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(404);
+    });
+
+    it('POST /api/v1/meetings/:id/summarize degrades gracefully without a configured LLM', async () => {
+      mockPrisma.meeting.findFirst.mockResolvedValue({
+        id: 'm-1',
+        title: 'Sprint planning',
+        transcript: 'We agreed to ship the search feature by Friday.',
+        organizationId: 'org-1',
+        participants: [],
+      });
+      mockPrisma.meeting.update.mockResolvedValue({});
+
+      await request(app.getHttpServer())
+        .post('/api/v1/meetings/m-1/summarize')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(201)
+        .expect((res) => {
+          expect(res.body.data.summary).toBeDefined();
+          expect(Array.isArray(res.body.data.actionItems)).toBe(true);
+          expect(Array.isArray(res.body.data.decisions)).toBe(true);
+        });
+    });
   });
 });

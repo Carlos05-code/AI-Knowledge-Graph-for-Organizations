@@ -14,7 +14,7 @@ Organizations lose enormous amounts of knowledge because information is scattere
 
 **AI Knowledge Graph** solves this by:
 
-- **Ingesting** data via universal connectors (Slack, GitHub, Google Drive shipped today; more on the roadmap)
+- **Ingesting** data via 14 universal connectors — see [Universal Connectors](#universal-connectors) below
 - **Understanding** content through AI-powered document processing
 - **Connecting** information automatically into a knowledge graph
 - **Searching** across everything with hybrid search (BM25 + Vector + Graph)
@@ -102,7 +102,9 @@ Interactive graph visualization. Expand nodes, filter relationships, discover hi
 "Who knows Kubernetes?" — ranked by commits, docs, tickets, PRs, meetings.
 
 ### Meeting Intelligence
-Transcription, AI summaries, action items, decisions, entity extraction.
+AI summaries, action items and decisions generated from a meeting transcript (paste or
+attach one when creating the meeting). Audio-to-transcript recording is on the roadmap;
+today the transcript is provided, not captured.
 
 ### Policy Search
 Ask policy questions, get answers with specific policy references and version citations.
