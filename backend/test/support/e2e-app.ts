@@ -12,6 +12,7 @@ import { Neo4jService } from '../../src/infrastructure/graph/neo4j.service';
 import { QdrantService } from '../../src/infrastructure/vector/qdrant.service';
 import { EmbeddingService } from '../../src/infrastructure/ai/embedding.service';
 import { MinioStorageService } from '../../src/infrastructure/storage/minio-storage.service';
+import { OpenSearchService } from '../../src/infrastructure/search/opensearch.service';
 
 /**
  * Fresh per test file — each e2e spec file calls this once in its own
@@ -201,6 +202,15 @@ export function createMockMinio() {
   };
 }
 
+export function createMockOpenSearch() {
+  return {
+    isAvailable: jest.fn().mockReturnValue(false),
+    search: jest.fn(),
+    indexChunks: jest.fn(),
+    deleteByDocumentId: jest.fn(),
+  };
+}
+
 export interface E2EContext {
   app: INestApplication;
   jwtService: JwtService;
@@ -212,17 +222,33 @@ export interface E2EContext {
   mockQdrant: ReturnType<typeof createMockQdrant>;
   mockEmbedding: ReturnType<typeof createMockEmbedding>;
   mockMinio: ReturnType<typeof createMockMinio>;
+  mockOpenSearch: ReturnType<typeof createMockOpenSearch>;
 }
 
-/** Boots a full AppModule with all infra providers mocked. Call once per spec file's beforeAll. */
-export async function bootstrapE2eApp(): Promise<E2EContext> {
+/**
+ * Boots a full AppModule with all infra providers mocked. Call once per spec file's beforeAll.
+ *
+ * `realOpenSearch: true` skips the OpenSearchService override so it connects
+ * to whatever OPENSEARCH_HOST is configured — used by the one suite that
+ * verifies the real BM25 integration against a CI-provisioned cluster.
+ * Every other spec gets the deterministic mock (isAvailable() === false),
+ * which is what actually happened by accident before this option existed:
+ * no real cluster was ever reachable from this sandbox, so OpenSearchService
+ * always failed to connect and every e2e test exercised the Postgres ILIKE
+ * fallback path. Making that explicit means it no longer depends on there
+ * being no cluster around to fail into.
+ */
+export async function bootstrapE2eApp(
+  options: { realOpenSearch?: boolean } = {},
+): Promise<E2EContext> {
   const mockPrisma = createMockPrisma();
   const mockNeo4j = createMockNeo4j();
   const mockQdrant = createMockQdrant();
   const mockEmbedding = createMockEmbedding();
   const mockMinio = createMockMinio();
+  const mockOpenSearch = createMockOpenSearch();
 
-  const moduleFixture: TestingModule = await Test.createTestingModule({
+  let builder = Test.createTestingModule({
     imports: [AppModule],
   })
     .overrideProvider(PrismaService)
@@ -248,8 +274,15 @@ export async function bootstrapE2eApp(): Promise<E2EContext> {
     .overrideProvider(MemoryHealthIndicator)
     .useValue({
       checkHeap: jest.fn().mockResolvedValue({ memory_heap: { status: 'up' } }),
-    })
-    .compile();
+    });
+
+  if (!options.realOpenSearch) {
+    builder = builder
+      .overrideProvider(OpenSearchService)
+      .useValue(mockOpenSearch);
+  }
+
+  const moduleFixture: TestingModule = await builder.compile();
 
   const app = moduleFixture.createNestApplication();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
@@ -288,13 +321,15 @@ export async function bootstrapE2eApp(): Promise<E2EContext> {
     mockQdrant,
     mockEmbedding,
     mockMinio,
+    mockOpenSearch,
   };
 }
 
 /** Call in each spec file's beforeEach — clears mocks and reinstates the shared defaults every test relied on implicitly. */
 export function resetE2eMockDefaults(ctx: E2EContext) {
-  const { mockPrisma, mockNeo4j, mockQdrant } = ctx;
+  const { mockPrisma, mockNeo4j, mockQdrant, mockOpenSearch } = ctx;
   jest.clearAllMocks();
+  mockOpenSearch.isAvailable.mockReturnValue(false);
 
   mockPrisma.user.findUnique.mockResolvedValue({
     id: 'user-1',

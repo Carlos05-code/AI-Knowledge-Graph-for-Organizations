@@ -122,6 +122,7 @@ export class OpenSearchService implements OnModuleInit {
 
     await this.client.deleteByQuery({
       index,
+      refresh: true,
       body: {
         query: { term: { documentId } },
       },

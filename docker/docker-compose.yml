@@ -129,13 +129,16 @@ services:
       - "9600:9600"
     environment:
       discovery.type: single-node
-      OPENSEARCH_INITIAL_ADMIN_PASSWORD: admin
+      # OpenSearch 2.12+ rejects weak admin passwords at startup (min 8 chars,
+      # upper/lower/digit/special) — "admin" fails that check and the
+      # container refuses to come up. Dev-only value; override for real use.
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "Akg#Search2026!"
       DISABLE_SECURITY_PLUGIN: "false"
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "-k", "-u", "admin:admin", "https://localhost:9200/_cluster/health"]
+      test: ["CMD", "curl", "-f", "-k", "-u", "admin:Akg#Search2026!", "https://localhost:9200/_cluster/health"]
       interval: 30s
       timeout: 20s
       retries: 10
@@ -453,7 +456,7 @@ services:
       MINIO_BUCKET: knowledge-graph
       OPENSEARCH_HOST: https://opensearch:9200
       OPENSEARCH_USER: admin
-      OPENSEARCH_PASSWORD: admin
+      OPENSEARCH_PASSWORD: "Akg#Search2026!"
       JWT_SECRET: dev-jwt-secret-change-in-production
       JWT_ACCESS_EXPIRY: 15m
       JWT_REFRESH_EXPIRY: 7d
