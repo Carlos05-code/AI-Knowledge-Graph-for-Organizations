@@ -15,6 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { SecretsService } from '../../infrastructure/security/secrets.service';
 import { UserRole } from '../../domain/entities/user.entity';
+import { formatRetrievedContext } from '../../infrastructure/ai/prompt-sanitizer';
 
 interface AuthenticatedSocket extends Socket {
   user?: {
@@ -161,12 +162,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     query: string,
     context: any[],
   ) {
-    const contextText = context
-      .map(
-        (c: any, i: number) =>
-          `[Source #${i + 1}] ${c.title || 'Untitled'}\n${(c.content || '').slice(0, 1000)}`,
-      )
-      .join('\n---\n');
+    const contextText = formatRetrievedContext(context, {
+      sourceLabel: () => 'Source',
+    });
 
     const { OpenAI } = require('openai');
     const openai = new OpenAI({ apiKey: this.config.get('OPENAI_API_KEY') });
@@ -176,7 +174,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       messages: [
         {
           role: 'system',
-          content: `You are an AI knowledge assistant. Answer based on context. Cite sources. Use markdown.\n\nContext:\n${contextText || 'No specific context available.'}`,
+          content: `You are an AI knowledge assistant. Answer based on context. Cite sources. Use markdown.\n\nContext:\n${contextText}`,
         },
         { role: 'user', content: query },
       ],

@@ -5,6 +5,7 @@ import { QdrantService } from '../../infrastructure/vector/qdrant.service';
 import { EmbeddingService } from '../../infrastructure/ai/embedding.service';
 import { OpenSearchService } from '../../infrastructure/search/opensearch.service';
 import { ConfigService } from '@nestjs/config';
+import { formatRetrievedContext } from '../../infrastructure/ai/prompt-sanitizer';
 
 @Injectable()
 export class ChatService {
@@ -263,13 +264,7 @@ Context:\n${contextText}`,
   }
 
   private formatContext(context: any[]): string {
-    return context
-      .map((c, i) => {
-        const sourceType = c.type === 'graph' ? 'Knowledge Graph' : 'Document';
-        const content = c.content || '';
-        return `[${sourceType} #${i + 1}] ${c.title || 'Untitled'}\n${content.slice(0, 1000)}\n`;
-      })
-      .join('\n---\n');
+    return formatRetrievedContext(context);
   }
 
   private extractCitations(

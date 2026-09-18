@@ -110,14 +110,28 @@ Viewable by admins (`GET /admin/audit-logs`).
 | Auth on all endpoints | ✅ graph endpoints now JWT-protected; raw Cypher admin-only; only Health + metrics public (probes) |
 | Swagger disabled in prod | ✅ gated by `NODE_ENV=production` |
 | Secrets in code | ✅ none committed (verified at first commit) |
-| Dependency audit | ✅ `npm audit --audit-level=high` gate in CI (0 high+; js-yaml pinned via npm `overrides`) |
+| Dependency audit | 🔄 `npm audit --audit-level=critical` gate in CI (0 critical); 17 high-severity findings tracked, all requiring breaking major-version upgrades (Prisma, NestJS platform-express/socket.io, pdf-to-img) — see ROADMAP.md "Known gaps" #26 |
 
 ## 7. Prompt injection defense
 
 - System prompt instructs model to answer only from retrieved context and decline
   out-of-context/instructional content.
 - Retrieved chunks are scoped to the caller's `organizationId` before reaching the model.
-- Follow-up: instruction-filter classifier, context sanitization (ROADMAP).
+- **Context sanitization** (`infrastructure/ai/prompt-sanitizer.ts`, `formatRetrievedContext`):
+  every retrieved chunk (vector/graph/keyword) is heuristically scanned before being
+  placed into the LLM prompt, on both the REST (`ChatService`) and WebSocket streaming
+  (`ChatGateway`) paths — a single shared helper, not two independent implementations.
+  Neutralizes instruction-override attempts ("ignore/disregard/forget ... previous
+  instructions"), system-prompt exfiltration requests ("reveal/print/show your system
+  prompt"), jailbreak framing ("you are now in developer mode"), and spoofed chat-role
+  headers (`system:`/`assistant:`/`developer:` at the start of a line) that an attacker
+  could plant in a document, Slack message, or any other synced connector content. The
+  whole context block is additionally wrapped in explicit untrusted-data framing as a
+  second layer, independent of pattern matching.
+- **Not a full instruction-filter classifier** — this is a targeted heuristic layer
+  (regex-based, zero added latency/cost) covering the highest-signal known attack
+  patterns, not exhaustive coverage or ML-based detection. A dedicated classifier
+  remains a possible future hardening step if heuristic coverage proves insufficient.
 
 ## 8. Data privacy & tenancy
 
