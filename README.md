@@ -81,9 +81,7 @@ Think of it as ChatGPT + Notion AI + Glean + GraphRAG, built for enterprise.
 ## Features
 
 ### Universal Connectors
-**Shipped:** Slack (channel export, file sync), GitHub (recursive repo tree + raw file sync), Google Drive (OAuth file sync, incl. Google Docs/Sheets/Slides export to text), Gmail (OAuth, MIME text extraction), Notion (page search + block content), Jira (JQL issue search + comments), Linear (GraphQL issue search + comments), Confluence (CQL page search + storage-format content), GitLab (repo tree + raw file sync, self-hosted capable), OneDrive + SharePoint + Outlook + Teams (Microsoft Graph, app-only OAuth). Plus local file upload (PDF, DOCX, PPTX, XLSX, MD, HTML, images).
-
-**Planned:** Dropbox — see [ROADMAP.md](ROADMAP.md).
+**Shipped:** Slack (channel export, file sync), GitHub (recursive repo tree + raw file sync), Google Drive (OAuth file sync, incl. Google Docs/Sheets/Slides export to text), Gmail (OAuth, MIME text extraction), Notion (page search + block content), Jira (JQL issue search + comments), Linear (GraphQL issue search + comments), Confluence (CQL page search + storage-format content), GitLab (repo tree + raw file sync, self-hosted capable), OneDrive + SharePoint + Outlook + Teams (Microsoft Graph, app-only OAuth), Dropbox (OAuth refresh, recursive folder listing). Plus local file upload (PDF, DOCX, PPTX, XLSX, MD, HTML, images).
 
 ### Document Processing Pipeline
 Upload → OCR → Parse → Clean → Chunk → Extract Metadata → Generate Embeddings → Extract Knowledge Graph → Index → AI Ready

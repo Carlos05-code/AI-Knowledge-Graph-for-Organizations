@@ -21,14 +21,15 @@ describe('ConnectorRegistryService', () => {
     'OUTLOOK',
     'GMAIL',
     'TEAMS',
+    'DROPBOX',
   ])('resolves a %s adapter', (type) => {
     expect(registry.isTypeSupported(type)).toBe(true);
     const adapter = registry.getAdapter(type, { accessToken: 'x' });
     expect(adapter.getType()).toBe(type);
   });
 
-  it('throws for an unregistered connector type', () => {
-    expect(() => registry.getAdapter('DROPBOX', {})).toThrow(
+  it('throws for an unregistered connector type (CUSTOM has no built-in adapter)', () => {
+    expect(() => registry.getAdapter('CUSTOM', {})).toThrow(
       /No adapter registered/,
     );
   });
@@ -49,6 +50,7 @@ describe('ConnectorRegistryService', () => {
         'OUTLOOK',
         'GMAIL',
         'TEAMS',
+        'DROPBOX',
       ]),
     );
   });

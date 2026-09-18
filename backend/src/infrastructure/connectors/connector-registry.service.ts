@@ -16,6 +16,7 @@ import { SharePointAdapter } from './adapters/sharepoint.adapter';
 import { OutlookAdapter } from './adapters/outlook.adapter';
 import { GmailAdapter } from './adapters/gmail.adapter';
 import { TeamsAdapter } from './adapters/teams.adapter';
+import { DropboxAdapter } from './adapters/dropbox.adapter';
 
 export type AdapterConstructor = new (
   config: ConnectorConfig,
@@ -40,6 +41,7 @@ export class ConnectorRegistryService {
     this.register('OUTLOOK', OutlookAdapter);
     this.register('GMAIL', GmailAdapter);
     this.register('TEAMS', TeamsAdapter);
+    this.register('DROPBOX', DropboxAdapter);
   }
 
   register(type: string, adapterClass: AdapterConstructor): void {

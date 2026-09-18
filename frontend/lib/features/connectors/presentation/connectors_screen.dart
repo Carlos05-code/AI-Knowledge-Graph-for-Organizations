@@ -35,6 +35,7 @@ const _connectorTypeMeta = [
   _ConnectorTypeMeta('OUTLOOK', 'Outlook', Icons.mail_outline, '{"tenantId": "...", "clientId": "...", "clientSecret": "...", "userId": "mailbox@yourtenant.com"}'),
   _ConnectorTypeMeta('GMAIL', 'Gmail', Icons.email_outlined, '{"refreshToken": "...", "clientId": "...", "clientSecret": "..."}'),
   _ConnectorTypeMeta('TEAMS', 'Microsoft Teams', Icons.groups_outlined, '{"tenantId": "...", "clientId": "...", "clientSecret": "...", "teamId": "...", "channelId": "..."}'),
+  _ConnectorTypeMeta('DROPBOX', 'Dropbox', Icons.folder_shared_outlined, '{"refreshToken": "...", "clientId": "...", "clientSecret": "..."}'),
   _ConnectorTypeMeta('CUSTOM', 'Custom API', Icons.extension_outlined, '{"key": "..."}'),
 ];
 
