@@ -175,6 +175,7 @@ async function main() {
 
   await prisma.knowledgeGap.create({
     data: {
+      organizationId: org.id,
       title: 'Payment API undocumented endpoints',
       description: 'The /v2/refund endpoint is not documented in the Payment API docs',
       severity: 'HIGH',

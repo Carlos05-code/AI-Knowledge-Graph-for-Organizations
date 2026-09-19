@@ -12,6 +12,7 @@ describe('ChatService', () => {
 
   const mockPrisma = {
     conversation: {
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
       findMany: jest.fn(),
@@ -122,6 +123,57 @@ describe('ChatService', () => {
     mockPrisma.message.create.mockResolvedValue({ id: 'msg-1' });
     const result = await service.saveUserMessage('conv-1', 'test');
     expect(result).toBeDefined();
+  });
+
+  describe('tenant isolation', () => {
+    it('scopes vector search to the caller organization', async () => {
+      mockPrisma.chunk.findMany.mockResolvedValue([]);
+
+      await service.retrieveContext('onboarding', 'org-1');
+
+      expect(mockQdrant.search).toHaveBeenCalledWith(
+        'knowledge_chunks',
+        expect.any(Array),
+        expect.objectContaining({
+          filter: {
+            must: [{ key: 'organizationId', match: { value: 'org-1' } }],
+          },
+        }),
+      );
+    });
+
+    it("does not attach a message to another user's conversation", async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue(null);
+      mockPrisma.conversation.create.mockResolvedValue({
+        id: 'new-conv',
+        userId: 'user-1',
+      });
+
+      const conversation = await service.getOrCreateConversation(
+        'user-1',
+        'hello',
+        'someone-elses-conversation-id',
+      );
+
+      expect(mockPrisma.conversation.findFirst).toHaveBeenCalledWith({
+        where: { id: 'someone-elses-conversation-id', userId: 'user-1' },
+      });
+      expect(mockPrisma.conversation.create).toHaveBeenCalled();
+      expect(conversation.id).toBe('new-conv');
+    });
+
+    it("does not return another user's conversation history", async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue(null);
+
+      const result = await service.getConversationHistory('conv-1', 'user-1');
+
+      expect(mockPrisma.conversation.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'conv-1', userId: 'user-1' },
+        }),
+      );
+      expect(result).toBeNull();
+    });
   });
 
   describe('retrieveContext keyword search', () => {

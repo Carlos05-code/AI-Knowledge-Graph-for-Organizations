@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_providers.dart';
+import '../../../core/api/api_client.dart';
 
 class MeetingsScreen extends ConsumerStatefulWidget {
   const MeetingsScreen({super.key});
@@ -396,7 +397,7 @@ class _MeetingDetailSheetState extends ConsumerState<_MeetingDetailSheet> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Summarize failed: $e')),
+        SnackBar(content: Text('Summarize failed: ${extractErrorMessage(e)}')),
       );
     }
   }
@@ -436,7 +437,7 @@ class _MeetingDetailSheetState extends ConsumerState<_MeetingDetailSheet> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $e')),
+        SnackBar(content: Text('Delete failed: ${extractErrorMessage(e)}')),
       );
     }
   }

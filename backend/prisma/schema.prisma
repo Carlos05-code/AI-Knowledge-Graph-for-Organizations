@@ -504,16 +504,24 @@ model ExpertiseScore {
 }
 
 model KnowledgeGap {
-  id          String      @id @default(uuid())
-  title       String
-  description String
-  severity    GapSeverity @default(MEDIUM)
-  category    String?
-  source      String?
-  metadata    Json        @default("{}")
-  resolvedAt  DateTime?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id             String      @id @default(uuid())
+  organizationId String
+  title          String
+  description    String
+  severity       GapSeverity @default(MEDIUM)
+  category       String?
+  source         String?
+  /// Stable identity of the underlying finding (e.g. a service/document id,
+  /// or sorted+joined ids for multi-entity findings like policy conflicts) —
+  /// lets re-running detection upsert instead of accumulating duplicates.
+  entityKey      String?
+  metadata       Json        @default("{}")
+  resolvedAt     DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([organizationId, category, entityKey])
+  @@index([organizationId, resolvedAt])
 }
 
 enum GapSeverity {

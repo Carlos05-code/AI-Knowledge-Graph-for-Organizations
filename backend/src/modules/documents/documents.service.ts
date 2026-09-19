@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
 import { EmbeddingService } from '../../infrastructure/ai/embedding.service';
@@ -125,6 +125,11 @@ export class DocumentsService {
   }
 
   async delete(id: string, organizationId: string) {
+    const existing = await this.prisma.document.findFirst({
+      where: { id, organizationId },
+    });
+    if (!existing) throw new NotFoundException('Document not found');
+
     await this.prisma.document.update({
       where: { id },
       data: { deletedAt: new Date(), status: 'DELETED' },
@@ -143,9 +148,11 @@ export class DocumentsService {
     );
   }
 
-  async processDocument(id: string) {
-    const doc = await this.prisma.document.findUnique({ where: { id } });
-    if (!doc) throw new Error('Document not found');
+  async processDocument(id: string, organizationId: string) {
+    const doc = await this.prisma.document.findFirst({
+      where: { id, organizationId },
+    });
+    if (!doc) throw new NotFoundException('Document not found');
 
     await this.prisma.document.update({
       where: { id },

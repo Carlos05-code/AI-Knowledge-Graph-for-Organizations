@@ -48,6 +48,25 @@ describe('SearchService', () => {
     service = module.get<SearchService>(SearchService);
   });
 
+  describe('semantic search tenancy', () => {
+    it('scopes the Qdrant search to the caller organization', async () => {
+      embedding.generateEmbedding.mockResolvedValue(Array(1536).fill(0.1));
+      qdrant.search.mockResolvedValue([]);
+
+      await service.hybridSearch('org-1', 'onboarding', { mode: 'semantic' });
+
+      expect(qdrant.search).toHaveBeenCalledWith(
+        'knowledge_chunks',
+        expect.any(Array),
+        expect.objectContaining({
+          filter: {
+            must: [{ key: 'organizationId', match: { value: 'org-1' } }],
+          },
+        }),
+      );
+    });
+  });
+
   describe('keyword search routing', () => {
     it('uses OpenSearch BM25 results when available', async () => {
       opensearch.isAvailable.mockReturnValue(true);

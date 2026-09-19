@@ -98,7 +98,9 @@ export class UploadController {
       user.id,
     );
 
-    this.documentsService.processDocument(doc.id).catch(() => {});
+    this.documentsService
+      .processDocument(doc.id, user.organizationId)
+      .catch(() => {});
 
     return doc;
   }

@@ -212,7 +212,7 @@ export class RecommendationsService {
           take: 5,
         }),
         this.prisma.knowledgeGap.findMany({
-          where: { resolvedAt: null },
+          where: { organizationId, resolvedAt: null },
           orderBy: { severity: 'asc' },
           take: 3,
         }),

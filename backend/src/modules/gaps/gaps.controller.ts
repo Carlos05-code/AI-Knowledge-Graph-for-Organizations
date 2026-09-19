@@ -43,7 +43,7 @@ export class GapsController {
   @Post(':id/resolve')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Mark gap as resolved' })
-  resolve(@Param('id') id: string) {
-    return this.gapsService.resolveGap(id);
+  resolve(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.gapsService.resolveGap(id, user.organizationId);
   }
 }

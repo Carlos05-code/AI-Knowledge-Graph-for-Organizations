@@ -68,8 +68,8 @@ export class ChatService {
     conversationId?: string,
   ) {
     if (conversationId) {
-      const existing = await this.prisma.conversation.findUnique({
-        where: { id: conversationId },
+      const existing = await this.prisma.conversation.findFirst({
+        where: { id: conversationId, userId },
       });
       if (existing) return existing;
     }
@@ -96,7 +96,7 @@ export class ChatService {
 
   async retrieveContext(query: string, organizationId: string) {
     const [vectorResults, graphResults, keywordResults] = await Promise.all([
-      this.vectorSearch(query),
+      this.vectorSearch(query, organizationId),
       this.graphSearch(query),
       this.keywordSearch(query, organizationId),
     ]);
@@ -105,12 +105,15 @@ export class ChatService {
     return this.rerankResults(combined);
   }
 
-  private async vectorSearch(query: string) {
+  private async vectorSearch(query: string, organizationId: string) {
     try {
       const vector = await this.embedding.generateEmbedding(query);
       const results = await this.qdrant.search('knowledge_chunks', vector, {
         limit: 10,
         scoreThreshold: 0.3,
+        filter: {
+          must: [{ key: 'organizationId', match: { value: organizationId } }],
+        },
       });
 
       return results.map((r) => ({
@@ -288,9 +291,9 @@ Context:\n${contextText}`,
     return `I found some potentially relevant sources but encountered an error processing them:\n\n${sources}\n\nPlease try asking in a different way.`;
   }
 
-  async getConversationHistory(conversationId: string) {
-    return this.prisma.conversation.findUnique({
-      where: { id: conversationId },
+  async getConversationHistory(conversationId: string, userId: string) {
+    return this.prisma.conversation.findFirst({
+      where: { id: conversationId, userId },
       include: { messages: { orderBy: { createdAt: 'asc' } } },
     });
   }

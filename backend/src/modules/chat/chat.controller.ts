@@ -32,7 +32,7 @@ export class ChatController {
 
   @Get('conversations/:id')
   @ApiOperation({ summary: 'Get conversation history' })
-  getConversation(@Param('id') id: string) {
-    return this.chatService.getConversationHistory(id);
+  getConversation(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.chatService.getConversationHistory(id, user.id);
   }
 }

@@ -118,8 +118,10 @@ export function createMockPrisma(): Record<string, any> {
     knowledgeGap: {
       create: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      upsert: jest.fn(),
       count: jest.fn(),
     },
     refreshToken: {

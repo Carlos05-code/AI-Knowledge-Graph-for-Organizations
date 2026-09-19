@@ -92,6 +92,40 @@ describe('Documents (e2e)', () => {
         .set('Authorization', `Bearer ${validToken}`)
         .expect(403);
     });
+
+    it('DELETE /api/v1/documents/:id should 404 for a document in another org', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+      mockPrisma.document.findFirst.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .delete('/api/v1/documents/doc-9')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(404);
+    });
+
+    it('POST /api/v1/documents/:id/process should 404 for a document in another org', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+      mockPrisma.document.findFirst.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/documents/doc-9/process')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(404);
+    });
   });
 
   // ─── Upload ────────────────────────────────────────────────────

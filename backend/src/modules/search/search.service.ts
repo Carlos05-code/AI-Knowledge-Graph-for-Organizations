@@ -186,7 +186,7 @@ export class SearchService implements OnModuleInit {
 
   private async semanticSearch(
     query: string,
-    _organizationId: string,
+    organizationId: string,
     _filter: Record<string, unknown>,
   ) {
     try {
@@ -197,6 +197,9 @@ export class SearchService implements OnModuleInit {
         {
           limit: 20,
           scoreThreshold: 0.3,
+          filter: {
+            must: [{ key: 'organizationId', match: { value: organizationId } }],
+          },
         },
       );
 

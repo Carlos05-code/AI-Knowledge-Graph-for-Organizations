@@ -1,6 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { GapSeverity } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { Neo4jService } from '../../infrastructure/graph/neo4j.service';
+
+interface DetectedGap {
+  title: string;
+  description: string;
+  severity: GapSeverity;
+  category: string;
+  source: string;
+  entityId?: string;
+  entityIds?: string[];
+}
 
 @Injectable()
 export class GapsService {
@@ -12,7 +23,7 @@ export class GapsService {
   ) {}
 
   async detectGaps(organizationId: string) {
-    const gaps = await Promise.all([
+    const detected = await Promise.all([
       this.detectUndocumentedServices(organizationId),
       this.detectStaleDocuments(organizationId),
       this.detectConflictingPolicies(organizationId),
@@ -20,7 +31,40 @@ export class GapsService {
       this.detectMissingOwnership(organizationId),
     ]);
 
-    return gaps.flat();
+    const gaps = detected.flat();
+
+    // Upsert so re-running detection refreshes existing findings instead of
+    // accumulating duplicates, and doesn't silently un-resolve ones a human
+    // already dismissed (resolvedAt is only ever set by resolveGap below).
+    return Promise.all(
+      gaps.map((gap: DetectedGap) => {
+        const entityKey =
+          gap.entityId ?? gap.entityIds?.slice().sort().join(',') ?? '';
+        return this.prisma.knowledgeGap.upsert({
+          where: {
+            organizationId_category_entityKey: {
+              organizationId,
+              category: gap.category,
+              entityKey,
+            },
+          },
+          create: {
+            organizationId,
+            title: gap.title,
+            description: gap.description,
+            severity: gap.severity,
+            category: gap.category,
+            source: gap.source,
+            entityKey,
+          },
+          update: {
+            title: gap.title,
+            description: gap.description,
+            severity: gap.severity,
+          },
+        });
+      }),
+    );
   }
 
   private async detectUndocumentedServices(
@@ -159,7 +203,7 @@ export class GapsService {
       resolved?: boolean;
     },
   ) {
-    const where: any = {};
+    const where: any = { organizationId };
     if (params.severity) where.severity = params.severity;
     if (params.category) where.category = params.category;
     if (params.resolved === false) where.resolvedAt = null;
@@ -188,7 +232,12 @@ export class GapsService {
     };
   }
 
-  async resolveGap(id: string) {
+  async resolveGap(id: string, organizationId: string) {
+    const existing = await this.prisma.knowledgeGap.findFirst({
+      where: { id, organizationId },
+    });
+    if (!existing) throw new NotFoundException('Knowledge gap not found');
+
     return this.prisma.knowledgeGap.update({
       where: { id },
       data: { resolvedAt: new Date() },

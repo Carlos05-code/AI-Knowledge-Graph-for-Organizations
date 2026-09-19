@@ -235,6 +235,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const conversation = await this.chatService.getConversationHistory(
       data.conversationId,
+      client.user!.id,
     );
     client.emit('conversation:get', conversation);
   }

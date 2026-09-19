@@ -152,6 +152,11 @@ describe('RecommendationsService', () => {
     expect(result.upcomingMeetings).toHaveLength(1);
     expect(result.unreadNotifications).toHaveLength(1);
     expect(result.openKnowledgeGaps).toHaveLength(1);
+    expect(mockPrisma.knowledgeGap.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ organizationId: 'org-1' }),
+      }),
+    );
   });
 
   it('should handle missing user gracefully', async () => {

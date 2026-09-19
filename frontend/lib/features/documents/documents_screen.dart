@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_providers.dart';
+import '../../core/api/api_client.dart';
 import '../auth/domain/auth_provider.dart';
 import '../auth/domain/auth_state.dart';
 
@@ -451,7 +452,7 @@ class _DocumentDetailSheetState extends ConsumerState<_DocumentDetailSheet> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $e')),
+        SnackBar(content: Text('Delete failed: ${extractErrorMessage(e)}')),
       );
     }
   }

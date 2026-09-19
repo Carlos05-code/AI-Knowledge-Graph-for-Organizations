@@ -88,9 +88,29 @@ describe('DocumentsService', () => {
     expect(result.meta.total).toBe(1);
   });
 
+  describe('tenant isolation', () => {
+    it('delete throws 404 for a document outside the caller org', async () => {
+      mockPrisma.document.findFirst.mockResolvedValue(null);
+
+      await expect(service.delete('doc-1', 'org-1')).rejects.toThrow(
+        'Document not found',
+      );
+      expect(mockPrisma.document.update).not.toHaveBeenCalled();
+    });
+
+    it('processDocument throws 404 for a document outside the caller org', async () => {
+      mockPrisma.document.findFirst.mockResolvedValue(null);
+
+      await expect(service.processDocument('doc-1', 'org-1')).rejects.toThrow(
+        'Document not found',
+      );
+      expect(mockPrisma.chunk.deleteMany).not.toHaveBeenCalled();
+    });
+  });
+
   it('should process a document', async () => {
     mockOcr.isOcrCandidate.mockReturnValue(false);
-    mockPrisma.document.findUnique.mockResolvedValue({
+    mockPrisma.document.findFirst.mockResolvedValue({
       id: '1',
       title: 'Test',
       filePath: '/fake/path',
@@ -100,7 +120,7 @@ describe('DocumentsService', () => {
     mockPrisma.chunk.createMany.mockResolvedValue({ count: 0 });
     mockSearch.indexDocumentChunks.mockResolvedValue(undefined);
 
-    await service.processDocument('1');
+    await service.processDocument('1', 'org-1');
     expect(mockPrisma.document.update).toHaveBeenCalled();
   });
 
@@ -120,7 +140,7 @@ describe('DocumentsService', () => {
       pages: 3,
       confidence: 88,
     });
-    mockPrisma.document.findUnique.mockResolvedValue({
+    mockPrisma.document.findFirst.mockResolvedValue({
       id: '2',
       title: 'Scan',
       filePath: scanPath,
@@ -133,7 +153,7 @@ describe('DocumentsService', () => {
     mockSearch.indexDocumentChunks.mockResolvedValue(undefined);
     mockNeo4j.createNode.mockResolvedValue(undefined);
 
-    await service.processDocument('2');
+    await service.processDocument('2', 'org-1');
 
     expect(mockOcr.extractText).toHaveBeenCalledWith(scanPath);
     const updateCall = mockPrisma.document.update.mock.calls.find(
@@ -160,7 +180,7 @@ describe('DocumentsService', () => {
 
     async function runProcess(filePath: string, mimeType: string) {
       mockOcr.isOcrCandidate.mockReturnValue(false);
-      mockPrisma.document.findUnique.mockResolvedValue({
+      mockPrisma.document.findFirst.mockResolvedValue({
         id: 'd-1',
         title: 'Fixture',
         filePath,
@@ -172,7 +192,7 @@ describe('DocumentsService', () => {
       mockPrisma.chunk.createMany.mockResolvedValue({ count: 0 });
       mockNeo4j.createNode.mockResolvedValue(undefined);
 
-      await service.processDocument('d-1');
+      await service.processDocument('d-1', 'org-1');
 
       const updateCall = mockPrisma.document.update.mock.calls.find(
         (c: any[]) => c[0]?.data?.status === 'INDEXED',

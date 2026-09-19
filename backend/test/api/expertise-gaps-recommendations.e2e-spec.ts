@@ -11,10 +11,11 @@ describe('Expertise + Gaps + Recommendations (e2e)', () => {
   let app: INestApplication;
   let mockPrisma: E2EContext['mockPrisma'];
   let validToken: string;
+  let adminToken: string;
 
   beforeAll(async () => {
     ctx = await bootstrapE2eApp();
-    ({ app, mockPrisma, validToken } = ctx);
+    ({ app, mockPrisma, validToken, adminToken } = ctx);
   }, 30000);
 
   afterAll(async () => {
@@ -47,7 +48,7 @@ describe('Expertise + Gaps + Recommendations (e2e)', () => {
   // ─── Gaps ──────────────────────────────────────────────────────
 
   describe('Gaps', () => {
-    it('GET /api/v1/gaps should list knowledge gaps', async () => {
+    it('GET /api/v1/gaps should list knowledge gaps scoped to the caller org', async () => {
       mockPrisma.knowledgeGap.findMany.mockResolvedValue([
         {
           id: 'gap-1',
@@ -63,6 +64,29 @@ describe('Expertise + Gaps + Recommendations (e2e)', () => {
         .get('/api/v1/gaps')
         .set('Authorization', `Bearer ${validToken}`)
         .expect(200);
+
+      expect(mockPrisma.knowledgeGap.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ organizationId: 'org-1' }),
+        }),
+      );
+    });
+
+    it('POST /api/v1/gaps/:id/resolve should 404 for a gap in another org', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        role: 'ADMIN',
+        isActive: true,
+        organizationId: 'org-1',
+        organization: { id: 'org-1', name: 'Test Org' },
+      });
+      mockPrisma.knowledgeGap.findFirst.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/gaps/gap-9/resolve')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(404);
     });
   });
 

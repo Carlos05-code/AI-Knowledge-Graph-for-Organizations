@@ -71,6 +71,24 @@ class ApiClient {
   }
 }
 
+/// The backend's global exception filter always responds with
+/// `{ success: false, message, errors?, timestamp }` (see
+/// backend/src/presentation/filters/http-exception.filter.ts). A bare
+/// `error.toString()` on a DioException shows a wall of request/stack-trace
+/// noise instead of that message, so screens should catch with this instead.
+String extractErrorMessage(Object error) {
+  if (error is DioException) {
+    final data = error.response?.data;
+    if (data is Map && data['message'] != null) {
+      final message = data['message'];
+      if (message is List) return message.join(', ');
+      return message.toString();
+    }
+    return error.message ?? error.toString();
+  }
+  return error.toString();
+}
+
 class AuthInterceptor extends Interceptor {
   final Dio _dio;
   final FlutterSecureStorage _storage;

@@ -135,13 +135,20 @@ Viewable by admins (`GET /admin/audit-logs`).
 
 ## 8. Data privacy & tenancy
 
-- All queries filter `organizationId` (docs, meetings, policies, connectors, search
-  filters on vector payload).
-- Mutating single-record endpoints enforce scope server-side: `meetings.delete`,
-  `policies.delete` verify `{ id, organizationId }` (404 otherwise);
-  `notifications.markAsRead`/`delete` verify `{ id, userId }` (404 otherwise);
-  chat `deleteConversation` verifies `{ id, userId }`.
+- All queries filter `organizationId` (docs, meetings, policies, connectors, gaps,
+  recommendations, search/chat semantic search filtered on the Qdrant vector payload).
+- Mutating single-record endpoints enforce scope server-side: `documents.delete`,
+  `documents.processDocument`, `meetings.delete`, `policies.delete`, `gaps.resolveGap`
+  verify `{ id, organizationId }` (404 otherwise); `notifications.markAsRead`/`delete`
+  verify `{ id, userId }` (404 otherwise); chat `deleteConversation`,
+  `getOrCreateConversation`, `getConversationHistory` (REST and WebSocket) verify
+  `{ id, userId }`.
 - Chat sources restricted to org content; expertise scores scoped per org.
+- **2026-09-19 audit**: a systematic review found and fixed 8 tenant-isolation gaps —
+  see ROADMAP.md milestone 38 for the full list and severity (two were live cross-tenant
+  document-content leaks in the shared Qdrant collection behind semantic search/chat,
+  not just metadata). All Prisma queries against org-owned models were re-checked as
+  part of that pass; this list reflects the result, not an unverified claim.
 - Notification recipients limited to org members / org admins.
 
 ## 9. File upload security

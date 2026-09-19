@@ -187,6 +187,20 @@ describe('ChatGateway', () => {
     ).rejects.toThrow('Message content required');
   });
 
+  it('scopes conversation:get to the connected user', async () => {
+    const socket = makeSocket('tok');
+    await gateway.handleConnection(asSocket(socket));
+
+    await gateway.handleGetConversation(asSocket(socket), {
+      conversationId: 'someone-elses-conv',
+    });
+
+    expect(chatServiceMock.getConversationHistory).toHaveBeenCalledWith(
+      'someone-elses-conv',
+      'user-1',
+    );
+  });
+
   it('sanitizes injected instructions in retrieved context before streaming to the LLM', async () => {
     chatServiceMock.retrieveContext.mockResolvedValue([
       {

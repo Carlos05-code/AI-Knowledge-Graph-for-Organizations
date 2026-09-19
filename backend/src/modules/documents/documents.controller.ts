@@ -64,7 +64,7 @@ export class DocumentsController {
   @Post(':id/process')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Trigger document processing' })
-  process(@Param('id') id: string) {
-    return this.documentsService.processDocument(id);
+  process(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.documentsService.processDocument(id, user.organizationId);
   }
 }
