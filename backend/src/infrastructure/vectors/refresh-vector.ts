@@ -1,9 +1,20 @@
 import 'reflect-metadata';
 import { PrismaClient } from '@prisma/client';
 import { QdrantClient } from '@qdrant/js-client-rest';
+import { EmbeddingService } from '../ai/embedding.service';
+
+const BATCH_SIZE = 100;
+
+/** Standalone script — no NestJS bootstrap, so EmbeddingService gets a
+ *  minimal config stub instead of the DI-resolved ConfigService. */
+const configStub = {
+  get: (key: string, defaultValue?: unknown) =>
+    process.env[key] ?? defaultValue,
+} as any;
 
 async function main() {
   const prisma = new PrismaClient();
+  const embedding = new EmbeddingService(configStub);
 
   // 1. Fetch up to 20k chunks from PostgreSQL
   const chunks = await prisma.chunk.findMany({
@@ -52,33 +63,35 @@ async function main() {
     );
   }
 
-  // 4. Upsert chunks into Qdrant
-  // We'll use the chunk content as the payload; vector would normally come from embedding service.
-  // For this refresh we set a dummy vector (zeros) and store content in payload.
-  // In production the embedding service would generate real vectors.
-  const vectorSize = 1536;
+  // 4. Generate real embeddings and upsert into Qdrant, in batches — both to
+  // stay under the embedding API's per-request size limits and so progress
+  // survives a mid-run failure instead of losing all 20k chunks' work.
+  let upserted = 0;
+  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+    const batch = chunks.slice(i, i + BATCH_SIZE);
+    const vectors = await embedding.generateEmbeddings(
+      batch.map((c) => c.content),
+    );
 
-  const points = chunks.map((chunk) => ({
-    id: chunk.id,
-    vector: Array(vectorSize).fill(0), // dummy vector — replace with real embeddings
-    payload: {
-      documentId: chunk.documentId,
-      content: chunk.content,
-      index: chunk.index,
-      tokenCount: chunk.tokenCount,
-      createdAt: chunk.createdAt,
-    },
-  }));
+    const points = batch.map((chunk, j) => ({
+      id: chunk.id,
+      vector: vectors[j],
+      payload: {
+        documentId: chunk.documentId,
+        content: chunk.content,
+        index: chunk.index,
+        tokenCount: chunk.tokenCount,
+        createdAt: chunk.createdAt,
+      },
+    }));
 
-  console.log(`Upserting ${points.length} points into Qdrant...`);
-
-  await qdrant.upsert(collectionName, {
-    wait: true,
-    points,
-  });
+    await qdrant.upsert(collectionName, { wait: true, points });
+    upserted += points.length;
+    console.log(`Upserted ${upserted}/${chunks.length} chunks...`);
+  }
 
   console.log(
-    `Successfully refreshed ${points.length} chunks into Qdrant collection '${collectionName}'`,
+    `Successfully refreshed ${upserted} chunks into Qdrant collection '${collectionName}'`,
   );
 
   await prisma.$disconnect();

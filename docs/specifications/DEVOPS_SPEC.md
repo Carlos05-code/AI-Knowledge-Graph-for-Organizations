@@ -89,7 +89,15 @@ replica available during node drains. Ingress terminates TLS via cert-manager
 
 - PostgreSQL: volume backups (`pg_dump` cron recommended); restore procedure documented
   in `docs/deployment-guide.md`.
-- Neo4j/Qdrant: volume snapshots; re-index from source of truth (Postgres + MinIO) if lost.
+- Neo4j/Qdrant: volume snapshots; re-index from source of truth (Postgres) if lost.
+- **Uploaded files are not currently backed by MinIO** despite the compose/k8s stack
+  provisioning it — `MinioStorageService` exists but nothing calls it; uploads are only
+  ever written to local disk (`./uploads`, via multer `diskStorage`). This is a real gap,
+  not just a docs correction: it means uploaded files have no object-storage redundancy
+  and won't survive losing that volume, and in a multi-replica deployment the pod that
+  processes a document isn't guaranteed to be the one that received the upload. Wiring
+  MinIO into the actual upload/read/delete path is tracked in ROADMAP.md as a known gap,
+  not yet done.
 - RPO/RTO targets: staged for production.
 
 ## 8. Scaling

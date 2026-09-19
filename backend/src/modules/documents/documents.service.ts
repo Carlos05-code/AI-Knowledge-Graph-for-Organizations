@@ -217,6 +217,12 @@ export class DocumentsService {
     }
   }
 
+  private static readonly STRUCTURED_MIME_TYPES = new Set([
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ]);
+
   private async readDocumentContent(doc: any): Promise<{
     content: string;
     ocr: { engine: string; pages?: number; confidence?: number } | null;
@@ -242,19 +248,127 @@ export class DocumentsService {
             };
           }
           return {
-            content: `Simulated content for document: ${doc.title}. OCR produced no text for this scanned file.`,
+            content: `No extractable text found in "${doc.title}" — OCR produced no text for this scanned file.`,
             ocr: null,
           };
         }
+        if (DocumentsService.STRUCTURED_MIME_TYPES.has(doc.mimeType)) {
+          const extracted = await this.extractStructuredText(
+            doc.mimeType,
+            doc.filePath,
+          );
+          return { content: extracted, ocr: null };
+        }
         return { content: fs.readFileSync(doc.filePath, 'utf-8'), ocr: null };
       }
-    } catch {
-      // fall back to simulated content
+      this.logger.warn(
+        `Document ${doc.id}'s file (${doc.filePath}) was not found on disk`,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to read/parse document ${doc.id}`,
+        error instanceof Error ? error.message : error,
+      );
     }
     return {
-      content: `Simulated content for document: ${doc.title}. In production, this would read from MinIO storage and parse the file.`,
+      content: `No extractable content found for document: ${doc.title}. The source file could not be read or parsed.`,
       ocr: null,
     };
+  }
+
+  /** DOCX/PPTX/XLSX are ZIP-based binary formats — reading them as UTF-8 text
+   *  (the plain-text fallback below) produces garbage, not real content. */
+  private async extractStructuredText(
+    mimeType: string,
+    filePath: string,
+  ): Promise<string> {
+    switch (mimeType) {
+      case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        return this.extractDocx(filePath);
+      case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+        return this.extractPptx(filePath);
+      case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        return this.extractXlsx(filePath);
+      default:
+        return '';
+    }
+  }
+
+  private async extractDocx(filePath: string): Promise<string> {
+    const mammoth = require('mammoth');
+    const result = await mammoth.extractRawText({ path: filePath });
+    return result.value;
+  }
+
+  /** ExcelJS cell values aren't always primitives — formulas, rich text and
+   *  hyperlinks come back as objects that would silently stringify to
+   *  "[object Object]" with a bare String(v). */
+  private cellToText(v: unknown): string {
+    if (v === null || v === undefined) return '';
+    if (v instanceof Date) return v.toISOString();
+    if (typeof v === 'object') {
+      const obj = v as Record<string, unknown>;
+      if (typeof obj.text === 'string') return obj.text;
+      if (Array.isArray(obj.richText)) {
+        return (obj.richText as Array<{ text?: string }>)
+          .map((r) => r.text ?? '')
+          .join('');
+      }
+      if ('result' in obj) return this.cellToText(obj.result);
+      return '';
+    }
+    if (
+      typeof v === 'string' ||
+      typeof v === 'number' ||
+      typeof v === 'boolean'
+    ) {
+      return String(v);
+    }
+    return '';
+  }
+
+  private async extractXlsx(filePath: string): Promise<string> {
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
+
+    const sheets: string[] = [];
+    workbook.eachSheet((sheet: any) => {
+      const rows: string[] = [];
+      sheet.eachRow((row: any) => {
+        const cells = (row.values as unknown[])
+          .slice(1)
+          .map((v) => this.cellToText(v));
+        rows.push(cells.join(', '));
+      });
+      sheets.push(`# ${sheet.name}\n${rows.join('\n')}`);
+    });
+    return sheets.join('\n\n');
+  }
+
+  private async extractPptx(filePath: string): Promise<string> {
+    const fs = require('fs');
+    const JSZip = require('jszip');
+    const buffer = fs.readFileSync(filePath);
+    const zip = await JSZip.loadAsync(buffer);
+
+    const slideNumber = (name: string) =>
+      Number(name.match(/slide(\d+)\.xml$/)?.[1] ?? 0);
+    const slideFiles = Object.keys(zip.files)
+      .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+      .sort((a, b) => slideNumber(a) - slideNumber(b));
+
+    const slides = await Promise.all(
+      slideFiles.map(async (name) => {
+        const xml: string = await zip.files[name].async('string');
+        const text = [...xml.matchAll(/<a:t>([^<]*)<\/a:t>/g)]
+          .map((m) => m[1])
+          .join(' ');
+        return text;
+      }),
+    );
+
+    return slides.map((text, i) => `[Slide ${i + 1}]\n${text}`).join('\n\n');
   }
 
   private async chunkDocument(documentId: string, content: string) {

@@ -146,4 +146,140 @@ describe('DocumentsService', () => {
     expect(updateCall[0].data.wordCount).toBeGreaterThan(0);
     fs.unlinkSync(scanPath);
   });
+
+  describe('structured document extraction (DOCX/PPTX/XLSX)', () => {
+    const fs = require('fs');
+    const os = require('os');
+    const path = require('path');
+
+    const tmpFile = (ext: string) =>
+      path.join(
+        os.tmpdir(),
+        `akg-doc-test-${Date.now()}-${Math.random()}.${ext}`,
+      );
+
+    async function runProcess(filePath: string, mimeType: string) {
+      mockOcr.isOcrCandidate.mockReturnValue(false);
+      mockPrisma.document.findUnique.mockResolvedValue({
+        id: 'd-1',
+        title: 'Fixture',
+        filePath,
+        mimeType,
+        metadata: {},
+        organizationId: 'org-1',
+      });
+      mockPrisma.document.update.mockResolvedValue({});
+      mockPrisma.chunk.createMany.mockResolvedValue({ count: 0 });
+      mockNeo4j.createNode.mockResolvedValue(undefined);
+
+      await service.processDocument('d-1');
+
+      const updateCall = mockPrisma.document.update.mock.calls.find(
+        (c: any[]) => c[0]?.data?.status === 'INDEXED',
+      );
+      return updateCall;
+    }
+
+    it('extracts real text from a DOCX file (not raw XML/zip bytes)', async () => {
+      const JSZip = require('jszip');
+      const zip = new JSZip();
+      zip.file(
+        '[Content_Types].xml',
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+          '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+          '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+          '<Default Extension="xml" ContentType="application/xml"/>' +
+          '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+          '</Types>',
+      );
+      zip.file(
+        '_rels/.rels',
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+          '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+          '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+          '</Relationships>',
+      );
+      zip.file(
+        'word/document.xml',
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+          '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+          '<w:body><w:p><w:r><w:t>Q3 budget approved for the search initiative.</w:t></w:r></w:p></w:body>' +
+          '</w:document>',
+      );
+      const filePath = tmpFile('docx');
+      fs.writeFileSync(
+        filePath,
+        await zip.generateAsync({ type: 'nodebuffer' }),
+      );
+
+      const updateCall = await runProcess(
+        filePath,
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      );
+
+      const persistedChunks = mockPrisma.chunk.createMany.mock.calls[0][0].data;
+      const allText = persistedChunks.map((c: any) => c.content).join(' ');
+      expect(allText).toContain('Q3 budget approved for the search initiative');
+      expect(allText).not.toContain('<w:t>');
+      expect(updateCall[0].data.status).toBe('INDEXED');
+      fs.unlinkSync(filePath);
+    });
+
+    it('extracts real text from a PPTX file (not raw XML/zip bytes)', async () => {
+      const JSZip = require('jszip');
+      const zip = new JSZip();
+      zip.file(
+        'ppt/slides/slide1.xml',
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+          '<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' +
+          '<a:t>Roadmap review</a:t></p:sld>',
+      );
+      zip.file(
+        'ppt/slides/slide2.xml',
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+          '<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' +
+          '<a:t>Ship search by Friday</a:t></p:sld>',
+      );
+      const filePath = tmpFile('pptx');
+      fs.writeFileSync(
+        filePath,
+        await zip.generateAsync({ type: 'nodebuffer' }),
+      );
+
+      await runProcess(
+        filePath,
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      );
+
+      const persistedChunks = mockPrisma.chunk.createMany.mock.calls[0][0].data;
+      const allText = persistedChunks.map((c: any) => c.content).join(' ');
+      expect(allText).toContain('Roadmap review');
+      expect(allText).toContain('Ship search by Friday');
+      expect(allText).toMatch(/\[Slide 1\][\s\S]*\[Slide 2\]/);
+      fs.unlinkSync(filePath);
+    });
+
+    it('extracts real text from an XLSX file (not raw zip bytes)', async () => {
+      const ExcelJS = require('exceljs');
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Budget');
+      sheet.addRow(['Item', 'Cost']);
+      sheet.addRow(['Search infra', 4200]);
+
+      const filePath = tmpFile('xlsx');
+      await workbook.xlsx.writeFile(filePath);
+
+      await runProcess(
+        filePath,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+
+      const persistedChunks = mockPrisma.chunk.createMany.mock.calls[0][0].data;
+      const allText = persistedChunks.map((c: any) => c.content).join(' ');
+      expect(allText).toContain('Budget');
+      expect(allText).toContain('Search infra');
+      expect(allText).toContain('4200');
+      fs.unlinkSync(filePath);
+    });
+  });
 });
